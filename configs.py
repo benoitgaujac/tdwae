@@ -50,17 +50,17 @@ config_mnist['lambda_schedule'] = 'constant' #  adaptive, constant
 
 # Model set up
 config_mnist['nlatents'] = 3
-config_mnist['zdim'] = [32,25,16]
+config_mnist['zdim'] = [36,25,16]
 
 # NN set up
 config_mnist['conv_filters_dim'] = 3
 config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
 
-config_mnist['e_arch'] = 'mlp' # mlp, dcgan, ali, began
+config_mnist['e_arch'] = 'dcgan' # mlp, dcgan, ali, began
 config_mnist['e_nlayers'] = 2
 config_mnist['e_nfilters'] = 8
 
-config_mnist['d_arch'] = 'mlp' # mlp, dcgan, dcgan_mod, ali, began
+config_mnist['d_arch'] = 'dcgan_mod' # mlp, dcgan, dcgan_mod, ali, began
 config_mnist['d_nlayers'] = 2
 config_mnist['d_nfilters'] = 8
