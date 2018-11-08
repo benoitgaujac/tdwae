@@ -144,6 +144,7 @@ def save_train(opts, data_train, data_test,
 
     ### The reconstruction loss curves
     base = plt.cm.get_cmap('Vega10')
+    #base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
@@ -156,7 +157,7 @@ def save_train(opts, data_train, data_test,
             y = np.log(l[::x_step])
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'rec$_%d$' % i)
         else:
-            y = np.log(opts['lambda'][i]*np.array(l[::x_step]))
+            y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
     plt.grid(axis='y')
     plt.legend(loc='lower left')
@@ -174,8 +175,8 @@ def save_train(opts, data_train, data_test,
                                 metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
 
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
-                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                #c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                #c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')

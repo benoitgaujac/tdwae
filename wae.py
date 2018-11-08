@@ -72,7 +72,7 @@ class WAE(object):
         for n in range(opts['nlatents']):
             # --- Encoding points
             enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
-                                                num_units=opts['e_nfilters']*2**(opts['nlatents']-(n+1)),
+                                                num_units=int(opts['e_nfilters'] / 2**n),
                                                 output_dim=opts['zdim'][n],
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
@@ -87,7 +87,7 @@ class WAE(object):
             # --- Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 reconstructed, _ = decoder(self.opts, inputs=encoded,
-                                                num_units=opts['d_nfilters']*2**(opts['nlatents']-(n+1)),
+                                                num_units=int(opts['d_nfilters'] / 2**n),
                                                 output_shape=datashapes[opts['dataset']],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
@@ -98,7 +98,7 @@ class WAE(object):
 
             else:
                 reconstructed, _ = decoder(self.opts, inputs=encoded,
-                                                num_units=opts['d_nfilters']*2**(opts['nlatents']-(n+1)),
+                                                num_units=int(opts['d_nfilters'] / 2**n),
                                                 output_shape=[opts['zdim'][n-1],],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
@@ -114,14 +114,14 @@ class WAE(object):
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
                 decoded, _ = decoder(self.opts, inputs=decoded,
-                                                num_units=opts['d_nfilters']*2**(opts['nlatents']-(n+1)),
+                                                num_units=int(opts['d_nfilters'] / 2**n),
                                                 output_shape=datashapes[opts['dataset']],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
             else:
                 decoded, _ = decoder(self.opts, inputs=decoded,
-                                                num_units=opts['d_nfilters']*2**(opts['nlatents']-(n+1)),
+                                                num_units=int(opts['d_nfilters'] / 2**n),
                                                 output_shape=[opts['zdim'][n-1],],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
