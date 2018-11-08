@@ -7,7 +7,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 200 #2400
+config_mnist['print_every'] = 250 #2400
 config_mnist['work_dir'] = 'results_mnist'
 config_mnist['plot_num_pics'] = 100
 config_mnist['plot_num_cols'] = 10
@@ -20,9 +20,9 @@ config_mnist['MNIST_data_source_url'] = 'http://yann.lecun.com/exdb/mnist/'
 config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
 
 # Experiment set up
-config_mnist['train_dataset_size'] = 2000
+config_mnist['train_dataset_size'] = 5000
 config_mnist['batch_size'] = 100
-config_mnist['epoch_num'] = 200
+config_mnist['epoch_num'] = 100
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
 config_mnist['e_pretrain'] = False #pretrained the encoder parameters
@@ -45,12 +45,12 @@ config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 config_mnist['MMDpp'] = True #MMD++ as in https://github.com/tolstikhin/wae/blob/master/improved_wae.py
 config_mnist['epsilon'] = 0.5 #Sinkhorn regularization parameters
 config_mnist['L'] = 100 #Sinkhorn iteration
-config_mnist['lambda'] = [5.,10.,15.,20.]
+config_mnist['lambda'] = [15.,20.,25.]
 config_mnist['lambda_schedule'] = 'constant' #  adaptive, constant
 
 # Model set up
-config_mnist['nlatents'] = 4
-config_mnist['zdim'] = [64,32,16,8]
+config_mnist['nlatents'] = 3
+config_mnist['zdim'] = [32,25,16]
 
 # NN set up
 config_mnist['conv_filters_dim'] = 3
@@ -59,8 +59,8 @@ config_mnist['init_bias'] = 0.0
 
 config_mnist['e_arch'] = 'mlp' # mlp, dcgan, ali, began
 config_mnist['e_nlayers'] = 2
-config_mnist['e_nfilters'] = 32
+config_mnist['e_nfilters'] = 8
 
 config_mnist['d_arch'] = 'mlp' # mlp, dcgan, dcgan_mod, ali, began
 config_mnist['d_nlayers'] = 2
-config_mnist['d_nfilters'] = 32
+config_mnist['d_nfilters'] = 8
