@@ -8,8 +8,6 @@ Wasserstein Auto-Encoder models
 """
 
 import sys
-sys.path.append('../TTUR')
-sys.path.append('../inception')
 import time
 import os
 import logging
@@ -20,17 +18,21 @@ import tensorflow as tf
 
 import ops
 import utils
-import fid
 from sampling_functions import sample_gaussian, generate_linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from plot_functions import save_train, save_vizu
 from networks import encoder, decoder
 from datahandler import datashapes
 
+"""
 # Path to inception model and stats for training set
+sys.path.append('../TTUR')
+sys.path.append('../inception')
+import fid
 inception_path = '../inception'
 inception_model = os.path.join(inception_path, 'classify_image_graph_def.pb')
 layername = 'FID_Inception_Net/pool_3:0'
+"""
 
 import pdb
 
