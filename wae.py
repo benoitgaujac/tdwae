@@ -443,7 +443,7 @@ class WAE(object):
                     # Making plots
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
                                      data.test_labels[:npics],                          # labels
-                                     reconstructed_test[0], reconstructed_test[0],      # reconstructions
+                                     reconstructed_train[0], reconstructed_test[0],      # reconstructions
                                      encoded[-1],                                       # encoded points (bottom)
                                      fixed_noise, samples[-1],                          # prior samples, model samples
                                      Loss, Loss_match,                                  # losses
@@ -454,7 +454,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 30:
+                if epoch >= 50:
                     # If no significant progress was made in last 10 epochs
                     # then decrease the learning rate.
                     if loss < min(Loss[-20 * batches_num:]):

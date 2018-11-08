@@ -45,12 +45,12 @@ config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 config_mnist['MMDpp'] = True #MMD++ as in https://github.com/tolstikhin/wae/blob/master/improved_wae.py
 config_mnist['epsilon'] = 0.5 #Sinkhorn regularization parameters
 config_mnist['L'] = 100 #Sinkhorn iteration
-config_mnist['lambda'] = [5.,5.,5.,5.,20.]
+config_mnist['lambda'] = [5.,10.,15.,20.]
 config_mnist['lambda_schedule'] = 'constant' #  adaptive, constant
 
 # Model set up
-config_mnist['nlatents'] = 5
-config_mnist['zdim'] = [64,32,16,8,4]
+config_mnist['nlatents'] = 4
+config_mnist['zdim'] = [64,32,16,8]
 
 # NN set up
 config_mnist['conv_filters_dim'] = 3

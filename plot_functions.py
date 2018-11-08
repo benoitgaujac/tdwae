@@ -152,8 +152,12 @@ def save_train(opts, data_train, data_test,
     losses = np.array(losses_rec)
     for i in range(np.shape(losses)[-1]):
         l = losses[:,i]
-        y = np.log(l[::x_step])
-        plt.plot(x, y, linewidth=2, color=color_list[i], label='rec %d' % i)
+        if i==0:
+            y = np.log(l[::x_step])
+            plt.plot(x, y, linewidth=2, color=color_list[i], label=r'rec$_%d$' % i)
+        else:
+            y = np.log(opts['lambda'][i]*np.array(l[::x_step]))
+            plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",
