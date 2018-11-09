@@ -131,12 +131,12 @@ def save_train(opts, data_train, data_test,
     x = np.arange(1, len(loss) + 1, x_step)
     y = np.log(loss[::x_step])
     plt.plot(x, y, linewidth=3, color='black', label='loss')
-    l = np.array(loss_rec)
-    y = np.log(l[::x_step])
-    plt.plot(x, y, linewidth=2, color='red', label='rec')
-    l = np.array(loss_match)
-    y = np.log(opts['lambda'][-1]*np.abs(l[::x_step]))
-    plt.plot(x, y, linewidth=2, color='blue', label=r'$\lambda$|match|')
+    # l = np.array(loss_rec)
+    # y = np.log(l[::x_step])
+    # plt.plot(x, y, linewidth=2, color='red', label='rec')
+    # l = np.array(loss_match)
+    # y = np.log(opts['lambda'][-1]*np.abs(l[::x_step]))
+    # plt.plot(x, y, linewidth=2, color='blue', label=r'$\lambda$|match|')
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",
@@ -159,6 +159,9 @@ def save_train(opts, data_train, data_test,
         else:
             y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
+    l = np.array(loss_match)
+    y = np.log(l[::x_step])
+    plt.plot(x, y, linewidth=2, color=color_list[i+1], label='match')
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",
