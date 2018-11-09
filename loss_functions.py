@@ -252,7 +252,7 @@ def reconstruction_loss(opts, x1, x2):
     else:
         assert False, 'Unknown cost function %s' % opts['cost']
     # Compute loss
-    loss = cost #coef: .2 for L2 and L1, .05 for L2sqr,
+    loss = opts['coef_rec'] * cost #coef: .2 for L2 and L1, .05 for L2sqr,
     return loss
 
 

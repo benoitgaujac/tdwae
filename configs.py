@@ -46,7 +46,9 @@ config_mnist['MMDpp'] = True #MMD++ as in https://github.com/tolstikhin/wae/blob
 config_mnist['epsilon'] = 0.5 #Sinkhorn regularization parameters
 config_mnist['L'] = 50 #Sinkhorn iteration
 config_mnist['lambda'] = [100.,]
-config_mnist['lambda_schedule'] = 'constant' #  adaptive, constant
+config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
+config_mnist['coef_rec'] = 0.1 # coef recon loss
+
 
 # Model set up
 config_mnist['nlatents'] = 1
