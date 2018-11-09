@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import utils
 from datahandler import datashapes
-from ops import log_sum_exp
+from ops import logsumexp
 
 import pdb
 
@@ -35,9 +35,7 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Batch size
     M = utils.get_batch_size(samples_pz)
     # Compute Cost matrix
-    norms_pz = tf.reduce_sum(tf.square(samples_pz), axis=-1, keepdims=True)
-    norms_qz = tf.reduce_sum(tf.square(samples_qz), axis=-1, keepdims=True)
-    C = square_dist(opts, samples_qz, norms_qz, samples_pz, norms_pz)
+    C = square_dist(opts, samples_qz, samples_pz)
     # Kernel
     log_K = - C / opts['epsilon']
     # Sinkhorn fixed points iteration
@@ -52,15 +50,15 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
 
 def sinkhorn_it(opts,log_K):
     # Initialization
-    log_v = - log_sum_exp(log_K, axis=0, keepdims=True)
+    log_v = - logsumexp(log_K, axis=0, keepdims=True)
     # Sinkhorn iterations
     for l in range(opts['L']-1):
-        log_u = - log_sum_exp(log_K + log_v, axis=1, keepdims=True)
-        log_v = - log_sum_exp(log_K + log_u, axis=0, keepdims=True)
-    log_u = - log_sum_exp(log_K + log_v, axis=1, keepdims=True)
+        log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
+        log_v = - logsumexp(log_K + log_u, axis=0, keepdims=True)
+    log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
     # Flatten
-    log_u = tf.reshape(log_u,[-1])
-    log_v = tf.reshape(log_v,[-1])
+    log_u = tf.squeeze(log_u)
+    log_v = tf.squeeze(log_v)
     return tf.exp(log_u), tf.exp(log_v)
 
 def mmd_penalty(opts, pi0, pi, sample_pz, sample_qz):
@@ -216,14 +214,16 @@ def mmd(opts, pi0, pi, sample_pz, sample_qz):
     return res, distances_pz, distances_qz, distances, K_pz, K_qz, K_qzpz, res_list
 
 
-def square_dist(opts, sample_x, norms_x, sample_y, norms_y):
+def square_dist(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance
     """
+    norms_x = tf.reduce_sum(tf.square(sample_x), axis=-1, keepdims=True)
+    norms_y = tf.reduce_sum(tf.square(sample_y), axis=-1, keepdims=True)
+
     squared_dist = norms_x + tf.transpose(norms_y) \
                     - 2. * tf.matmul(sample_x,sample_y,transpose_b=True)
-    #return distances
-    return tf.nn.relu(squared_dist)
+    return squared_dist
 
 
 def reconstruction_loss(opts, x1, x2):
@@ -235,29 +235,26 @@ def reconstruction_loss(opts, x1, x2):
     # Flatten if necessary
     assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
                 'data and reconstruction must have the same shape'
-    shape = x1.get_shape().as_list()
-    M = utils.get_batch_size(x1)
-    if len(shape)>2:
-        x1 = tf.reshape(x1,[-1,np.prod(shape[1:])])
-        x2 = tf.reshape(x2,[-1,np.prod(shape[1:])])
+    x1 = tf.layers.flatten(x1)
+    x2 = tf.layers.flatten(x2)
     # Compute chosen cost
     if opts['cost'] == 'l2':
         # c(x,y) = ||x - y||_2
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
         cost = tf.sqrt(1e-10 + cost)
-        cost = tf.reduce_mean(cost,axis=-1)
+        cost = tf.reduce_mean(cost)
     elif opts['cost'] == 'l2sq':
         # c(x,y) = ||x - y||_2^2
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-        cost = tf.reduce_mean(cost,axis=-1)
+        cost = tf.reduce_mean(cost)
     elif opts['cost'] == 'l1':
         # c(x,y) = ||x - y||_1
         cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
-        cost = tf.reduce_mean(cost,axis=-1)
+        cost = tf.reduce_mean(cost)
     else:
         assert False, 'Unknown cost function %s' % opts['cost']
     # Compute loss
-    loss = 1. * cost #coef: .2 for L2 and L1, .05 for L2sqr,
+    loss = .01 * cost #coef: .2 for L2 and L1, .05 for L2sqr,
     return loss
 
 

@@ -31,7 +31,7 @@ config_mnist['e_pretrain_sample_size'] = 200
 # Opt set up
 config_mnist['optimizer'] = 'adam' # adam, sgd
 config_mnist['adam_beta1'] = 0.5
-config_mnist['lr'] = 0.0001
+config_mnist['lr'] = 0.0005
 config_mnist['lr_adv'] = 0.0008
 config_mnist['batch_norm'] = True
 config_mnist['batch_norm_eps'] = 1e-05
