@@ -35,19 +35,17 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Batch size
     M = utils.get_batch_size(samples_pz)
     # Compute Cost matrix
-    C = square_dist(opts, samples_qz, samples_pz)
+    C = square_dist(opts, samples_pz, samples_qz)
     # Kernel
     log_K = - C / opts['epsilon']
     # Sinkhorn fixed points iteration
     log_u, log_v = sinkhorn_it(opts,log_K)
     # Sinkhorn OT plan
     log_R = log_u + log_K + log_v
-    # R = tf.matmul(tf.exp(log_K),tf.matrix_diag(v))
-    # R = tf.matmul(tf.matrix_diag(u),R)
     # Sharp Sinkhorn
     S = tf.matmul(tf.exp(log_R),C,transpose_b=True)
-    #S = tf.matmul(R,C,transpose_b=True)
-    return tf.trace(S) / M
+    #return tf.trace(S) / M
+    return tf.reduce_sum(S)
 
 def sinkhorn_it(opts,log_K):
     # Initialization
