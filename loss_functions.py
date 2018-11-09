@@ -39,13 +39,14 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Kernel
     log_K = - C / opts['epsilon']
     # Sinkhorn fixed points iteration
-    u, v = sinkhorn_it(opts,log_K)
+    log_u, log_v = sinkhorn_it(opts,log_K)
     # Sinkhorn OT plan
-    R = tf.matmul(tf.exp(log_K),tf.matrix_diag(v))
-    R = tf.matmul(tf.matrix_diag(u),R)
+    log_R = log_u + log_K + log_v
+    # R = tf.matmul(tf.exp(log_K),tf.matrix_diag(v))
+    # R = tf.matmul(tf.matrix_diag(u),R)
     # Sharp Sinkhorn
-    S = tf.matmul(C,R,transpose_b=True)
-
+    S = tf.matmul(tf.exp(log_R),C,transpose_b=True)
+    #S = tf.matmul(R,C,transpose_b=True)
     return tf.trace(S) / M
 
 def sinkhorn_it(opts,log_K):
@@ -56,10 +57,7 @@ def sinkhorn_it(opts,log_K):
         log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
         log_v = - logsumexp(log_K + log_u, axis=0, keepdims=True)
     log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
-    # Flatten
-    log_u = tf.squeeze(log_u)
-    log_v = tf.squeeze(log_v)
-    return tf.exp(log_u), tf.exp(log_v)
+    return log_u, log_v
 
 def mmd_penalty(opts, pi0, pi, sample_pz, sample_qz):
     """
