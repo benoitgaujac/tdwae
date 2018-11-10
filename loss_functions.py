@@ -43,9 +43,10 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Sinkhorn OT plan
     log_R = log_u + log_K + log_v
     # Sharp Sinkhorn
+    #S = tf.matmul(tf.exp(log_R),C,transpose_b=False)
     S = tf.matmul(tf.exp(log_R),C,transpose_b=True)
-    #return tf.trace(S) / M
-    return tf.reduce_sum(S)
+    return tf.trace(S) / M
+    #return tf.reduce_sum(S)
 
 def sinkhorn_it(opts,log_K):
     # Initialization
