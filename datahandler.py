@@ -528,7 +528,7 @@ class DataHandler(object):
         self.test_labels = y[-test_size:]
         self.num_points = len(self.data)
 
-        logging.error('Loading Done.')
+        logging.error('Loading Done: Train size: %d, Test size: %d' % (self.num_points,len(self.test_data)))
 
     def _load_mnist3(self, opts):
         """Load data from MNIST files.
