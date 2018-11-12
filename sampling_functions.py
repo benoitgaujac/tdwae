@@ -13,9 +13,11 @@ def sample_gaussian(opts, means, covs, batch_size=100, typ='numpy'):
     means and covs
     """
     if typ =='tensorflow':
-        shape = tf.shape(means)
+        shape = (tf.shape(means)[0],) + (batch_size,opts['zdim'][-1])
         eps = tf.random_normal(shape, dtype=tf.float32)
-        noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
+        noise = tf.expand_dims(means,1) \
+                + tf.multiply(eps,tf.sqrt(1e-10+tf.expand_dims(covs,1)))
+        noise = tf.reshape(noise,(-1,opts['zdim'][-1]))
     elif typ =='numpy':
         shape = (batch_size,)+np.shape(means)
         eps = np.random.normal(0.,1.,shape).astype(np.float32)

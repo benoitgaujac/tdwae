@@ -20,7 +20,8 @@ import ops
 import utils
 from sampling_functions import sample_gaussian, generate_linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
-from plot_functions import save_train, save_vizu
+from loss_functions import sinkhorn_it, square_dist
+from plot_functions import save_train, save_vizu, plot_sinkhorn
 from networks import encoder, decoder
 from datahandler import datashapes
 
@@ -81,7 +82,7 @@ class WAE(object):
             self.enc_Sigmas.append(enc_Sigma)
             # --- Sampling from encoded MoG prior
             encoded = sample_gaussian(opts, enc_mean, enc_Sigma,
-                                                sample_size,
+                                                1,
                                                 'tensorflow')
             self.encoded.append(encoded)
             # --- Decoding encoded points (i.e. reconstruct) & reconstruction cost
@@ -129,7 +130,13 @@ class WAE(object):
             self.decoded.append(decoded)
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
-        self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+        self.encoded_samples = sample_gaussian(opts, self.enc_means[-1],
+                                                self.enc_Sigmas[-1],
+                                                opts['nsamples'],
+                                                'tensorflow')
+        self.match_penalty = matching_penalty(opts, self.samples, self.encoded_samples)
+        self.C = square_dist(self.opts,self.samples, self.encoded_samples)
+        self.sinkhorn = sinkhorn_it(self.opts, self.C)
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
                          + opts['lambda'][-1] * self.match_penalty
@@ -339,7 +346,7 @@ class WAE(object):
                 batch_images = data.data[data_ids].astype(np.float32)
                 batch_samples = sample_gaussian(opts, self.pz_mean,
                                                 self.pz_sigma,
-                                                opts['batch_size'])
+                                                opts['nsamples']*opts['batch_size'])
                 # Feeding dictionary
                 feed_dict={self.points: batch_images,
                            self.samples: batch_samples,
@@ -389,6 +396,13 @@ class WAE(object):
                                                  self.encoded],
                                                 feed_dict={self.points:data.test_data[:npics],
                                                            self.is_training:False})
+                    sinkhorn = self.sess.run(self.sinkhorn,
+                                                feed_dict={self.points:data.test_data[:npics],
+                                                           self.samples: fixed_noise,
+                                                           self.is_training:False})
+                    plot_sinkhorn(opts, sinkhorn, work_dir,
+                                                'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
+
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.reconstructed,
                                                 feed_dict={self.points:data.data[200:200+npics],

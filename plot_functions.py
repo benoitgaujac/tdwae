@@ -143,7 +143,7 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    #base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
@@ -160,8 +160,8 @@ def save_train(opts, data_train, data_test,
             y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
     l = np.array(loss_match)
-    y = np.log(l[::x_step])
-    plt.plot(x, y, linewidth=2, color=color_list[i+1], label='match')
+    y = np.log(np.abs(l[::x_step]))
+    plt.plot(x, y, linewidth=2, color=color_list[i+1], label='|match|')
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",
@@ -179,7 +179,7 @@ def save_train(opts, data_train, data_test,
 
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
                 c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                #c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')
@@ -515,6 +515,24 @@ def save_vizu(opts, data_train, data_test,              # images
                 priors=prior_interpolation,
                 pi=pi,
                 lmbda=np.array(opts['lambda']))
+
+
+def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
+    dpi = 100
+    fig = plt.figure()
+    x = np.arange(1, len(sinkhorn) + 1)
+    y = np.log(sinkhorn)
+    plt.plot(x, y, linewidth=3, color='black', label='log sinkorn')
+    plt.grid(axis='y')
+    plt.legend(loc='lower left')
+    plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",size=20)
+    # Plot
+    plots_dir = 'train_plots'
+    save_path = os.path.join(work_dir,plots_dir)
+    utils.create_dir(save_path)
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=dpi, format='png')
+    plt.close()
 
 
 def discrete_cmap(N, base_cmap=None):

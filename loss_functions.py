@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import utils
 from datahandler import datashapes
-from ops import logsumexp
+from ops import logsumexp, logsumexp_v2
 
 import pdb
 
@@ -18,52 +18,75 @@ def matching_penalty(opts, samples_pz, samples_qz):
     (add here other penalty if any)
     """
     if opts['penalty']=='mmd':
-        raise ValueError('To implement')
         macth_penalty = mmd_penalty(opts, samples_pz, samples_qz)
     elif opts['penalty']=='sinkhorn':
         macth_penalty = sinkhorn_penalty(opts, samples_pz, samples_qz)
     else:
         raise ValueError('Unknown matching penalty term')
-
     return macth_penalty
+
 
 def sinkhorn_penalty(opts, samples_pz, samples_qz):
     """
     Compute the sinkhorn distance penatly as
     in Sinkhorn Auto Encoders
     """
-    # Batch size
-    M = utils.get_batch_size(samples_pz)
     # Compute Cost matrix
     C = square_dist(opts, samples_pz, samples_qz)
+    # Sinkhorn fixed points iteration
+    sinkhorn = sinkhorn_it_modified(opts, C)
+    return sinkhorn[-1]
+    # # Kernel
+    # log_K = - C / opts['epsilon']
+    # # Sinkhorn OT plan
+    # log_R = log_u + log_K + log_v
+    # # Sharp Sinkhorn
+    # S = tf.exp(log_R) * C
+    # return tf.reduce_sum(S)#, log_u_list, log_v_list
+
+
+def sinkhorn_it(opts,C):
+    # Batch size
+    M = utils.get_batch_size(C)
     # Kernel
     log_K = - C / opts['epsilon']
-    # Sinkhorn fixed points iteration
-    log_u, log_v = sinkhorn_it(opts,log_K)
-    # Sinkhorn OT plan
-    log_R = log_u + log_K + log_v
-    # Sharp Sinkhorn
-    #S = tf.matmul(tf.exp(log_R),C,transpose_b=False)
-    S = tf.matmul(tf.exp(log_R),C,transpose_b=True)
-    return tf.trace(S) / M
-    #return tf.reduce_sum(S)
-
-def sinkhorn_it(opts,log_K):
     # Initialization
     log_v = - logsumexp(log_K, axis=0, keepdims=True)
+    Sinkhorn = []
     # Sinkhorn iterations
     for l in range(opts['L']-1):
         log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
+        #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
+        Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
         log_v = - logsumexp(log_K + log_u, axis=0, keepdims=True)
     log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
-    return log_u, log_v
+    #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
+    Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
+    return Sinkhorn
 
+
+def sinkhorn_it_modified(opts,C):
+    # Batch size
+    M = utils.get_batch_size(C)
+    # Initialization
+    v = opts['epsilon']*(tf.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
+    u = opts['epsilon']*(tf.log(M) - logsumexp((-C + v)/opts['epsilon'], axis=1, keepdims=True))
+    Sinkhorn = []
+    sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C)
+    Sinkhorn.append(sinkhorn_init)
+    # Sinkhorn iterations
+    for l in range(opts['L']-1):
+        u = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
+        v = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
+        Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C))
+    return Sinkhorn
+
+
+"""
 def mmd_penalty(opts, pi0, pi, sample_pz, sample_qz):
-    """
     Compute the MMD penalty for WAE
     pi0: prior weights [K]
     pi: variational weights [batch,K]
-    """
     # Compute MMD
     MMD, distances_pz, distances_qz, distances, K_pz, K_qz, K_qzpz, res_list = mmd(opts, pi0, pi, sample_pz, sample_qz)
     if opts['sqrt_MMD']:
@@ -71,14 +94,10 @@ def mmd_penalty(opts, pi0, pi, sample_pz, sample_qz):
     else:
         MMD_penalty = MMD
     return MMD_penalty, distances_pz, distances_qz, distances, K_pz, K_qz, K_qzpz, res_list
-
-
 def mmd(opts, pi0, pi, sample_pz, sample_qz):
-    """
     Compute MMD between prior and aggregated posterior
     pi0: prior weights [K]
     pi: variational weights [batch,K]
-    """
     sigma2_p = opts['pz_scale'] ** 2
     kernel = opts['mmd_kernel']
 
@@ -209,6 +228,52 @@ def mmd(opts, pi0, pi, sample_pz, sample_qz):
     #return res
     res_list = tf.stack(res_list)
     return res, distances_pz, distances_qz, distances, K_pz, K_qz, K_qzpz, res_list
+"""
+
+def mmd_penalty(opts, sample_qz, sample_pz):
+    sigma2_p = opts['pz_scale'] ** 2
+    kernel = opts['mmd_kernel']
+    n = utils.get_batch_size(sample_qz)
+    n = tf.cast(n, tf.int32)
+    nf = tf.cast(n, tf.float32)
+    half_size = (n * n - n) / 2
+
+    distances_pz = square_dist(opts, sample_pz, sample_pz)
+    distances_qz = square_dist(opts, sample_qz, sample_qz)
+    distances = square_dist(opts, sample_qz, sample_pz)
+
+    if opts['mmd_kernel'] == 'RBF':
+        # Median heuristic for the sigma^2 of Gaussian kernel
+        sigma2_k = tf.nn.top_k(
+            tf.reshape(distances, [-1]), half_size).values[half_size - 1]
+        sigma2_k += tf.nn.top_k(
+            tf.reshape(distances_qz, [-1]), half_size).values[half_size - 1]
+        # Maximal heuristic for the sigma^2 of Gaussian kernel
+        # sigma2_k = tf.nn.top_k(tf.reshape(distances_qz, [-1]), 1).values[0]
+        # sigma2_k += tf.nn.top_k(tf.reshape(distances, [-1]), 1).values[0]
+        # sigma2_k = opts['latent_space_dim'] * sigma2_p
+        if opts['verbose']:
+            sigma2_k = tf.Print(sigma2_k, [sigma2_k], 'Kernel width:')
+        res1 = tf.exp( - distances_qz / 2. / sigma2_k)
+        res1 += tf.exp( - distances_pz / 2. / sigma2_k)
+        res1 = tf.multiply(res1, 1. - tf.eye(n))
+        res1 = tf.reduce_sum(res1) / (nf * nf - nf)
+        res2 = tf.exp( - distances / 2. / sigma2_k)
+        res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
+        stat = res1 - res2
+    elif opts['mmd_kernel'] == 'IMQ':
+        Cbase = 2 * opts['zdim'][-1] * sigma2_p
+        stat = 0.
+        for scale in [.1, .2, .5, 1., 2., 5., 10.]:
+            C = Cbase * scale
+            res1 = C / (C + distances_qz)
+            res1 += C / (C + distances_pz)
+            res1 = tf.multiply(res1, 1. - tf.eye(n))
+            res1 = tf.reduce_sum(res1) / (nf * nf - nf)
+            res2 = C / (C + distances)
+            res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
+            stat += res1 - res2
+    return stat
 
 
 def square_dist(opts, sample_x, sample_y):
@@ -220,7 +285,7 @@ def square_dist(opts, sample_x, sample_y):
 
     squared_dist = norms_x + tf.transpose(norms_y) \
                     - 2. * tf.matmul(sample_x,sample_y,transpose_b=True)
-    return squared_dist
+    return tf.nn.relu(squared_dist)
 
 
 def reconstruction_loss(opts, x1, x2):
