@@ -46,6 +46,7 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
 
 
 def sinkhorn_it(opts,C):
+    eps = 1e-10
     # Batch size
     M = utils.get_batch_size(C)
     # Kernel
@@ -57,28 +58,29 @@ def sinkhorn_it(opts,C):
     for l in range(opts['L']-1):
         log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
         #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
-        Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
+        Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) + eps)
         log_v = - logsumexp(log_K + log_u, axis=0, keepdims=True)
     log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
     #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
-    Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
+    Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) + eps)
     return Sinkhorn
 
 
 def sinkhorn_it_modified(opts,C):
+    eps = 1e-10
     # Batch size
     M = utils.get_batch_size(C)
     # Initialization
     v = opts['epsilon']*(tf.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
     u = opts['epsilon']*(tf.log(M) - logsumexp((-C + v)/opts['epsilon'], axis=1, keepdims=True))
     Sinkhorn = []
-    sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C)
+    sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C) + eps
     Sinkhorn.append(sinkhorn_init)
     # Sinkhorn iterations
     for l in range(opts['L']-1):
         u = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
         v = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
-        Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C))
+        Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C) + eps)
     return Sinkhorn
 
 
