@@ -7,7 +7,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 1560
+config_mnist['print_every'] = 500 #1560
 config_mnist['work_dir'] = 'results_mnist'
 config_mnist['plot_num_pics'] = 100
 config_mnist['plot_num_cols'] = 10
@@ -20,9 +20,9 @@ config_mnist['MNIST_data_source_url'] = 'http://yann.lecun.com/exdb/mnist/'
 config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
 
 # Experiment set up
-config_mnist['train_dataset_size'] = 10000
+config_mnist['train_dataset_size'] = -1
 config_mnist['batch_size'] = 128
-config_mnist['epoch_num'] = 100
+config_mnist['epoch_num'] = 50
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
 config_mnist['e_pretrain'] = False #pretrained the encoder parameters
@@ -42,10 +42,10 @@ config_mnist['coef_rec'] = 1. # coef recon loss
 config_mnist['cost'] = 'l2sq' #l2, l2sq, l1
 config_mnist['nsamples'] = 2 # match penalty on nsamples*batch_size
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
-config_mnist['epsilon'] = 0.05 #Sinkhorn regularization parameters
+config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
 config_mnist['L'] = 50 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
-config_mnist['lambda'] = [1000.,]
+config_mnist['lambda'] = [5000.,]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Model set up
