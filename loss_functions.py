@@ -34,7 +34,7 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Compute Cost matrix
     C = square_dist(opts, samples_pz, samples_qz)
     # Sinkhorn fixed points iteration
-    sinkhorn = sinkhorn_it_modified(opts, C)
+    sinkhorn = sinkhorn_it(opts, C)
     return sinkhorn[-1]
     # # Kernel
     # log_K = - C / opts['epsilon']
