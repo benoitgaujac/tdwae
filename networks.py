@@ -40,12 +40,11 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
                                                         is_training=False):
     layer_x = inputs
     for i in range(num_layers):
-        scale = 2**i
-        layer_x = ops.linear(opts, layer_x, int(num_units / scale),
-                                            scope='hid{}/lin'.format(i))
+        layer_x = ops.linear(opts, layer_x, num_units, scope='hid{}/lin'.format(i))
         if batch_norm:
-            layer_x = ops.batch_norm(opts, layer_x, is_training, reuse,
-                                            scope='hid{}/bn'.format(i))
+            layer_x = ops.batch_norm(opts, layer_x, is_training,
+                                                        reuse,
+                                                        scope='hid{}/bn'.format(i))
         layer_x = tf.nn.relu(layer_x)
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
 
@@ -106,8 +105,7 @@ def mlp_decoder(opts, inputs, num_layers, num_units, outputs_shape,
     layer_x = inputs
     for i in range(num_layers):
         scale = 2**(num_layers - i - 1)
-        layer_x = ops.linear(opts, layer_x, int(num_units / scale),
-                                                        scope='hid%d/lin' % i)
+        layer_x = ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
         layer_x = tf.nn.relu(layer_x)
         if batch_norm:
             layer_x = ops.batch_norm(
