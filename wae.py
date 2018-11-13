@@ -20,7 +20,7 @@ import ops
 import utils
 from sampling_functions import sample_gaussian, generate_linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
-from loss_functions import sinkhorn_it, square_dist
+from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
 from plot_functions import save_train, save_vizu, plot_sinkhorn
 from networks import encoder, decoder
 from datahandler import datashapes
@@ -135,8 +135,8 @@ class WAE(object):
                                                 opts['nsamples'],
                                                 'tensorflow')
         self.match_penalty = matching_penalty(opts, self.samples, self.encoded_samples)
-        self.C = square_dist(self.opts,self.samples, self.encoded_samples)
-        self.sinkhorn = sinkhorn_it(self.opts, self.C)
+        self.C = square_dist_v2(self.opts,self.samples, self.encoded_samples)
+        self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
                          + opts['lambda'][-1] * self.match_penalty
@@ -396,7 +396,7 @@ class WAE(object):
                                                  self.encoded],
                                                 feed_dict={self.points:data.test_data[:npics],
                                                            self.is_training:False})
-                    sinkhorn = self.sess.run(self.sinkhorn,
+                    [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
                                                 feed_dict={self.points:data.test_data[:npics],
                                                            self.samples: fixed_noise,
                                                            self.is_training:False})
@@ -446,6 +446,11 @@ class WAE(object):
                                                 Loss_rec[-1],
                                                 Loss_rec_test[-1],
                                                 Loss_match[-1])
+                    logging.error(debug_str)
+                    debug_str = 'mdist=%10.3e, Mdist=%10.3e, avgdist=%10.3e, ' % (
+                                                np.amin(C),
+                                                np.amax(C),
+                                                np.mean(C))
                     logging.error(debug_str)
 
                     """

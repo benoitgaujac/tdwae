@@ -147,8 +147,8 @@ def deconv2d(opts, input_, output_shape, d_h=2, d_w=2, scope=None, conv_filters_
     return deconv
 
 def logsumexp(logits,axis=1,keepdims=True):
-    eps = 1e-05
-    tmp =  tf.reduce_sum(tf.exp(logits),axis=axis,keepdims=keepdims)
+    eps = 1e-06
+    tmp = tf.reduce_sum(tf.exp(logits),axis=axis,keepdims=keepdims)
     return tf.log(tmp + eps)
 
 def logsumexp_v2(logits, axis=1, keepdims=True):

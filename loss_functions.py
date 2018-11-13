@@ -32,55 +32,44 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     in Sinkhorn Auto Encoders
     """
     # Compute Cost matrix
-    C = square_dist(opts, samples_pz, samples_qz)
+    C = square_dist_v2(opts, samples_pz, samples_qz)
     # Sinkhorn fixed points iteration
-    sinkhorn = sinkhorn_it(opts, C)
+    sinkhorn = sinkhorn_it_v2(opts, C)
     return sinkhorn[-1]
-    # # Kernel
-    # log_K = - C / opts['epsilon']
-    # # Sinkhorn OT plan
-    # log_R = log_u + log_K + log_v
-    # # Sharp Sinkhorn
-    # S = tf.exp(log_R) * C
-    # return tf.reduce_sum(S)#, log_u_list, log_v_list
 
 
-def sinkhorn_it(opts,C):
-    eps = 1e-10
+def sinkhorn_it(opts, C):
     # Batch size
     M = utils.get_batch_size(C)
     # Kernel
     log_K = - C / opts['epsilon']
     # Initialization
-    log_v = - logsumexp(log_K, axis=0, keepdims=True)
+    log_v = - logsumexp(log_K, axis=1, keepdims=True)
     Sinkhorn = []
     # Sinkhorn iterations
     for l in range(opts['L']-1):
-        log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
-        #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
-        Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) + eps)
-        log_v = - logsumexp(log_K + log_u, axis=0, keepdims=True)
-    log_u = - logsumexp(log_K + log_v, axis=1, keepdims=True)
-    #Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) / M)
-    Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C) + eps)
+        log_u = - logsumexp(log_K + log_v, axis=0, keepdims=True)
+        Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
+        log_v = - logsumexp(log_K + log_u, axis=1, keepdims=True)
+    log_u = - logsumexp(log_K + log_v, axis=0, keepdims=True)
+    Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
     return Sinkhorn
 
 
-def sinkhorn_it_modified(opts,C):
-    eps = 1e-10
+def sinkhorn_it_v2(opts,C):
     # Batch size
     M = utils.get_batch_size(C)
     # Initialization
-    v = opts['epsilon']*(tf.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
-    u = opts['epsilon']*(tf.log(M) - logsumexp((-C + v)/opts['epsilon'], axis=1, keepdims=True))
+    u = opts['epsilon']*(tf.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
+    v = opts['epsilon']*(tf.log(M) - logsumexp((-C + u)/opts['epsilon'], axis=0, keepdims=True))
     Sinkhorn = []
-    sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C) + eps
+    sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C)
     Sinkhorn.append(sinkhorn_init)
     # Sinkhorn iterations
     for l in range(opts['L']-1):
-        u = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
-        v = opts['epsilon']*(tf.log(M) - logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
-        Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C) + eps)
+        u -= opts['epsilon']*(tf.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
+        v -= opts['epsilon']*(tf.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=0, keepdims=True))
+        Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C))
     return Sinkhorn
 
 
@@ -288,6 +277,16 @@ def square_dist(opts, sample_x, sample_y):
     squared_dist = norms_x + tf.transpose(norms_y) \
                     - 2. * tf.matmul(sample_x,sample_y,transpose_b=True)
     return tf.nn.relu(squared_dist)
+
+
+def square_dist_v2(opts, sample_x, sample_y):
+    """
+    Wrapper to compute square distance
+    """
+    x = tf.expand_dims(sample_x,axis=1)
+    y = tf.expand_dims(sample_y,axis=0)
+    squared_dist = tf.reduce_sum(tf.square(x - y),axis=-1)
+    return squared_dist
 
 
 def reconstruction_loss(opts, x1, x2):

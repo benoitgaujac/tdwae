@@ -7,7 +7,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 500 #1560
+config_mnist['print_every'] = 1000 #1560
 config_mnist['work_dir'] = 'results_mnist'
 config_mnist['plot_num_pics'] = 100
 config_mnist['plot_num_cols'] = 10
@@ -42,10 +42,10 @@ config_mnist['coef_rec'] = 1. # coef recon loss
 config_mnist['cost'] = 'l2sq' #l2, l2sq, l1
 config_mnist['nsamples'] = 2 # match penalty on nsamples*batch_size
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
-config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
+config_mnist['epsilon'] = 0.3 #Sinkhorn regularization parameters
 config_mnist['L'] = 50 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
-config_mnist['lambda'] = [5000.,]
+config_mnist['lambda'] = [100.,]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Model set up
