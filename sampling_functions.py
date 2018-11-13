@@ -7,17 +7,15 @@ import tensorflow as tf
 
 import pdb
 
-def sample_gaussian(opts, means, covs, batch_size=100, typ='numpy'):
+def sample_gaussian(opts, means, covs, typ='numpy', batch_size=100):
     """
     Sample noise from gaussian distribution with parameters
     means and covs
     """
     if typ =='tensorflow':
-        shape = (tf.shape(means)[0],) + (batch_size,opts['zdim'][-1])
+        shape = tf.shape(means)
         eps = tf.random_normal(shape, dtype=tf.float32)
-        noise = tf.expand_dims(means,1) \
-                + tf.multiply(eps,tf.sqrt(1e-10+tf.expand_dims(covs,1)))
-        noise = tf.reshape(noise,(-1,opts['zdim'][-1]))
+        noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
     elif typ =='numpy':
         shape = (batch_size,)+np.shape(means)
         eps = np.random.normal(0.,1.,shape).astype(np.float32)

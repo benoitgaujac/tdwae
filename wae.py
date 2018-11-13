@@ -82,7 +82,6 @@ class WAE(object):
             self.enc_Sigmas.append(enc_Sigma)
             # --- Sampling from encoded MoG prior
             encoded = sample_gaussian(opts, enc_mean, enc_Sigma,
-                                                1,
                                                 'tensorflow')
             self.encoded.append(encoded)
             # --- Decoding encoded points (i.e. reconstruct) & reconstruction cost
@@ -132,7 +131,6 @@ class WAE(object):
         # Compute matching penalty cost
         self.encoded_samples = sample_gaussian(opts, self.enc_means[-1],
                                                 self.enc_Sigmas[-1],
-                                                opts['nsamples'],
                                                 'tensorflow')
         self.match_penalty = matching_penalty(opts, self.samples, self.encoded_samples)
         self.C = square_dist_v2(self.opts,self.samples, self.encoded_samples)
@@ -221,6 +219,7 @@ class WAE(object):
             batch_images = data.data[data_ids].astype(np.float32)
             batch_samples = sample_gaussian(opts, self.pz_mean,
                                                 self.pz_sigma,
+                                                'numpy',
                                                 batch_size)
             [_, pre_loss] = self.sess.run([self.pre_opt, self.pre_loss],
                                                 feed_dict={
@@ -276,11 +275,7 @@ class WAE(object):
         """
 
         opts = self.opts
-        if opts['method']=='wae':
-            logging.error('Training WAE')
-        elif opts['method']=='vae':
-            raise ValueError('To implement')
-            logging.error('Training VAE')
+        logging.error('Training WAE %d latent layers' % opt['nlatents'])
         print('')
 
         # Create work_dir
@@ -304,6 +299,7 @@ class WAE(object):
         batches_num = int(train_size/opts['batch_size'])
         npics = opts['plot_num_pics']
         fixed_noise = sample_gaussian(opts, self.pz_mean, self.pz_sigma,
+                                                'numpy',
                                                 opts['plot_num_pics'])
 
         """
@@ -346,7 +342,8 @@ class WAE(object):
                 batch_images = data.data[data_ids].astype(np.float32)
                 batch_samples = sample_gaussian(opts, self.pz_mean,
                                                 self.pz_sigma,
-                                                opts['nsamples']*opts['batch_size'])
+                                                'numpy',
+                                                opts['batch_size'])
                 # Feeding dictionary
                 feed_dict={self.points: batch_images,
                            self.samples: batch_samples,
@@ -378,16 +375,10 @@ class WAE(object):
                         data_ids =  np.random.choice(test_size, batch_size_te,
                                                 replace=True)
                         batch_images = data.test_data[data_ids].astype(np.float32)
-                        if opts['method']=='wae':
-                            l = self.sess.run(self.loss_reconstruct,
-                                                feed_dict={self.points:batch_images,
-                                                           self.lmbd: wae_lambda,
-                                                           self.is_training:False})
-                        elif opts['method']=='vae':
-                            l = self.sess.run(self.loss_reconstruct,
-                                                feed_dict={self.points:batch_images,
-                                                           self.lmbd: wae_lambda,
-                                                           self.is_training:False})
+                        l = self.sess.run(self.loss_reconstruct,
+                                            feed_dict={self.points:batch_images,
+                                                       self.lmbd: wae_lambda,
+                                                       self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
                     # Auto-encoding test images
