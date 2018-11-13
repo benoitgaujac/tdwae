@@ -275,7 +275,7 @@ class WAE(object):
         """
 
         opts = self.opts
-        logging.error('Training WAE %d latent layers' % opt['nlatents'])
+        logging.error('Training WAE %d latent layers' % opts['nlatents'])
         print('')
 
         # Create work_dir
