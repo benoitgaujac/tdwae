@@ -143,7 +143,7 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    # base = plt.cm.get_cmap('Vega10')
+    #base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
@@ -168,10 +168,10 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     # ###UMAP visualization of the embedings
+    num_pics = np.shape(encoded)[0]
     ax = plt.subplot(gs[1, 2])
     if opts['zdim'][-1]==2:
         embedding = np.concatenate((encoded,samples_prior),axis=0)
-        #embedding = np.concatenate((encoded,enc_mean,sample_prior),axis=0)
     else:
         embedding = umap.UMAP(n_neighbors=5,
                                 min_dist=0.3,
@@ -179,7 +179,7 @@ def save_train(opts, data_train, data_test,
 
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
                 c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                #c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')
@@ -217,6 +217,7 @@ def save_train(opts, data_train, data_test,
     np.savez(os.path.join(save_path,name),
                 data_test=data_test, data_train=data_train,
                 label_test=label_test,
+                encoded = encoded,
                 rec_train=rec_train, rec_test=rec_test,
                 samples_prior=samples_prior, samples=samples,
                 loss=np.array(loss), loss_match=np.array(loss_match),

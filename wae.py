@@ -300,7 +300,7 @@ class WAE(object):
         npics = opts['plot_num_pics']
         fixed_noise = sample_gaussian(opts, self.pz_mean, self.pz_sigma,
                                                 'numpy',
-                                                opts['plot_num_pics'])
+                                                npics)
 
         """
         # Load inception mean samples for train set
@@ -385,7 +385,7 @@ class WAE(object):
                     [reconstructed_test, encoded] = self.sess.run(
                                                 [self.reconstructed,
                                                  self.encoded],
-                                                feed_dict={self.points:data.test_data[:npics],
+                                                feed_dict={self.points:data.test_data[:3*npics],
                                                            self.is_training:False})
                     [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
                                                 feed_dict={self.points:data.test_data[:npics],
@@ -454,15 +454,15 @@ class WAE(object):
                     print('')
                     # Making plots
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:npics],                          # labels
-                                     reconstructed_train[0], reconstructed_test[0],      # reconstructions
-                                     encoded[-1],                                       # encoded points (bottom)
-                                     fixed_noise, samples[-1],                          # prior samples, model samples
-                                     Loss, Loss_match,                                  # losses
-                                     Loss_rec, Loss_rec_test,                           # rec losses
-                                     Losses_rec,                                        # rec losses for each latents
-                                     work_dir,                                          # working directory
-                                     'res_e%04d_mb%05d.png' % (epoch, it))              # filename
+                                     data.test_labels[:3*npics],    # labels
+                                     reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
+                                     encoded[-1],   # encoded points (bottom)
+                                     fixed_noise, samples[-1],  # prior samples, model samples
+                                     Loss, Loss_match,  # losses
+                                     Loss_rec, Loss_rec_test,   # rec losses
+                                     Losses_rec,    # rec losses for each latents
+                                     work_dir,  # working directory
+                                     'res_e%04d_mb%05d.png' % (epoch, it))  # filename
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
