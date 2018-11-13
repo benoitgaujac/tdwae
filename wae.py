@@ -73,7 +73,7 @@ class WAE(object):
         for n in range(opts['nlatents']):
             # --- Encoding points
             enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
-                                                num_units=['e_nfilters'],
+                                                num_units=opts['e_nfilters'],
                                                 #num_units=int(opts['e_nfilters'] / 2**n),
                                                 output_dim=opts['zdim'][n],
                                                 scope='encoder/layer_%d' % (n+1),
