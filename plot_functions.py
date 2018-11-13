@@ -526,7 +526,7 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     plt.plot(x, y, linewidth=3, color='black', label='log sinkorn')
     plt.grid(axis='y')
     plt.legend(loc='best')
-    plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",size=20)
+    plt.title('Sinkhorn iterations')
     # Plot
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)
