@@ -525,7 +525,7 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     y = np.log(sinkhorn)
     plt.plot(x, y, linewidth=3, color='black', label='log sinkorn')
     plt.grid(axis='y')
-    plt.legend(loc='lower left')
+    plt.legend(loc='best')
     plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",size=20)
     # Plot
     plots_dir = 'train_plots'
