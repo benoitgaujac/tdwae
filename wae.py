@@ -21,7 +21,7 @@ import utils
 from sampling_functions import sample_gaussian, generate_linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
-from plot_functions import save_train, save_vizu, plot_sinkhorn
+from plot_functions import save_train, save_vizu, plot_sinkhorn, plot_embedded
 from networks import encoder, decoder
 from datahandler import datashapes
 
@@ -392,13 +392,16 @@ class WAE(object):
                                                  self.encoded],
                                                 feed_dict={self.points:data.test_data[:3*npics],
                                                            self.is_training:False})
-                    [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
-                                                feed_dict={self.points:data.test_data[:npics],
-                                                           self.samples: fixed_noise,
-                                                           self.is_training:False})
-                    plot_sinkhorn(opts, sinkhorn, work_dir,
-                                                'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
-
+                    if opts['vizu_embedded']:
+                        plot_embedded(opts,encoded,data.test_labels[:3*npics],
+                                                work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
+                    if opts['vizu_sinkhorn']:
+                        [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
+                                                    feed_dict={self.points:data.test_data[:npics],
+                                                               self.samples: fixed_noise,
+                                                               self.is_training:False})
+                        plot_sinkhorn(opts, sinkhorn, work_dir,
+                                                    'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.reconstructed,
                                                 feed_dict={self.points:data.data[200:200+npics],
@@ -443,11 +446,12 @@ class WAE(object):
                                                 Loss_rec_test[-1],
                                                 Loss_match[-1])
                     logging.error(debug_str)
-                    debug_str = 'mdist=%10.3e, Mdist=%10.3e, avgdist=%10.3e, ' % (
-                                                np.amin(C),
-                                                np.amax(C),
-                                                np.mean(C))
-                    logging.error(debug_str)
+                    if opts['vizu_sinkhorn']:
+                        debug_str = 'mdist=%10.3e, Mdist=%10.3e, avgdist=%10.3e, ' % (
+                                                    np.amin(C),
+                                                    np.amax(C),
+                                                    np.mean(C))
+                        logging.error(debug_str)
 
                     """
                     debug_str = 'FID=%.3f, BLUR=%10.4e' % (

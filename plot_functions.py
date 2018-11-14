@@ -143,7 +143,7 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    #base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
@@ -179,7 +179,7 @@ def save_train(opts, data_train, data_test,
 
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
                 c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                #c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')
@@ -533,6 +533,61 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     utils.create_dir(save_path)
     fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
                 dpi=dpi, format='png')
+    plt.close()
+
+
+def plot_embedded(opts, encoded, labels, work_dir, filename):
+    num_pics = np.shape(encoded[0])[0]
+    embeds = []
+    for i in range(len(encoded)):
+        ###UMAP visualization of the embedings
+        embedding = umap.UMAP(n_neighbors=5,
+                                min_dist=0.3,
+                                metric='correlation').fit_transform(encoded[i])
+        embeds.append(embedding)
+    # Creating a pyplot fig
+    dpi = 100
+    height_pic = 300
+    width_pic = 300
+    fig_height = 4*height_pic / float(dpi)
+    fig_width = 4*len(embeds) * height_pic  / float(dpi)
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    #fig = plt.figure()
+    gs = matplotlib.gridspec.GridSpec(1, len(embeds))
+    for i in range(len(embeds)):
+        ax = plt.subplot(gs[0, i])
+        plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    # c=labels[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+        if i==len(embeds)-1:
+            plt.colorbar()
+        xmin = np.amin(embeds[i][:,0])
+        xmax = np.amax(embeds[i][:,0])
+        magnify = 0.05
+        width = abs(xmax - xmin)
+        xmin = xmin - width * magnify
+        xmax = xmax + width * magnify
+        ymin = np.amin(embeds[i][:,1])
+        ymax = np.amax(embeds[i][:,1])
+        width = abs(ymin - ymax)
+        ymin = ymin - width * magnify
+        ymax = ymax + width * magnify
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.legend(loc='best')
+        plt.text(0.47, 1., 'UMAP latent %d' % (i+1), ha="center", va="bottom",
+                                                size=20, transform=ax.transAxes)
+        # Removing ticks
+        ax.axes.get_xaxis().set_ticks([])
+        ax.axes.get_yaxis().set_ticks([])
+        # ax.axes.set_xlim([0, width_pic])
+        # ax.axes.set_ylim([height_pic, 0])
+        ax.axes.set_aspect(1)
+    ### Saving plot
+    plots_dir = 'train_plots'
+    save_path = os.path.join(work_dir,plots_dir)
+    utils.create_dir(save_path)
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=dpi,cformat='png')
     plt.close()
 
 
