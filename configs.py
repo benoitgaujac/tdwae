@@ -41,7 +41,7 @@ config_mnist['batch_norm_decay'] = 0.9
 
 # Objective set up
 config_mnist['coef_rec'] = 1. # coef recon loss
-config_mnist['cost'] = 'l2sq_norm' #l2, l2sq, l2sq_norm, l1
+config_mnist['cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
 config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
 config_mnist['L'] = 30 #Sinkhorn iteration
@@ -53,6 +53,8 @@ config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 config_mnist['nlatents'] = 4
 config_mnist['zdim'] = [64,32,16,8]
 config_mnist['pz_scale'] = 1.
+config_mnist['prior'] = 'dirichlet' # dirichlet or gaussian
+
 
 # NN set up
 config_mnist['conv_filters_dim'] = 3

@@ -7,20 +7,43 @@ import tensorflow as tf
 
 import pdb
 
-def sample_gaussian(opts, means, covs, typ='numpy', batch_size=100):
+def sample_pz(opts,pz_params,batch_size=100):
+    if opts['prior']=='gaussian':
+        noise = sample_gaussian(opts, pz_params, 'numpy', batch_size)
+    elif opts['prior']=='dirichlet':
+        noise = sample_dirichlet(opts, pz_params, batch_size)
+    else:
+        assert False, 'Unknown prior %s' % opts['prior']
+    return noise
+
+def sample_gaussian(opts, params, typ='numpy', batch_size=100):
     """
     Sample noise from gaussian distribution with parameters
     means and covs
     """
+
     if typ =='tensorflow':
-        shape = tf.shape(means)
+        means, covs = tf.split(params,2,axis=-1)
+        shape = tf.shape(mean)
+        assert shape.as_list()[-1]==opts['zdim'][-1], \
+                    'Prior dimension mismatch'
         eps = tf.random_normal(shape, dtype=tf.float32)
         noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
     elif typ =='numpy':
+        means, covs = np.split(params,2,axis=-1)
         shape = (batch_size,)+np.shape(means)
+        assert shape[-1]==opts['zdim'][-1], \
+                    'Prior dimension mismatch'
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
         noise = means + np.multiply(eps,np.sqrt(1e-10+covs))
     return noise
+
+def sample_dirichlet(opts, alpha, batch_size=100):
+    """
+    Sample noise from dirichlet distribution with parameters
+    alpha
+    """
+    return np.random.dirichlet(alpha, batch_size)
 
 
 def generate_linespace(opts, n, mode, anchors):
