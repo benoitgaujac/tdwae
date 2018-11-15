@@ -43,7 +43,7 @@ class WAE(object):
         logging.error('Building the Tensorflow Graph')
 
         # --- model warning
-        if opts['prior']=='dirichlet' and opts['encoder']='gaussian':
+        if opts['prior']=='dirichlet' and opts['encoder']=='gaussian':
             logging.error('Warning, training a gaussian encoder with dirichlet prior')
 
         # --- Create session
