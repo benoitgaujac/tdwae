@@ -59,34 +59,49 @@ class WAE(object):
         self.add_model_placeholders()
         self.add_training_placeholders()
         sample_size = tf.shape(self.points,out_type=tf.int32)[0]
+
         # --- Initialize prior parameters
         self.pz_mean = np.zeros(opts['zdim'][-1], dtype='float32')
         self.pz_sigma = np.ones(opts['zdim'][-1], dtype='float32')
+
         # --- Initialize list container
         self.enc_means, self.enc_Sigmas = [], []
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
         self.loss_reconstruct = 0
+
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['nlatents']):
-            # --- Encoding points
-            enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
-                                                num_units=opts['e_nfilters'][n],
-                                                # num_units=opts['e_nfilters'],
-                                                # num_units=int(opts['e_nfilters'] / 2**n),
-                                                output_dim=opts['zdim'][n],
-                                                scope='encoder/layer_%d' % (n+1),
-                                                reuse=False,
-                                                is_training=self.is_training)
-            self.enc_means.append(enc_mean)
-            self.enc_Sigmas.append(enc_Sigma)
-            # --- Sampling from encoded MoG prior
-            encoded = sample_gaussian(opts, enc_mean, enc_Sigma,
-                                                'tensorflow')
+            # - Encoding points
+            if opts['encoder'] == 'deterministic':
+                encoded, _ = encoder(self.opts, inputs=encoded,
+                                                    num_units=opts['e_nfilters'][n],
+                                                    # num_units=opts['e_nfilters'],
+                                                    # num_units=int(opts['e_nfilters'] / 2**n),
+                                                    output_dim=opts['zdim'][n],
+                                                    scope='encoder/layer_%d' % (n+1),
+                                                    reuse=False,
+                                                    is_training=self.is_training)
+            elif opts['encoder'] == 'gaussian':
+                enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
+                                                    num_units=opts['e_nfilters'][n],
+                                                    # num_units=opts['e_nfilters'],
+                                                    # num_units=int(opts['e_nfilters'] / 2**n),
+                                                    output_dim=opts['zdim'][n],
+                                                    scope='encoder/layer_%d' % (n+1),
+                                                    reuse=False,
+                                                    is_training=self.is_training)
+                self.enc_means.append(enc_mean)
+                self.enc_Sigmas.append(enc_Sigma)
+                # - Sampling from encoded MoG prior
+                encoded = sample_gaussian(opts, enc_mean, enc_Sigma,
+                                                    'tensorflow')
+            else:
+                assert False, 'Unknown encoder %s' % opts['encoder']
             self.encoded.append(encoded)
-            # --- Decoding encoded points (i.e. reconstruct) & reconstruction cost
+            # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 reconstructed, _ = decoder(self.opts, inputs=encoded,
                                                 num_units=opts['e_nfilters'][n],
@@ -112,9 +127,9 @@ class WAE(object):
                 loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
                                                 reconstructed)
                 self.loss_reconstruct += opts['lambda'][n-1] * loss_reconstruct
-                # self.loss_reconstruct += self.lmbd / 2**(n-1) * loss_reconstruct
             self.reconstructed.append(reconstructed)
             self.losses_reconstruct.append(loss_reconstruct)
+
         # --- Sampling from model (only for generation)
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
@@ -137,13 +152,12 @@ class WAE(object):
                                                 reuse=True,
                                                 is_training=self.is_training)
             self.decoded.append(decoded)
+
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
-        self.encoded_samples = sample_gaussian(opts, self.enc_means[-1],
-                                                self.enc_Sigmas[-1],
-                                                'tensorflow')
-        self.match_penalty = matching_penalty(opts, self.samples, self.encoded_samples)
-        self.C = square_dist_v2(self.opts,self.samples, self.encoded_samples)
+        self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+        # Logging info
+        self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
         self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
@@ -160,6 +174,7 @@ class WAE(object):
             self.create_inception_graph()
         self.inception_layer = self._get_inception_layer()
         """
+
         # --- Optimizers, savers, etc
         self.add_optimizers()
         self.add_savers()

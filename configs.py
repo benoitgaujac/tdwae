@@ -7,7 +7,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 5000 #1560
+config_mnist['print_every'] = 1200
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['work_dir'] = 'results_mnist'
@@ -24,7 +24,7 @@ config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-ce
 # Experiment set up
 config_mnist['train_dataset_size'] = -1
 config_mnist['batch_size'] = 128
-config_mnist['epoch_num'] = 500
+config_mnist['epoch_num'] = 101
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
 config_mnist['e_pretrain'] = False #pretrained the encoder parameters
@@ -41,10 +41,10 @@ config_mnist['batch_norm_decay'] = 0.9
 
 # Objective set up
 config_mnist['coef_rec'] = 1. # coef recon loss
-config_mnist['cost'] = 'l2sq' #l2, l2sq, l1
+config_mnist['cost'] = 'l2sq_norm' #l2, l2sq, l2sq_norm, l1
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
 config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
-config_mnist['L'] = 20 #Sinkhorn iteration
+config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 config_mnist['lambda'] = [12.,24.,49.,98.,]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
@@ -59,10 +59,11 @@ config_mnist['conv_filters_dim'] = 3
 config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
 
+config_mnist['encoder'] = 'deterministic' # deterministic, gaussian
 config_mnist['e_arch'] = 'mlp' # mlp, dcgan, ali, began
 config_mnist['e_nlayers'] = 2
-config_mnist['e_nfilters'] = 32
+config_mnist['e_nfilters'] = [64,32,32,32]
 
 config_mnist['d_arch'] = 'mlp' # mlp, dcgan, dcgan_mod, ali, began
 config_mnist['d_nlayers'] = 2
-config_mnist['d_nfilters'] = 32
+config_mnist['d_nfilters'] = [64,32,32,32]
