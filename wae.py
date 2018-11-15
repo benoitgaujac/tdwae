@@ -495,7 +495,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 20:
+                if epoch >= 30:
                     # If no significant progress was made in last 10 epochs
                     # then decrease the learning rate.
                     if loss < min(Loss_rec[-10 * batches_num:]):
