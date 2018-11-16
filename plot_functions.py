@@ -563,7 +563,7 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
-        magnify = 0.3
+        magnify = 0.1
         width = abs(xmax - xmin)
         xmin = xmin - width * magnify
         xmax = xmax + width * magnify

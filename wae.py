@@ -417,10 +417,10 @@ class WAE(object):
                     [reconstructed_test, encoded] = self.sess.run(
                                                 [self.reconstructed,
                                                  self.encoded],
-                                                feed_dict={self.points:data.test_data[:5*npics],
+                                                feed_dict={self.points:data.test_data[:10*npics],
                                                            self.is_training:False})
                     if opts['vizu_embedded']:
-                        plot_embedded(opts,encoded,data.test_labels[:5*npics],
+                        plot_embedded(opts,encoded,data.test_labels[:10*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -490,7 +490,7 @@ class WAE(object):
                     print('')
                     # Making plots
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:5*npics],    # labels
+                                     data.test_labels[:10*npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      fixed_noise, samples[-1],  # prior samples, model samples
