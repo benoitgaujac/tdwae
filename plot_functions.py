@@ -185,7 +185,7 @@ def save_train(opts, data_train, data_test,
                             color='navy', s=10, marker='*',label='Pz')
     xmin = np.amin(embedding[:,0])
     xmax = np.amax(embedding[:,0])
-    magnify = 0.01
+    magnify = 0.3
     width = abs(xmax - xmin)
     xmin = xmin - width * magnify
     xmax = xmax + width * magnify
@@ -563,7 +563,7 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
-        magnify = 0.05
+        magnify = 0.3
         width = abs(xmax - xmin)
         xmin = xmin - width * magnify
         xmax = xmax + width * magnify
