@@ -173,8 +173,8 @@ def save_train(opts, data_train, data_test,
     if opts['zdim'][-1]==2:
         embedding = np.concatenate((encoded,samples_prior),axis=0)
     else:
-        embedding = umap.UMAP(n_neighbors=5,
-                                min_dist=0.3,
+        embedding = umap.UMAP(n_neighbors=15,
+                                min_dist=0.2,
                                 metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
 
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
@@ -453,7 +453,7 @@ def save_vizu(opts, data_train, data_test,              # images
         embedding = np.concatenate((encoded,samples_prior_flat),axis=0)
         #embedding = np.concatenate((encoded,enc_mean,sample_prior),axis=0)
     else:
-        embedding = umap.UMAP(n_neighbors=5,
+        embedding = umap.UMAP(n_neighbors=15,
                                 min_dist=0.3,
                                 metric='correlation').fit_transform(np.concatenate((encoded[:num_pics],samples_prior_flat),axis=0))
                                 #metric='correlation').fit_transform(np.concatenate((encoded[:num_pics],enc_mean[:num_pics],sample_prior),axis=0))
@@ -541,8 +541,8 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     embeds = []
     for i in range(len(encoded)):
         ###UMAP visualization of the embedings
-        embedding = umap.UMAP(n_neighbors=5,
-                                min_dist=0.3,
+        embedding = umap.UMAP(n_neighbors=15,
+                                min_dist=0.2,
                                 metric='correlation').fit_transform(encoded[i])
         embeds.append(embedding)
     # Creating a pyplot fig
