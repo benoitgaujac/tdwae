@@ -24,7 +24,7 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
     if typ =='tensorflow':
         means, covs = tf.split(params,2,axis=-1)
         shape = tf.shape(means)
-        assert shape.as_list()[-1]==opts['zdim'][-1], \
+        assert shape.get_shape().as_list()[-1]==opts['zdim'][-1], \
                     'Prior dimension mismatch'
         eps = tf.random_normal(shape, dtype=tf.float32)
         noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
