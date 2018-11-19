@@ -21,10 +21,9 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
     Sample noise from gaussian distribution with parameters
     means and covs
     """
-
     if typ =='tensorflow':
         means, covs = tf.split(params,2,axis=-1)
-        shape = tf.shape(mean)
+        shape = tf.shape(means)
         assert shape.as_list()[-1]==opts['zdim'][-1], \
                     'Prior dimension mismatch'
         eps = tf.random_normal(shape, dtype=tf.float32)
