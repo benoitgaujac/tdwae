@@ -75,7 +75,6 @@ class WAE(object):
             assert False, 'Unknown prior %s' % opts['prior']
 
         # --- Initialize list container
-        self.enc_means, self.enc_Sigmas = [], []
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -105,11 +104,9 @@ class WAE(object):
                                                     scope='encoder/layer_%d' % (n+1),
                                                     reuse=False,
                                                     is_training=self.is_training)
-                self.enc_means.append(enc_mean)
-                self.enc_Sigmas.append(enc_Sigma)
+                qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
                 # - Sampling from encoded MoG prior
-                encoded = sample_gaussian(opts, enc_mean, enc_Sigma,
-                                                    'tensorflow')
+                encoded = sample_gaussian(opts, qz_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % opts['encoder']
             self.encoded.append(encoded)
