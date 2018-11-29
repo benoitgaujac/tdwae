@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--mode", default='test',
                     help='mode to run [train/test/vizu]')
 parser.add_argument("--exp", default='mnist',
-                    help='dataset [mnist/celebA/dsprites].'\
+                    help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
 parser.add_argument("--method",
                     help='algo to train [wae/vae]')
@@ -36,6 +36,8 @@ def main():
         opts = configs.config_mnist
     elif FLAGS.exp == 'mnist_small':
         opts = configs.config_mnist_small
+    elif FLAGS.exp == 'cifar10':
+        opts = configs.config_cifar10
     elif FLAGS.exp == 'dsprites':
         opts = configs.config_dsprites
     elif FLAGS.exp == 'grassli':

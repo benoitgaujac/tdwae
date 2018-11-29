@@ -18,12 +18,14 @@ import PIL
 from utils import ArraySaver
 from PIL import Image
 import sys
+import tarfile
 
 import pdb
 
 datashapes = {}
 datashapes['mnist'] = [28, 28, 1]
 datashapes['zalando'] = [28, 28, 1]
+datashapes['svhn'] = [32, 32, 3]
 datashapes['cifar10'] = [32, 32, 3]
 datashapes['celebA'] = [64, 64, 3]
 datashapes['grassli'] = [64, 64, 3]
@@ -51,6 +53,12 @@ def maybe_download(opts):
         maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
         maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
         maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
+    elif opts['dataset']=='cifar10':
+        maybe_download_file(data_path,'cifar-10-python.tar.gz',opts['cifar10_data_source_url'])
+        tar = tarfile.open(os.path.join(data_path,'cifar-10-python.tar.gz'))
+        tar.extractall(path=data_path)
+        tar.close()
+        data_path = os.path.join(data_path,'cifar-10-batches-py')
     else:
         assert False, 'Unknow dataset'
 
@@ -447,24 +455,6 @@ class DataHandler(object):
         tr_Y = None
         te_X = None
         te_Y = None
-
-        """
-        with utils.o_gfile((data_dir, 'train-images-idx3-ubyte.gz'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            tr_X = loaded[16:].reshape((60000, 28, 28, 1)).astype(np.float32)
-
-        with utils.o_gfile((data_dir, 'train-labels-idx1-ubyte.gz'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            tr_Y = loaded[8:].reshape((60000)).astype(np.int)
-
-        with utils.o_gfile((data_dir, 't10k-images-idx3-ubyte.gz'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            te_X = loaded[16:].reshape((10000, 28, 28, 1)).astype(np.float)
-
-        with utils.o_gfile((data_dir, 't10k-labels-idx1-ubyte.gz'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            te_Y = loaded[8:].reshape((10000)).astype(np.int)
-        """
 
         with gzip.open(os.path.join(data_dir, 'train-images-idx3-ubyte.gz')) as fd:
             fd.read(16)

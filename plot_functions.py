@@ -540,10 +540,14 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
-        ###UMAP visualization of the embedings
-        embedding = umap.UMAP(n_neighbors=15,
-                                min_dist=0.2,
-                                metric='correlation').fit_transform(encoded[i])
+        if opts['zdim']==2:
+            embedding = encoded[i]
+            #embedding = np.concatenate((encoded,enc_mean,sample_prior),axis=0)
+        else:
+            ###UMAP visualization of the embedings
+            embedding = umap.UMAP(n_neighbors=15,
+                                    min_dist=0.3,
+                                    metric='correlation').fit_transform(encoded[i])
         embeds.append(embedding)
     # Creating a pyplot fig
     dpi = 100
