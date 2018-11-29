@@ -104,7 +104,6 @@ def mlp_decoder(opts, inputs, num_layers, num_units, outputs_shape,
     # Architecture with only fully connected layers and ReLUs
     layer_x = inputs
     for i in range(num_layers):
-        scale = 2**(num_layers - i - 1)
         layer_x = ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
         layer_x = tf.nn.relu(layer_x)
         if batch_norm:

@@ -113,8 +113,8 @@ class WAE(object):
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 reconstructed, _ = decoder(self.opts, inputs=encoded,
-                                                num_units=opts['e_nfilters'][n],
-                                                # num_units=opts['e_nfilters'],
+                                                num_units=opts['d_nfilters'][n],
+                                                # num_units=opts['d_nfilters'],
                                                 # num_units=int(opts['d_nfilters'] / 2**n),
                                                 output_shape=datashapes[opts['dataset']],
                                                 scope='decoder/layer_%d' % n,
@@ -135,7 +135,7 @@ class WAE(object):
                                                 is_training=self.is_training)
                 loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
                                                 reconstructed)
-                self.loss_reconstruct += opts['lambda'][n-1] * loss_reconstruct
+                self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
             self.losses_reconstruct.append(loss_reconstruct)
 
@@ -170,7 +170,7 @@ class WAE(object):
         self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
-                         + opts['lambda'][-1] * self.match_penalty
+                         + self.lmbd[-1] * self.match_penalty
                          # + self.lmbd / 2**opts['nlatents'] * self.match_penalty
         # Pre Training
         self.pretrain_loss()
