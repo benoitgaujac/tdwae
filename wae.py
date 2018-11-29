@@ -252,7 +252,6 @@ class WAE(object):
                                                replace=False)
             batch_images = data.data[data_ids].astype(np.float32)
             batch_samples = sample_pz(opts, self.pz_params,
-                                                'numpy',
                                                 batch_size)
             [_, pre_loss] = self.sess.run([self.pre_opt, self.pre_loss],
                                                 feed_dict={
