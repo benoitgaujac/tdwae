@@ -540,7 +540,7 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
-        if opts['zdim']==2:
+        if np.shape(encoded[i])[-1]==2:
             embedding = encoded[i]
             #embedding = np.concatenate((encoded,enc_mean,sample_prior),axis=0)
         else:
