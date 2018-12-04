@@ -21,7 +21,7 @@ import utils
 from sampling_functions import sample_pz, sample_gaussian, generate_linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
-from plot_functions import save_train, save_vizu, plot_sinkhorn, plot_embedded
+from plot_functions import save_train, plot_sinkhorn, plot_embedded
 from networks import encoder, decoder
 from datahandler import datashapes
 
