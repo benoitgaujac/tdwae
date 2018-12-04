@@ -235,7 +235,6 @@ def save_vizu(opts, data_train, data_test,              # images
                     samples,                            # samples
                     interpolation, prior_interpolation, # interpolations
                     work_dir):                          # working directory
-
     """ Generates and saves the following plots:
         img1    -   train reconstruction
         img2    -   test reconstruction
@@ -245,7 +244,6 @@ def save_vizu(opts, data_train, data_test,              # images
         img6    -   discrete latents
         img7    -   UMAP
     """
-
     # Create saving directory
     plots_dir = 'vizu_plots'
     save_path = os.path.join(work_dir,plots_dir)
@@ -562,7 +560,7 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
                     c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
