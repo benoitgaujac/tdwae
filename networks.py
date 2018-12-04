@@ -30,7 +30,7 @@ def encoder(opts, inputs, num_units, output_dim, scope, reuse=False,
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['e_arch'])
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -20, 20)
+    logSigma = tf.clip_by_value(logSigma, -50, 50)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
@@ -72,14 +72,14 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
     return outputs
 
-def decoder(opts, inputs, num_units, output_shape, scope, reuse=False,
+def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
         if opts['d_arch'] == 'mlp':
             # Encoder uses only fully connected layers with ReLus
             outputs, logits = mlp_decoder(opts, inputs, opts['d_nlayers'],
                                                         num_units,
-                                                        output_shape,
+                                                        2*output_dim,
                                                         opts['batch_norm'],
                                                         reuse,
                                                         is_training)
@@ -88,7 +88,7 @@ def decoder(opts, inputs, num_units, output_shape, scope, reuse=False,
             outputs, logits = dcgan_decoder(opts, inputs, opts['d_arch'],
                                                         opts['d_nlayers'],
                                                         num_units,
-                                                        output_shape,
+                                                        2*output_dim,
                                                         opts['batch_norm'],
                                                         reuse,
                                                         is_training)
@@ -97,7 +97,7 @@ def decoder(opts, inputs, num_units, output_shape, scope, reuse=False,
     return outputs, logits
 
 
-def mlp_decoder(opts, inputs, num_layers, num_units, outputs_shape,
+def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
@@ -109,16 +109,21 @@ def mlp_decoder(opts, inputs, num_layers, num_units, outputs_shape,
         if batch_norm:
             layer_x = ops.batch_norm(
                 opts, layer_x, is_training, reuse, scope='hid%d/bn' % i)
-    out = ops.linear(opts, layer_x,
-                     np.prod(outputs_shape), 'hid_final')
-    out = tf.reshape(out, [-1] + list(outputs_shape))
+    out = ops.linear(opts, layer_x, output_dim, 'hid_final')
+    # out = ops.linear(opts, layer_x,
+    #                  np.prod(outputs_shape), 'hid_final')
+    # out = tf.reshape(out, [-1] + list(outputs_shape))
+    mean, logSigma = tf.split(out,2,axis=-1)
+    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    Sigma = tf.nn.softplus(logSigma)
+
     if opts['input_normalize_sym']:
-        return tf.nn.tanh(out), out
+        return tf.nn.tanh(mean), Sigma
     else:
-        return tf.nn.sigmoid(out), out
+        return tf.nn.sigmoid(mean), Sigma
 
 def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
-                                                        outputs_shape,
+                                                        output_dim,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
@@ -159,7 +164,10 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         last_h = ops.deconv2d(
             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
     last_h = tf.reshape(last_h,[-1]+list(outputs_shape))
+    mean, logSigma = tf.split(last_h,2,axis=-1)
+    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    Sigma = tf.nn.softplus(logSigma)
     if opts['input_normalize_sym']:
-        return tf.nn.tanh(last_h), last_h
+        return tf.nn.tanh(mean), Sigma
     else:
-        return tf.nn.sigmoid(last_h), last_h
+        return tf.nn.sigmoid(mean), Sigma

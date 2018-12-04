@@ -40,6 +40,10 @@ import pdb
 class WAE(object):
 
     def __init__(self, opts):
+        # --- No gaussian dcgan decoder
+        assert opts['decoder']!='gaussian' or opts['d_arch']!='dcgan', \
+                'Gaussian decoder with dcgan archi not implemented'
+
         logging.error('Building the Tensorflow Graph')
 
         # --- model warning
@@ -84,28 +88,18 @@ class WAE(object):
         encoded = self.points
         for n in range(opts['nlatents']):
             # - Encoding points
+            enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
+                                                num_units=opts['e_nfilters'][n],
+                                                output_dim=opts['zdim'][n],
+                                                scope='encoder/layer_%d' % (n+1),
+                                                reuse=False,
+                                                is_training=self.is_training)
             if opts['encoder'] == 'deterministic':
-                encoded, _ = encoder(self.opts, inputs=encoded,
-                                                    num_units=opts['e_nfilters'][n],
-                                                    # num_units=opts['e_nfilters'],
-                                                    # num_units=int(opts['e_nfilters'] / 2**n),
-                                                    output_dim=opts['zdim'][n],
-                                                    scope='encoder/layer_%d' % (n+1),
-                                                    reuse=False,
-                                                    is_training=self.is_training)
+                encoded = enc_mean
                 if n==opts['nlatents']-1 and opts['prior']=='dirichlet':
                     encoded = tf.nn.softmax(encoded)
             elif opts['encoder'] == 'gaussian':
-                enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
-                                                    num_units=opts['e_nfilters'][n],
-                                                    # num_units=opts['e_nfilters'],
-                                                    # num_units=int(opts['e_nfilters'] / 2**n),
-                                                    output_dim=opts['zdim'][n],
-                                                    scope='encoder/layer_%d' % (n+1),
-                                                    reuse=False,
-                                                    is_training=self.is_training)
                 qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-                # - Sampling from encoded MoG prior
                 encoded = sample_gaussian(opts, qz_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % opts['encoder']
@@ -114,25 +108,48 @@ class WAE(object):
             if n==0:
                 reconstructed, _ = decoder(self.opts, inputs=encoded,
                                                 num_units=opts['d_nfilters'][n],
-                                                # num_units=opts['d_nfilters'],
-                                                # num_units=int(opts['d_nfilters'] / 2**n),
-                                                output_shape=datashapes[opts['dataset']],
+                                                output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training)
+                reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                # recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
+                #                                 num_units=opts['d_nfilters'][n],
+                #                                 output_dim=np.prod(datashapes[opts['dataset']]),
+                #                                 scope='decoder/layer_%d' % n,
+                #                                 reuse=False,
+                #                                 is_training=self.is_training)
+                # if opts['decoder'] == 'deterministic':
+                #     reconstructed = tf.reshape(recon_mean,[-1]+datashapes[opts['dataset']])
+                # elif opts['decoder'] == 'gaussian':
+                #     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                #     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                #     reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                # else:
+                #     assert False, 'Unknown encoder %s' % opts['decoder']
                 loss_reconstruct = reconstruction_loss(opts, self.points,
                                                 reconstructed)
                 self.loss_reconstruct += loss_reconstruct
-
             else:
-                reconstructed, _ = decoder(self.opts, inputs=encoded,
+                # reconstructed, _ = decoder(self.opts, inputs=encoded,
+                #                                 num_units=opts['d_nfilters'][n],
+                #                                 output_shape=[opts['zdim'][n-1],],
+                #                                 scope='decoder/layer_%d' % n,
+                #                                 reuse=False,
+                #                                 is_training=self.is_training)
+                recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                                                 num_units=opts['d_nfilters'][n],
-                                                # num_units=opts['d_nfilters'],
-                                                # num_units=int(opts['d_nfilters'] / 2**n),
-                                                output_shape=[opts['zdim'][n-1],],
+                                                output_dim=opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training)
+                if opts['decoder'] == 'deterministic':
+                    reconstructed = recon_mean
+                elif opts['decoder'] == 'gaussian':
+                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder']
                 loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
                                                 reconstructed)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
@@ -145,21 +162,46 @@ class WAE(object):
             if n==0:
                 decoded, _ = decoder(self.opts, inputs=decoded,
                                                 num_units=opts['d_nfilters'][n],
-                                                # num_units=opts['d_nfilters'],
-                                                # num_units=int(opts['d_nfilters'] / 2**n),
-                                                output_shape=datashapes[opts['dataset']],
+                                                output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
+                decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+                # decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
+                #                                 num_units=opts['d_nfilters'][n],
+                #                                 output_dim=np.prod(datashapes[opts['dataset']]),
+                #                                 scope='decoder/layer_%d' % n,
+                #                                 reuse=True,
+                #                                 is_training=self.is_training)
+                # if opts['decoder'] == 'deterministic':
+                #     decoded = tf.reshape(decoded_mean,[-1]+datashapes[opts['dataset']])
+                # elif opts['decoder'] == 'gaussian':
+                #     p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                #     decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                #     decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+                # else:
+                #     assert False, 'Unknown encoder %s' % opts['decoder']
             else:
-                decoded, _ = decoder(self.opts, inputs=decoded,
+                # decoded, _ = decoder(self.opts, inputs=decoded,
+                #                                 num_units=opts['d_nfilters'][n],
+                #                                 output_shape=[opts['zdim'][n-1],],
+                #                                 scope='decoder/layer_%d' % n,
+                #                                 reuse=True,
+                #                                 is_training=self.is_training)
+                decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                                                 num_units=opts['d_nfilters'][n],
-                                                # num_units=opts['d_nfilters'],
-                                                # num_units=int(opts['d_nfilters'] / 2**n),
-                                                output_shape=[opts['zdim'][n-1],],
+                                                output_dim=opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
+                if opts['decoder'] == 'deterministic':
+                    decoded = decoded_mean
+                elif opts['decoder'] == 'gaussian':
+                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder']
+
             self.decoded.append(decoded)
 
         # --- Objectives, penalties, pretraining, FID
@@ -171,7 +213,6 @@ class WAE(object):
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
-                         # + self.lmbd / 2**opts['nlatents'] * self.match_penalty
         # Pre Training
         self.pretrain_loss()
         """
@@ -498,14 +539,14 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 20:
+                if epoch >= 30:
                     # If no significant progress was made in last 5 epochs
                     # then decrease the learning rate.
-                    if loss < min(Loss_rec[-5 * batches_num:]):
+                    if loss < min(Loss_rec[-10 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
-                    if wait > 5 * batches_num:
+                    if wait > 10 * batches_num:
                         decay = max(decay  / 1.4, 1e-6)
                         logging.error('Reduction in lr: %f' % decay)
                         print('')
