@@ -77,7 +77,7 @@ def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
     with tf.variable_scope(scope, reuse=reuse):
         if opts['d_arch'] == 'mlp':
             # Encoder uses only fully connected layers with ReLus
-            outputs, logits = mlp_decoder(opts, inputs, opts['d_nlayers'],
+            mean, Sigma = mlp_decoder(opts, inputs, opts['d_nlayers'],
                                                         num_units,
                                                         2*output_dim,
                                                         opts['batch_norm'],
@@ -85,7 +85,7 @@ def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
                                                         is_training)
         elif opts['d_arch'] == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
-            outputs, logits = dcgan_decoder(opts, inputs, opts['d_arch'],
+            mean, Sigma = dcgan_decoder(opts, inputs, opts['d_arch'],
                                                         opts['d_nlayers'],
                                                         num_units,
                                                         2*output_dim,
@@ -94,7 +94,7 @@ def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
                                                         is_training)
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
-    return outputs, logits
+    return mean, Sigma
 
 
 def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
@@ -113,20 +113,25 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     # out = ops.linear(opts, layer_x,
     #                  np.prod(outputs_shape), 'hid_final')
     # out = tf.reshape(out, [-1] + list(outputs_shape))
+    # if opts['input_normalize_sym']:
+    #     return tf.nn.tanh(out), out
+    # else:
+    #     return tf.nn.sigmoid(out), out
     mean, logSigma = tf.split(out,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 50)
     Sigma = tf.nn.softplus(logSigma)
 
-    if opts['input_normalize_sym']:
-        return tf.nn.tanh(mean), Sigma
-    else:
-        return tf.nn.sigmoid(mean), Sigma
+    return mean, Sigma
+
 
 def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                                                         output_dim,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
+    """
+    TO DO
+    """
     # Reshaping if needed
     if len(outputs_shape)<3:
         assert len(outputs_shape)==1, 'Wrong shape for inputs'

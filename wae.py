@@ -112,6 +112,10 @@ class WAE(object):
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training)
+                if opts['input_normalize_sym']:
+                    reconstructed=tf.nn.tanh(reconstructed)
+                else:
+                    reconstructed=tf.nn.sigmoid(reconstructed)
                 reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                 # recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                 #                                 num_units=opts['d_nfilters'][n],
@@ -166,6 +170,10 @@ class WAE(object):
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
+                if opts['input_normalize_sym']:
+                    decoded=tf.nn.tanh(decoded)
+                else:
+                    decoded=tf.nn.sigmoid(decoded)
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
                 # decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                 #                                 num_units=opts['d_nfilters'][n],
@@ -539,14 +547,14 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 30:
+                if epoch >= 50:
                     # If no significant progress was made in last 5 epochs
                     # then decrease the learning rate.
-                    if loss < min(Loss_rec[-5 * batches_num:]):
+                    if loss < min(Loss_rec[-15 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
-                    if wait > 5 * batches_num:
+                    if wait > 15 * batches_num:
                         decay = max(decay  / 1.4, 1e-6)
                         logging.error('Reduction in lr: %f' % decay)
                         print('')
