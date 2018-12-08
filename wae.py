@@ -547,11 +547,11 @@ class WAE(object):
                 if epoch >= 50:
                     # If no significant progress was made in last 5 epochs
                     # then decrease the learning rate.
-                    if loss < min(Loss_rec[-15 * batches_num:]):
+                    if loss < min(Loss_rec[-5 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
-                    if wait > 15 * batches_num:
+                    if wait > 5 * batches_num:
                         decay = max(decay  / 1.4, 1e-6)
                         logging.error('Reduction in lr: %f' % decay)
                         print('')
