@@ -40,9 +40,6 @@ import pdb
 class WAE(object):
 
     def __init__(self, opts):
-        # --- No gaussian dcgan decoder
-        assert opts['decoder']!='gaussian' or opts['d_arch']!='dcgan', \
-                'Gaussian decoder with dcgan archi not implemented'
 
         logging.error('Building the Tensorflow Graph')
 

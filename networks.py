@@ -129,15 +129,13 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
-    """
-    TO DO
-    """
-    # Reshaping if needed
-    if len(outputs_shape)<3:
-        assert len(outputs_shape)==1, 'Wrong shape for inputs'
-        output_shape = (int(sqrt(outputs_shape[0])),int(sqrt(outputs_shape[0])),1)
-    else:
-        output_shape = outputs_shape
+    # # Reshaping if needed
+    # if len(output_dim)<3:
+    #     assert len(output_dim)==1, 'Wrong shape for inputs'
+    #     outputs_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
+    # else:
+    #     outputs_shape = output_dim
+    output_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
     batch_size = tf.shape(inputs)[0]
     if archi == 'dcgan':
         height = output_shape[0] / 2**num_layers
@@ -168,11 +166,15 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
     elif archi == 'dcgan_mod':
         last_h = ops.deconv2d(
             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
-    last_h = tf.reshape(last_h,[-1]+list(outputs_shape))
+    # last_h = tf.reshape(last_h,[-1]+list(outputs_shape))
+
     mean, logSigma = tf.split(last_h,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 50)
     Sigma = tf.nn.softplus(logSigma)
-    if opts['input_normalize_sym']:
-        return tf.nn.tanh(mean), Sigma
-    else:
-        return tf.nn.sigmoid(mean), Sigma
+
+
+    return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
+    # if opts['input_normalize_sym']:
+    #     return tf.nn.tanh(mean), Sigma
+    # else:
+    #     return tf.nn.sigmoid(mean), Sigma
