@@ -547,7 +547,7 @@ class WAE(object):
                 if epoch >= 150:
                     # If no significant progress was made in last 5 epochs
                     # then decrease the learning rate.
-                    if np.mean(Loss_rec[-100:]) < np.mean(Loss_rec[-5 * batches_num:])-0.5*np.var(Loss_rec[-5 * batches_num:]):
+                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-5 * batches_num:])-0.5*np.var(Loss_rec[-5 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
