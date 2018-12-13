@@ -128,7 +128,7 @@ def save_train(opts, data_train, data_test,
     ### The loss curves
     ax = plt.subplot(gs[1, 0])
     total_num = len(loss)
-    x_step = max(int(total_num / 100), 1)
+    x_step = max(int(total_num / 200), 1)
     x = np.arange(1, len(loss) + 1, x_step)
     y = np.log(loss[::x_step])
     plt.plot(x, y, linewidth=3, color='black', label='loss')
@@ -183,7 +183,7 @@ def save_train(opts, data_train, data_test,
         else:
             assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
-                c=label_test[:num_pics,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                 # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
@@ -277,7 +277,7 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
-                    c=labels[:,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
