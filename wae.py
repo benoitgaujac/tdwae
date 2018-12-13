@@ -551,7 +551,7 @@ class WAE(object):
                         wait = 0
                     else:
                         wait += 1
-                    if wait > 10 * batches_num:
+                    if wait > 2 * batches_num:
                         decay = max(decay  / 1.4, 1e-6)
                         logging.error('Reduction in lr: %f' % decay)
                         print('')
