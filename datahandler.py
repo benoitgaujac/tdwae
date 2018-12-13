@@ -624,10 +624,14 @@ class DataHandler(object):
 
         self.data_shape = (32, 32, 3)
 
-        self.data = Data(opts, X[:-1000])
-        self.test_data = Data(opts, X[-1000:])
-        self.labels = y[:-1000]
-        self.test_labels = y[-1000:]
+        test_size = 10000
+        if opts['train_dataset_size']==-1:
+            self.data = Data(opts, X[:-test_size])
+        else:
+            self.data = Data(opts, X[:opts['train_dataset_size']])
+        self.test_data = Data(opts, X[-test_size:])
+        self.labels = y[:-test_size]
+        self.test_labels = y[-test_size:]
         self.num_points = len(self.data)
 
         logging.error('Loading Done.')

@@ -6,6 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import umap
+from sklearn.decomposition import PCA
 
 import utils
 
@@ -143,12 +144,12 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
-    x_step = max(int(total_num / 100), 1)
+    x_step = max(int(total_num / 200), 1)
     x = np.arange(1, len(losses_rec) + 1, x_step)
     losses = np.array(losses_rec)
     for i in range(np.shape(losses)[-1]):
@@ -173,13 +174,17 @@ def save_train(opts, data_train, data_test,
     if opts['zdim'][-1]==2:
         embedding = np.concatenate((encoded,samples_prior),axis=0)
     else:
-        embedding = umap.UMAP(n_neighbors=15,
-                                min_dist=0.2,
-                                metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
-
+        if opts['vizu_emb']=='pca':
+            embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+        elif opts['vizu_emb']=='umap':
+            embedding = umap.UMAP(n_neighbors=15,
+                                    min_dist=0.2,
+                                    metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+        else:
+            assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
-                c=label_test[:num_pics,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                # c=label_test[:num_pics,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')
@@ -250,12 +255,15 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     for i in range(len(encoded)):
         if np.shape(encoded[i])[-1]==2:
             embedding = encoded[i]
-            #embedding = np.concatenate((encoded,enc_mean,sample_prior),axis=0)
         else:
-            ###UMAP visualization of the embedings
-            embedding = umap.UMAP(n_neighbors=15,
-                                    min_dist=0.3,
-                                    metric='correlation').fit_transform(encoded[i])
+            if opts['vizu_emb']=='pca':
+                embedding = PCA(n_components=2).fit_transform(encoded[i])
+            elif opts['vizu_emb']=='umap':
+                embedding = umap.UMAP(n_neighbors=15,
+                                        min_dist=0.3,
+                                        metric='correlation').fit_transform(encoded[i])
+            else:
+                assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
         embeds.append(embedding)
     # Creating a pyplot fig
     dpi = 100
@@ -269,8 +277,8 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
-                    c=labels[:,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=labels[:,0], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])

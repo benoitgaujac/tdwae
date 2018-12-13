@@ -135,45 +135,77 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
     #     outputs_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
     # else:
     #     outputs_shape = output_dim
-    output_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
-    batch_size = tf.shape(inputs)[0]
-    if archi == 'dcgan':
-        height = output_shape[0] / 2**num_layers
-        width = output_shape[1] / 2**num_layers
-    elif archi == 'dcgan_mod':
-        height = output_shape[0] / 2**(num_layers - 1)
-        width = output_shape[1] / 2**(num_layers - 1)
 
-    h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
-                                                        scope='hid0/lin')
-    h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
-    h0 = tf.nn.relu(h0)
-    layer_x = h0
-    for i in range(num_layers - 1):
-        scale = 2**(i + 1)
-        _out_shape = [batch_size, ceil(height * scale),
-                      ceil(width * scale), int(num_units / scale)]
-        layer_x = ops.deconv2d(opts, layer_x, _out_shape,
-                               scope='hid%d/deconv' % i)
-        if batch_norm:
-            layer_x = ops.batch_norm(opts, layer_x,
-                                     is_training, reuse, scope='hid%d/bn' % i)
-        layer_x = tf.nn.relu(layer_x)
-    _out_shape = [batch_size] + list(output_shape)
-    if archi == 'dcgan':
-        last_h = ops.deconv2d(
-            opts, layer_x, _out_shape, scope='hid_final/deconv')
-    elif archi == 'dcgan_mod':
-        last_h = ops.deconv2d(
-            opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
-    # last_h = tf.reshape(last_h,[-1]+list(outputs_shape))
+    if output_dim==2*np.prod(datashapes[opts['dataset']]):
+        # Highest latent layer: reconstructions have data shape
+        output_shape = datashapes[opts['dataset']]
+        batch_size = tf.shape(inputs)[0]
+        if archi == 'dcgan':
+            height = output_shape[0] / 2**num_layers
+            width = output_shape[1] / 2**num_layers
+        elif archi == 'dcgan_mod':
+            height = output_shape[0] / 2**(num_layers - 1)
+            width = output_shape[1] / 2**(num_layers - 1)
+        h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
+                                                            scope='hid0/lin')
+        h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
+        h0 = tf.nn.relu(h0)
+        layer_x = h0
+        for i in range(num_layers - 1):
+            scale = 2**(i + 1)
+            _out_shape = [batch_size, ceil(height * scale),
+                          ceil(width * scale), int(num_units / scale)]
+            layer_x = ops.deconv2d(opts, layer_x, _out_shape,
+                                   scope='hid%d/deconv' % i)
+            if batch_norm:
+                layer_x = ops.batch_norm(opts, layer_x,
+                                         is_training, reuse, scope='hid%d/bn' % i)
+            layer_x = tf.nn.relu(layer_x)
+        _out_shape = [batch_size] + list(output_shape)
+        if archi == 'dcgan':
+            last_h = ops.deconv2d(
+                opts, layer_x, _out_shape, scope='hid_final/deconv')
+        elif archi == 'dcgan_mod':
+            last_h = ops.deconv2d(
+                opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
+        return last_h, None
+    else:
+        # Deeper latent layers: reconstructions have shape (h,w,2)
+        output_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
+        batch_size = tf.shape(inputs)[0]
+        if archi == 'dcgan':
+            height = output_shape[0] / 2**num_layers
+            width = output_shape[1] / 2**num_layers
+        elif archi == 'dcgan_mod':
+            height = output_shape[0] / 2**(num_layers - 1)
+            width = output_shape[1] / 2**(num_layers - 1)
+        h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
+                                                            scope='hid0/lin')
+        h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
+        h0 = tf.nn.relu(h0)
+        layer_x = h0
+        for i in range(num_layers - 1):
+            scale = 2**(i + 1)
+            _out_shape = [batch_size, ceil(height * scale),
+                          ceil(width * scale), int(num_units / scale)]
+            layer_x = ops.deconv2d(opts, layer_x, _out_shape,
+                                   scope='hid%d/deconv' % i)
+            if batch_norm:
+                layer_x = ops.batch_norm(opts, layer_x,
+                                         is_training, reuse, scope='hid%d/bn' % i)
+            layer_x = tf.nn.relu(layer_x)
+        _out_shape = [batch_size] + list(output_shape)
+        if archi == 'dcgan':
+            last_h = ops.deconv2d(
+                opts, layer_x, _out_shape, scope='hid_final/deconv')
+        elif archi == 'dcgan_mod':
+            last_h = ops.deconv2d(
+                opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
+        mean, logSigma = tf.split(last_h,2,axis=-1)
+        logSigma = tf.clip_by_value(logSigma, -50, 50)
+        Sigma = tf.nn.softplus(logSigma)
+        return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
 
-    mean, logSigma = tf.split(last_h,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 50)
-    Sigma = tf.nn.softplus(logSigma)
-
-
-    return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
     # if opts['input_normalize_sym']:
     #     return tf.nn.tanh(mean), Sigma
     # else:
