@@ -11,100 +11,95 @@ import tensorflow as tf
 
 import pdb
 
+parser = argparse.ArgumentParser()
+# Args for experiment
+parser.add_argument("--mode", default='test',
+                    help='mode to run [train/test/vizu]')
+parser.add_argument("--exp", default='mnist',
+                    help='dataset [mnist/cifar10/].'\
+                    ' celebA/dsprites Not implemented yet')
+parser.add_argument("--method",
+                    help='algo to train [wae/vae]')
+parser.add_argument("--work_dir")
+parser.add_argument("--weights_file")
+
+FLAGS = parser.parse_args()
 
 def main():
 
-    # Verbose
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-
     # Select dataset to use
-    opts = configs.config_mnist
+    if FLAGS.exp == 'celebA':
+        opts = configs.config_celebA
+    elif FLAGS.exp == 'celebA_small':
+        opts = configs.config_celebA_small
+    elif FLAGS.exp == 'mnist':
+        opts = configs.config_mnist
+    elif FLAGS.exp == 'mnist_small':
+        opts = configs.config_mnist_small
+    elif FLAGS.exp == 'cifar10':
+        opts = configs.config_cifar10
+    elif FLAGS.exp == 'dsprites':
+        opts = configs.config_dsprites
+    elif FLAGS.exp == 'grassli':
+        opts = configs.config_grassli
+    elif FLAGS.exp == 'grassli_small':
+        opts = configs.config_grassli_small
+    else:
+        assert False, 'Unknown experiment configuration'
+
+    # Select training method
+    if FLAGS.method:
+        opts['method'] = FLAGS.method
+
+    # Verbose
+    if opts['verbose']:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
-    # weights_file for vae use WAE pretrained
-    weights_file = 'swae/mnist_10mix_v7/checkpoints/trained-wae-18000'
+    # Experiments
+    lambda_values = [25*(i+1) for i in range(10)]
+    for lambda_scalar in lambda_values:
+        logging.error('Experiment lambda %d' % lambda_scalar)
 
-    # VAE loop
-    opts['method'] = 'vae'
-    vae_exps = [1. ,5., 10., 15., 20., 100.]
-    #vae_exps = [1. ,10.]
-    for beta in vae_exps:
+        # lambda Value
+        opts['lambda_scalar'] = lambda_scalar
+        opts['lambda'] = [opts['zdim'][i]*opts['lambda_scalar']**(i+1)/784 for i in range(len(opts['zdim'])-1)]
+        opts['lambda'].append(opts['coef_rec']*opts['lambda_scalar']**opts['nlatents']/784)
+
         # Working directory
-        opts['work_dir'] = 'mnist_10mix_v7_beta' + str(beta)
+        if FLAGS.work_dir:
+            opts['work_dir'] = FLAGS.work_dir + '_' + str(lambda_scalar)
+
         # Create directories
         utils.create_dir(opts['method'])
         work_dir = os.path.join(opts['method'],opts['work_dir'])
         utils.create_dir(work_dir)
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))
-        # setting lambda
-        opts['lambda'] = beta
-        # No pretrained model
-        opts['use_trained'] = False
+
         # Dumping all the configs to the text file
         with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
             text.write('Parameters:\n')
             for key in opts:
                 text.write('%s : %s\n' % (key, opts[key]))
+
         #Reset tf graph
         tf.reset_default_graph()
+
         # build WAE
         wae = WAE(opts)
-        # Training
-        wae.train(data, opts['work_dir'], weights_file)
 
-    # # VAE init with WAE
-    # opts['method'] = 'vae'
-    # # Working directory
-    # opts['work_dir'] = 'mnist_10mix_v7_wae_pretrained/'
-    # # Create directories
-    # utils.create_dir(opts['method'])
-    # work_dir = os.path.join(opts['method'],opts['work_dir'])
-    # utils.create_dir(work_dir)
-    # utils.create_dir(os.path.join(work_dir, 'checkpoints'))
-    # # setting lambda
-    # opts['lambda'] = 10.
-    # # Use pretrained model
-    # opts['use_trained'] = True
-    # # Dumping all the configs to the text file
-    # with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
-    #     text.write('Parameters:\n')
-    #     for key in opts:
-    #         text.write('%s : %s\n' % (key, opts[key]))
-    # #Reset tf graph
-    # tf.reset_default_graph()
-    # # build WAE
-    # wae = WAE(opts)
-    # # Training
-    # wae.train(data, opts['work_dir'], weights_file)
-
-    # # WAE 1 mixtures
-    # opts['method'] = 'swae'
-    # # Working directory
-    # opts['work_dir'] = 'mnist_1mix_v7'
-    # # Create directories
-    # utils.create_dir(opts['method'])
-    # work_dir = os.path.join(opts['method'],opts['work_dir'])
-    # utils.create_dir(work_dir)
-    # utils.create_dir(os.path.join(work_dir, 'checkpoints'))
-    # # setting lambda
-    # opts['lambda'] = 450.
-    # # No pretrained model
-    # opts['use_trained'] = False
-    # # 1 mixture
-    # opts['nmixtures'] = 1
-    # # Dumping all the configs to the text file
-    # with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
-    #     text.write('Parameters:\n')
-    #     for key in opts:
-    #         text.write('%s : %s\n' % (key, opts[key]))
-    # #Reset tf graph
-    # tf.reset_default_graph()
-    # # build WAE
-    # wae = WAE(opts)
-    # # Training
-    # wae.train(data, opts['work_dir'], weights_file)
+        # Training/testing/vizu
+        if FLAGS.mode=="train":
+            wae.train(data, opts['work_dir'], FLAGS.weights_file)
+        elif FLAGS.mode=="vizu":
+            raise ValueError('To implement')
+            wae.vizu(data, opts['work_dir'], FLAGS.weights_file)
+        else:
+            raise ValueError('To implement')
+            wae.test(data, opts['work_dir'], FLAGS.weights_file)
 
 main()

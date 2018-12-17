@@ -459,10 +459,10 @@ class WAE(object):
                     [reconstructed_test, encoded] = self.sess.run(
                                                 [self.reconstructed,
                                                  self.encoded],
-                                                feed_dict={self.points:data.test_data[:10*npics],
+                                                feed_dict={self.points:data.test_data[:50*npics],
                                                            self.is_training:False})
                     if opts['vizu_embedded']:
-                        plot_embedded(opts,encoded,data.test_labels[:10*npics],
+                        plot_embedded(opts,encoded,data.test_labels[:50*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -532,7 +532,7 @@ class WAE(object):
                     print('')
                     # Making plots
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:10*npics],    # labels
+                                     data.test_labels[:50*npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      fixed_noise, samples[-1],  # prior samples, model samples
@@ -544,15 +544,15 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 150:
-                    # If no significant progress was made in last 5 epochs
+                if epoch >= 1000:
+                    # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
-                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-10 * batches_num:])-0.5*np.var(Loss_rec[-10 * batches_num:]):
+                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-0.5*np.var(Loss_rec[-20 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
-                    if wait > 10 * batches_num:
-                        decay = max(decay  / 1.1, 1e-6)
+                    if wait > 20 * batches_num:
+                        decay = max(decay  / 1.33, 1e-6)
                         logging.error('Reduction in lr: %f' % decay)
                         print('')
                         wait = 0

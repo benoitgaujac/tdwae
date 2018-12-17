@@ -6,7 +6,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 5000
+config_mnist['print_every'] = 30000
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
@@ -24,7 +24,7 @@ config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-ce
 # Experiment set up
 config_mnist['train_dataset_size'] = -1
 config_mnist['batch_size'] = 128
-config_mnist['epoch_num'] = 1001
+config_mnist['epoch_num'] = 3001
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
 config_mnist['e_pretrain'] = False #pretrained the encoder parameters
@@ -34,7 +34,7 @@ config_mnist['e_pretrain_sample_size'] = 200
 # Opt set up
 config_mnist['optimizer'] = 'adam' # adam, sgd
 config_mnist['adam_beta1'] = 0.5
-config_mnist['lr'] = 0.0001
+config_mnist['lr'] = 0.0005
 config_mnist['lr_adv'] = 0.0008
 config_mnist['batch_norm'] = True
 config_mnist['batch_norm_eps'] = 1e-05
