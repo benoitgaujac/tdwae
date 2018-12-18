@@ -353,7 +353,7 @@ class WAE(object):
         """
 
         opts = self.opts
-        logging.error('Training WAE %d latent layers' % opts['nlatents'])
+        logging.error('Training WAE %d latent layers\n' % opts['nlatents'])
         print('')
 
         # Create work_dir
@@ -368,7 +368,7 @@ class WAE(object):
         else:
             self.sess.run(self.init)
             if opts['e_pretrain']:
-                logging.error('Pretraining the encoder')
+                logging.error('Pretraining the encoder\n')
                 self.pretrain_encoder(data)
                 print('')
 
@@ -510,13 +510,13 @@ class WAE(object):
                     logging.error(debug_str)
                     debug_str = 'TRAIN LOSS=%.3f' % (Loss[-1])
                     logging.error(debug_str)
-                    debug_str = 'REC=%.3f, REC TEST=%.3f, MATCH=%10.3e, ' % (
+                    debug_str = 'REC=%.3f, REC TEST=%.3f, MATCH=%10.3e\n ' % (
                                                 Loss_rec[-1],
                                                 Loss_rec_test[-1],
                                                 Loss_match[-1])
                     logging.error(debug_str)
                     if opts['vizu_sinkhorn']:
-                        debug_str = 'mdist=%10.3e, Mdist=%10.3e, avgdist=%10.3e, ' % (
+                        debug_str = 'mdist=%10.3e, Mdist=%10.3e, avgdist=%10.3e\n ' % (
                                                     np.amin(C),
                                                     np.amax(C),
                                                     np.mean(C))
@@ -547,13 +547,13 @@ class WAE(object):
                 if epoch >= 1000:
                     # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
-                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-0.5*np.var(Loss_rec[-20 * batches_num:]):
+                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
                         wait = 0
                     else:
                         wait += 1
                     if wait > 20 * batches_num:
                         decay = max(decay  / 1.33, 1e-6)
-                        logging.error('Reduction in lr: %f' % decay)
+                        logging.error('Reduction in lr: %f\n' % decay)
                         print('')
                         wait = 0
                 # Update regularizer if necessary
@@ -563,7 +563,7 @@ class WAE(object):
                         last_match = Loss_match[-1]
                         wae_lambda = 0.98 * wae_lambda + \
                                      0.02 * last_rec / abs(last_match)
-                        logging.error('Lambda updated to %f' % wae_lambda)
+                        logging.error('Lambda updated to %f\n' % wae_lambda)
                         print('')
                         wait_lambda = 0
                     else:

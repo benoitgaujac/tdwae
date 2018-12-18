@@ -22,6 +22,9 @@ parser.add_argument("--method",
                     help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
 parser.add_argument("--weights_file")
+parser.add_argument("--base_lambda", type=int, default=100,
+                    help='base lambda',)
+
 
 FLAGS = parser.parse_args()
 
@@ -61,7 +64,7 @@ def main():
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
     # Experiments
-    lambda_values = [25*(i+1) for i in range(10)]
+    lambda_values = [FLAGS.base_lambda*(i+1) for i in range(10)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
 
