@@ -142,9 +142,9 @@ config_cifar10['init_bias'] = 0.0
 config_cifar10['encoder'] = 'deterministic' # deterministic, gaussian
 config_cifar10['e_arch'] = 'dcgan' # mlp, dcgan, ali, began
 config_cifar10['e_nlayers'] = 2
-config_cifar10['e_nfilters'] = [32,32,32,32,32] #[64,32,32]
+config_cifar10['e_nfilters'] = [128,64,64,32,32] #[64,32,32]
 
 config_cifar10['decoder'] = 'deterministic' # deterministic, gaussian
 config_cifar10['d_arch'] = 'dcgan' # mlp, dcgan, dcgan_mod, ali, began
 config_cifar10['d_nlayers'] = 2
-config_cifar10['d_nfilters'] = [32,32,32,32,32] #[64,32,32]
+config_cifar10['d_nfilters'] = [128,64,64,32,32] #[64,32,32]
