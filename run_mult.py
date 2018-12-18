@@ -64,7 +64,7 @@ def main():
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
     # Experiments
-    lambda_values = [FLAGS.base_lambda*(i+1) for i in range(10)]
+    lambda_values = [FLAGS.base_lambda*(i+1) for i in range(5)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
 
