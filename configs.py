@@ -81,7 +81,7 @@ config_cifar10 = {}
 # Outputs set up
 config_cifar10['verbose'] = False
 config_cifar10['save_every_epoch'] = 1000
-config_cifar10['print_every'] = 1000
+config_cifar10['print_every'] = 6500
 config_cifar10['vizu_sinkhorn'] = False
 config_cifar10['vizu_embedded'] = True
 config_cifar10['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
@@ -98,7 +98,7 @@ config_cifar10['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
 # Experiment set up
 config_cifar10['train_dataset_size'] = -1
 config_cifar10['batch_size'] = 128
-config_cifar10['epoch_num'] = 101
+config_cifar10['epoch_num'] = 301
 config_cifar10['method'] = 'wae' #vae, wae
 config_cifar10['use_trained'] = False #train from pre-trained model
 config_cifar10['e_pretrain'] = False #pretrained the encoder parameters
