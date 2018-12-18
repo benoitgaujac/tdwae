@@ -81,7 +81,7 @@ config_cifar10 = {}
 # Outputs set up
 config_cifar10['verbose'] = False
 config_cifar10['save_every_epoch'] = 1000
-config_cifar10['print_every'] = 200
+config_cifar10['print_every'] = 1000
 config_cifar10['vizu_sinkhorn'] = False
 config_cifar10['vizu_embedded'] = True
 config_cifar10['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
@@ -96,7 +96,7 @@ config_cifar10['input_normalize_sym'] = False
 config_cifar10['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
 
 # Experiment set up
-config_cifar10['train_dataset_size'] = 5000
+config_cifar10['train_dataset_size'] = -1
 config_cifar10['batch_size'] = 128
 config_cifar10['epoch_num'] = 101
 config_cifar10['method'] = 'wae' #vae, wae
@@ -108,7 +108,7 @@ config_cifar10['e_pretrain_it'] = 1000
 # Opt set up
 config_cifar10['optimizer'] = 'adam' # adam, sgd
 config_cifar10['adam_beta1'] = 0.5
-config_cifar10['lr'] = 0.0005
+config_cifar10['lr'] = 0.0001
 config_cifar10['lr_adv'] = 0.0008
 config_cifar10['batch_norm'] = True
 config_cifar10['batch_norm_eps'] = 1e-05
@@ -123,15 +123,15 @@ config_cifar10['L'] = 30 #Sinkhorn iteration
 config_cifar10['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_cifar10['nlatents'] = 1
-config_cifar10['zdim'] = [64,] #[64,16,2]
+config_cifar10['nlatents'] = 5
+config_cifar10['zdim'] = [121,64,36,16,8]
 config_cifar10['pz_scale'] = 1.
 config_cifar10['prior'] = 'gaussian' # dirichlet or gaussian
 
 # lambda set up
 config_cifar10['lambda_scalar'] = 200.
-config_cifar10['lambda'] = [config_cifar10['zdim'][i]*config_cifar10['lambda_scalar']**(i+1)/784 for i in range(len(config_cifar10['zdim'])-1)]
-config_cifar10['lambda'].append(config_cifar10['coef_rec']*config_cifar10['lambda_scalar']**config_cifar10['nlatents']/784)
+config_cifar10['lambda'] = [config_cifar10['zdim'][i]*config_cifar10['lambda_scalar']**(i+1)/1024 for i in range(len(config_cifar10['zdim'])-1)]
+config_cifar10['lambda'].append(config_cifar10['coef_rec']*config_cifar10['lambda_scalar']**config_cifar10['nlatents']/1024)
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
@@ -142,9 +142,9 @@ config_cifar10['init_bias'] = 0.0
 config_cifar10['encoder'] = 'deterministic' # deterministic, gaussian
 config_cifar10['e_arch'] = 'dcgan' # mlp, dcgan, ali, began
 config_cifar10['e_nlayers'] = 2
-config_cifar10['e_nfilters'] = [64,] #[64,32,32]
+config_cifar10['e_nfilters'] = [32,32,32,32,32] #[64,32,32]
 
 config_cifar10['decoder'] = 'deterministic' # deterministic, gaussian
 config_cifar10['d_arch'] = 'dcgan' # mlp, dcgan, dcgan_mod, ali, began
 config_cifar10['d_nlayers'] = 2
-config_cifar10['d_nfilters'] = [64,] #[64,32,32][64,32,32]
+config_cifar10['d_nfilters'] = [32,32,32,32,32] #[64,32,32]
