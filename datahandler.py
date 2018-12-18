@@ -630,8 +630,8 @@ class DataHandler(object):
         else:
             self.data = Data(opts, X[:opts['train_dataset_size']])
         self.test_data = Data(opts, X[-test_size:])
-        self.labels = y[:-test_size]
-        self.test_labels = y[-test_size:]
+        self.labels = y[:-test_size].flatten()
+        self.test_labels = y[-test_size:].flatten()
         self.num_points = len(self.data)
 
         logging.error('Loading Done.')
