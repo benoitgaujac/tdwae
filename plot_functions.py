@@ -144,8 +144,8 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 10))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
@@ -183,8 +183,8 @@ def save_train(opts, data_train, data_test,
         else:
             assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
-                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=10, marker='*',label='Pz')
@@ -219,16 +219,16 @@ def save_train(opts, data_train, data_test,
     save_path = os.path.join(work_dir,data_dir)
     utils.create_dir(save_path)
     name = filename[:-4]
-    np.savez(os.path.join(save_path,name),
-                data_test=data_test, data_train=data_train,
-                label_test=label_test,
-                encoded = encoded[-1],
-                rec_train=rec_train, rec_test=rec_test,
-                samples_prior=samples_prior, samples=samples,
-                loss=np.array(loss), loss_match=np.array(loss_match),
-                loss_rec=np.array(loss_rec),
-                loss_rec_test=np.array(loss_rec_test),
-                losses_rec=np.array(losses_rec))
+    # np.savez(os.path.join(save_path,name),
+    #             data_test=data_test, data_train=data_train,
+    #             label_test=label_test,
+    #             encoded = encoded[-1],
+    #             rec_train=rec_train, rec_test=rec_test,
+    #             samples_prior=samples_prior, samples=samples,
+    #             loss=np.array(loss), loss_match=np.array(loss_match),
+    #             loss_rec=np.array(loss_rec),
+    #             loss_rec_test=np.array(loss_rec_test),
+    #             losses_rec=np.array(losses_rec))
 
 
 def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
@@ -277,8 +277,8 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
-                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
