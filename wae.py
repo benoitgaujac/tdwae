@@ -66,7 +66,7 @@ class WAE(object):
         sample_size = tf.shape(self.points,out_type=tf.int32)[0]
 
         # --- Initialize prior parameters
-        if opts['prior']=='gaussian':
+        if opts['prior']=='gaussian' or opts['prior']=='implicit':
             mean = np.zeros(opts['zdim'][-1], dtype='float32')
             Sigma = np.ones(opts['zdim'][-1], dtype='float32')
             self.pz_params = np.concatenate([mean,Sigma],axis=0)
@@ -161,12 +161,19 @@ class WAE(object):
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
-                decoded, _ = decoder(self.opts, inputs=decoded,
+                decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
+                if opts['decoder'] == 'deterministic':
+                    decoded = decoded_mean
+                elif opts['decoder'] == 'gaussian':
+                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder']                                                
                 if opts['input_normalize_sym']:
                     decoded=tf.nn.tanh(decoded)
                 else:
@@ -206,18 +213,20 @@ class WAE(object):
                     decoded = sample_gaussian(opts, p_params, 'tensorflow')
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder']
-
             self.decoded.append(decoded)
 
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
-        self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
-        # Logging info
-        self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
-        self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
+        if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
+            self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+        elif opts['prior']=='implicit':
+            self.match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
         # Compute Unlabeled obj
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
+        # Logging info
+        self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
+        self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Pre Training
         self.pretrain_loss()
         """
