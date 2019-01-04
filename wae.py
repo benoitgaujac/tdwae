@@ -103,12 +103,19 @@ class WAE(object):
             self.encoded.append(encoded)
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
-                reconstructed, _ = decoder(self.opts, inputs=encoded,
+                recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training)
+                if opts['decoder'] == 'deterministic':
+                    reconstructed = recon_mean
+                elif opts['decoder'] == 'gaussian':
+                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder']                                                
                 if opts['input_normalize_sym']:
                     reconstructed=tf.nn.tanh(reconstructed)
                 else:
@@ -173,7 +180,7 @@ class WAE(object):
                     p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
                     decoded = sample_gaussian(opts, p_params, 'tensorflow')
                 else:
-                    assert False, 'Unknown encoder %s' % opts['decoder']                                                
+                    assert False, 'Unknown encoder %s' % opts['decoder']
                 if opts['input_normalize_sym']:
                     decoded=tf.nn.tanh(decoded)
                 else:
