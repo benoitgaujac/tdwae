@@ -6,7 +6,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
-config_mnist['print_every'] = 30000
+config_mnist['print_every'] = 500
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
@@ -45,19 +45,20 @@ config_mnist['coef_rec'] = .01 # coef recon loss
 config_mnist['cost'] = 'l2sq_norm' #l2, l2sq, l2sq_norm, l1
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
 config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
-config_mnist['L'] = 20 #Sinkhorn iteration
+config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
 config_mnist['nlatents'] = 5
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['pz_scale'] = 1.
-config_mnist['prior'] = 'gaussian' # dirichlet or gaussian
+config_mnist['prior'] = 'implicit' # dirichlet, gaussian or implicit
 
 # lambda set up
-config_mnist['lambda_scalar'] = 200.
+config_mnist['lambda_scalar'] = 100.
 config_mnist['lambda'] = [config_mnist['zdim'][i]*config_mnist['lambda_scalar']**(i+1)/784 for i in range(len(config_mnist['zdim'])-1)]
 config_mnist['lambda'].append(config_mnist['coef_rec']*config_mnist['lambda_scalar']**config_mnist['nlatents']/784)
+# config_mnist['lambda'] = [0., 0., 0., 0., config_mnist['lambda_scalar']]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
@@ -65,13 +66,13 @@ config_mnist['conv_filters_dim'] = 3
 config_mnist['init_std'] = 0.099999
 config_mnist['init_bias'] = 0.0
 
-config_mnist['encoder'] = 'deterministic' # deterministic, gaussian
-config_mnist['e_arch'] = 'mlp' # mlp, dcgan, ali, began
+config_mnist['encoder'] = ['det','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
 config_mnist['e_nlayers'] = 2
 config_mnist['e_nfilters'] = [512,256,128,64,32]
 
-config_mnist['decoder'] = 'deterministic' # deterministic, gaussian
-config_mnist['d_arch'] = 'mlp' # mlp, dcgan, dcgan_mod, ali, began
+config_mnist['decoder'] = ['det','det','det','det','det'] # deterministic, gaussian
+config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
 config_mnist['d_nlayers'] = 2
 config_mnist['d_nfilters'] = [512,256,128,64,32]
 

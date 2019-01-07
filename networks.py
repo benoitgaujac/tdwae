@@ -7,10 +7,10 @@ from math import ceil, sqrt
 import pdb
 
 
-def encoder(opts, inputs, num_units, output_dim, scope, reuse=False,
+def encoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
-        if opts['e_arch'] == 'mlp':
+        if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
             outputs = mlp_encoder(opts, inputs, opts['e_nlayers'],
                                                         num_units,
@@ -18,7 +18,7 @@ def encoder(opts, inputs, num_units, output_dim, scope, reuse=False,
                                                         opts['batch_norm'],
                                                         reuse,
                                                         is_training)
-        elif opts['e_arch'] == 'dcgan':
+        elif archi == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
             outputs = dcgan_encoder(opts, inputs, opts['e_nlayers'],
                                                         num_units,
@@ -72,10 +72,10 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
     return outputs
 
-def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
+def decoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
-        if opts['d_arch'] == 'mlp':
+        if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
             mean, Sigma = mlp_decoder(opts, inputs, opts['d_nlayers'],
                                                         num_units,
@@ -83,7 +83,7 @@ def decoder(opts, inputs, num_units, output_dim, scope, reuse=False,
                                                         opts['batch_norm'],
                                                         reuse,
                                                         is_training)
-        elif opts['d_arch'] == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
+        elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
             mean, Sigma = dcgan_decoder(opts, inputs, opts['d_arch'],
                                                         opts['d_nlayers'],
