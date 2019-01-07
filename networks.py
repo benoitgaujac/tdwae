@@ -85,7 +85,7 @@ def decoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
                                                         is_training)
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
-            mean, Sigma = dcgan_decoder(opts, inputs, opts['d_arch'],
+            mean, Sigma = dcgan_decoder(opts, inputs, archi,
                                                         opts['d_nlayers'],
                                                         num_units,
                                                         2*output_dim,
