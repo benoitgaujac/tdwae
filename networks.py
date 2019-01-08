@@ -7,7 +7,7 @@ from math import ceil, sqrt
 import pdb
 
 
-def encoder(opts, inputs, num_layers, archi, num_units, output_dim, scope,
+def encoder(opts, inputs, archi, num_layers, num_units, output_dim, scope,
                                                         reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
@@ -28,7 +28,7 @@ def encoder(opts, inputs, num_layers, archi, num_units, output_dim, scope,
                                                         reuse,
                                                         is_training)
         else:
-            raise ValueError('%s Unknown encoder architecture for mixtures' % opts['e_arch'])
+            raise ValueError('%s Unknown encoder architecture for mixtures' % archi)
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 50)
@@ -73,7 +73,7 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
     return outputs
 
-def decoder(opts, inputs, num_layers, archi, num_units, output_dim, scope,
+def decoder(opts, inputs, archi, num_layers, num_units, output_dim, scope,
                                                         reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
