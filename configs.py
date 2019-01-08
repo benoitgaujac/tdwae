@@ -7,7 +7,7 @@ config_mnist = {}
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 1000
 config_mnist['print_every'] = 500
-config_mnist['vizu_sinkhorn'] = False
+config_mnist['vizu_sinkhorn'] = True
 config_mnist['vizu_embedded'] = True
 config_mnist['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
 config_mnist['work_dir'] = 'results_mnist'
@@ -44,7 +44,7 @@ config_mnist['batch_norm_decay'] = 0.9
 config_mnist['coef_rec'] = .01 # coef recon loss
 config_mnist['cost'] = 'l2sq_norm' #l2, l2sq, l2sq_norm, l1
 config_mnist['penalty'] = 'sinkhorn' #sinkhorn, mmd
-config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
+config_mnist['epsilon'] = 0.5 #Sinkhorn regularization parameters
 config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
@@ -52,7 +52,7 @@ config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 config_mnist['nlatents'] = 5
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['pz_scale'] = 1.
-config_mnist['prior'] = 'implicit' # dirichlet, gaussian or implicit
+config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
 
 # lambda set up
 config_mnist['lambda_scalar'] = 100.
@@ -63,17 +63,17 @@ config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
 config_mnist['conv_filters_dim'] = 3
-config_mnist['init_std'] = 0.099999
+config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
 
-config_mnist['encoder'] = ['det','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-config_mnist['e_nlayers'] = 2
+config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
+config_mnist['e_nlayers'] = [2,2,2,2,2]
 config_mnist['e_nfilters'] = [512,256,128,64,32]
 
-config_mnist['decoder'] = ['det','det','det','det','det'] # deterministic, gaussian
+config_mnist['decoder'] = ['det','gauss','gauss','gauss','gauss'] # deterministic, gaussian
 config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-config_mnist['d_nlayers'] = 2
+config_mnist['d_nlayers'] = [2,2,2,2,2]
 config_mnist['d_nfilters'] = [512,256,128,64,32]
 
 
@@ -124,13 +124,13 @@ config_cifar10['L'] = 30 #Sinkhorn iteration
 config_cifar10['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_cifar10['nlatents'] = 5
-config_cifar10['zdim'] = [121,64,36,16,8]
+config_cifar10['nlatents'] = 4
+config_cifar10['zdim'] = [64,32,16,8]
 config_cifar10['pz_scale'] = 1.
 config_cifar10['prior'] = 'gaussian' # dirichlet or gaussian
 
 # lambda set up
-config_cifar10['lambda_scalar'] = 200.
+config_cifar10['lambda_scalar'] = 100.
 config_cifar10['lambda'] = [config_cifar10['zdim'][i]*config_cifar10['lambda_scalar']**(i+1)/1024 for i in range(len(config_cifar10['zdim'])-1)]
 config_cifar10['lambda'].append(config_cifar10['coef_rec']*config_cifar10['lambda_scalar']**config_cifar10['nlatents']/1024)
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
@@ -140,12 +140,12 @@ config_cifar10['conv_filters_dim'] = 3
 config_cifar10['init_std'] = 0.099999
 config_cifar10['init_bias'] = 0.0
 
-config_cifar10['encoder'] = 'deterministic' # deterministic, gaussian
-config_cifar10['e_arch'] = 'dcgan' # mlp, dcgan, ali, began
-config_cifar10['e_nlayers'] = 2
-config_cifar10['e_nfilters'] = [128,64,64,32,32] #[64,32,32]
+config_cifar10['encoder'] = ['det','gauss','gauss','gauss'] # deterministic, gaussian
+config_cifar10['e_arch'] = ['dcgan','dcgan','mlp','mlp'] # mlp, dcgan, ali, began
+config_cifar10['e_nlayers'] = [3,3,2,2]
+config_cifar10['e_nfilters'] = [256,128,256,128] #[64,32,32]
 
-config_cifar10['decoder'] = 'deterministic' # deterministic, gaussian
-config_cifar10['d_arch'] = 'dcgan' # mlp, dcgan, dcgan_mod, ali, began
-config_cifar10['d_nlayers'] = 2
-config_cifar10['d_nfilters'] = [128,64,64,32,32] #[64,32,32]
+config_cifar10['decoder'] = ['det','det','det','det'] # deterministic, gaussian
+config_cifar10['d_arch'] = ['dcgan','dcgan','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
+config_cifar10['d_nlayers'] = [3,3,2,2]
+config_cifar10['d_nfilters'] = [256,128,256,128] #[64,32,32]

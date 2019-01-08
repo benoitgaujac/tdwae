@@ -87,6 +87,7 @@ class WAE(object):
             # - Encoding points
             enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
                                                 archi=opts['e_arch'][n],
+                                                num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
                                                 output_dim=opts['zdim'][n],
                                                 scope='encoder/layer_%d' % (n+1),
@@ -106,6 +107,7 @@ class WAE(object):
             if n==0:
                 recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                                                 archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
@@ -129,6 +131,7 @@ class WAE(object):
             else:
                 recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                                                 archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
@@ -153,6 +156,7 @@ class WAE(object):
             if n==0:
                 decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                                                 archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
@@ -173,6 +177,7 @@ class WAE(object):
             else:
                 decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                                                 archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,

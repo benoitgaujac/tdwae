@@ -7,12 +7,13 @@ from math import ceil, sqrt
 import pdb
 
 
-def encoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
+def encoder(opts, inputs, num_layers, archi, num_units, output_dim, scope,
+                                                        reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
-            outputs = mlp_encoder(opts, inputs, opts['e_nlayers'],
+            outputs = mlp_encoder(opts, inputs, num_layers,
                                                         num_units,
                                                         2*output_dim,
                                                         opts['batch_norm'],
@@ -20,7 +21,7 @@ def encoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
                                                         is_training)
         elif archi == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
-            outputs = dcgan_encoder(opts, inputs, opts['e_nlayers'],
+            outputs = dcgan_encoder(opts, inputs, num_layers,
                                                         num_units,
                                                         2*output_dim,
                                                         opts['batch_norm'],
@@ -72,12 +73,13 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
     return outputs
 
-def decoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
+def decoder(opts, inputs, num_layers, archi, num_units, output_dim, scope,
+                                                        reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
-            mean, Sigma = mlp_decoder(opts, inputs, opts['d_nlayers'],
+            mean, Sigma = mlp_decoder(opts, inputs, num_layers,
                                                         num_units,
                                                         2*output_dim,
                                                         opts['batch_norm'],
@@ -86,7 +88,7 @@ def decoder(opts, inputs, archi, num_units, output_dim, scope, reuse=False,
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
             mean, Sigma = dcgan_decoder(opts, inputs, archi,
-                                                        opts['d_nlayers'],
+                                                        num_layers,
                                                         num_units,
                                                         2*output_dim,
                                                         opts['batch_norm'],
