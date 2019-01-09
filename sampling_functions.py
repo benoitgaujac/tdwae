@@ -8,7 +8,7 @@ import tensorflow as tf
 import pdb
 
 def sample_pz(opts,pz_params,batch_size=100):
-    if opts['prior']=='gaussian':
+    if opts['prior']=='gaussian' or opts['prior']=='implicit':
         noise = sample_gaussian(opts, pz_params, 'numpy', batch_size)
     elif opts['prior']=='dirichlet':
         noise = sample_dirichlet(opts, pz_params, batch_size)
@@ -25,14 +25,14 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
         means, covs = tf.split(params,2,axis=-1)
         shape = tf.shape(means)
         eps = tf.random_normal(shape, dtype=tf.float32)
-        noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
+        noise = means + tf.multiply(eps,tf.sqrt(1e-8+covs))
     elif typ =='numpy':
         means, covs = np.split(params,2,axis=-1)
         shape = (batch_size,)+np.shape(means)
         assert shape[-1]==opts['zdim'][-1], \
                     'Prior dimension mismatch'
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
-        noise = means + np.multiply(eps,np.sqrt(1e-10+covs))
+        noise = means + np.multiply(eps,np.sqrt(1e-8+covs))
     return noise
 
 def sample_dirichlet(opts, alpha, batch_size=100):
