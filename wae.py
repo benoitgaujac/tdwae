@@ -198,7 +198,7 @@ class WAE(object):
             self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
         elif opts['prior']=='implicit':
             self.match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
-        # Compute Unlabeled obj
+        # Compute obj
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
         # Logging info
