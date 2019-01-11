@@ -84,73 +84,79 @@ class WAE(object):
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['nlatents']):
-            # - Encoding points
-            enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
-                                                archi=opts['e_arch'][n],
-                                                num_layers=opts['e_nlayers'][n],
-                                                num_units=opts['e_nfilters'][n],
-                                                output_dim=opts['zdim'][n],
-                                                scope='encoder/layer_%d' % (n+1),
-                                                reuse=False,
-                                                is_training=self.is_training)
-            if opts['encoder'][n] == 'det':
-                encoded = enc_mean
-                if n==opts['nlatents']-1 and opts['prior']=='dirichlet':
-                    encoded = tf.nn.softmax(encoded)
-            elif opts['encoder'][n] == 'gauss':
-                qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-                encoded = sample_gaussian(opts, qz_params, 'tensorflow')
-            else:
-                assert False, 'Unknown encoder %s' % opts['encoder']
-            self.encoded.append(encoded)
-            # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
-            if n==0:
-                recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
-                                                archi=opts['d_arch'][n],
-                                                num_layers=opts['d_nlayers'][n],
-                                                num_units=opts['d_nfilters'][n],
-                                                output_dim=np.prod(datashapes[opts['dataset']]),
-                                                scope='decoder/layer_%d' % n,
-                                                reuse=False,
-                                                is_training=self.is_training)
-                if opts['decoder'][n] == 'det':
-                    reconstructed = recon_mean
-                elif opts['decoder'][n] == 'gauss':
-                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
-                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+            if opts['prior']=='implicit' and n==0 or opts['prior']!='implicit':
+                # - Encoding points
+                enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
+                                                    archi=opts['e_arch'][n],
+                                                    num_layers=opts['e_nlayers'][n],
+                                                    num_units=opts['e_nfilters'][n],
+                                                    output_dim=opts['zdim'][n],
+                                                    scope='encoder/layer_%d' % (n+1),
+                                                    reuse=False,
+                                                    is_training=self.is_training)
+                if opts['encoder'][n] == 'det':
+                    encoded = enc_mean
+                    if n==opts['nlatents']-1 and opts['prior']=='dirichlet':
+                        encoded = tf.nn.softmax(encoded)
+                elif opts['encoder'][n] == 'gauss':
+                    qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
+                    encoded = sample_gaussian(opts, qz_params, 'tensorflow')
                 else:
-                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
-                if opts['input_normalize_sym']:
-                    reconstructed=tf.nn.tanh(reconstructed)
+                    assert False, 'Unknown encoder %s' % opts['encoder']
+                self.encoded.append(encoded)
+                # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
+                if n==0:
+                    recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=np.prod(datashapes[opts['dataset']]),
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=False,
+                                                    is_training=self.is_training)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                    if opts['input_normalize_sym']:
+                        reconstructed=tf.nn.tanh(reconstructed)
+                    else:
+                        reconstructed=tf.nn.sigmoid(reconstructed)
+                    reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                    loss_reconstruct = reconstruction_loss(opts, self.points,
+                                                    reconstructed)
+                    self.loss_reconstruct += loss_reconstruct
                 else:
-                    reconstructed=tf.nn.sigmoid(reconstructed)
-                reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-                loss_reconstruct = reconstruction_loss(opts, self.points,
-                                                reconstructed)
-                self.loss_reconstruct += loss_reconstruct
-            else:
-                recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
-                                                archi=opts['d_arch'][n],
-                                                num_layers=opts['d_nlayers'][n],
-                                                num_units=opts['d_nfilters'][n],
-                                                output_dim=opts['zdim'][n-1],
-                                                scope='decoder/layer_%d' % n,
-                                                reuse=False,
-                                                is_training=self.is_training)
-                if opts['decoder'][n] == 'det':
-                    reconstructed = recon_mean
-                elif opts['decoder'][n] == 'gauss':
-                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
-                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
-                else:
-                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
-                loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
-                                                reconstructed)
-                self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
-            self.reconstructed.append(reconstructed)
-            self.losses_reconstruct.append(loss_reconstruct)
+                    recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=opts['zdim'][n-1],
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=False,
+                                                    is_training=self.is_training)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                    loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
+                                                    reconstructed)
+                    self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
+                self.reconstructed.append(reconstructed)
+                self.losses_reconstruct.append(loss_reconstruct)
 
         # --- Sampling from model (only for generation)
+        # reuse cariable
+        if opts['prior']=='implicit':
+            reuse = False
+        else:
+            reuse = True
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
@@ -181,7 +187,7 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
-                                                reuse=True,
+                                                reuse=reuse,
                                                 is_training=self.is_training)
                 if opts['decoder'][n] == 'det':
                     decoded = decoded_mean
@@ -196,13 +202,16 @@ class WAE(object):
         # Compute matching penalty cost
         if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
             self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+            self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
         elif opts['prior']=='implicit':
             self.match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
+            self.C = square_dist_v2(self.opts,self.decoded[-2], self.encoded[0])
+        else:
+            assert False, 'Unknown prior %s' % opts['prior']
         # Compute obj
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
         # Logging info
-        self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
         self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Pre Training
         self.pretrain_loss()
@@ -272,10 +281,14 @@ class WAE(object):
     def pretrain_loss(self):
         # Adding ops to pretrain the encoder so that mean and covariance
         # of Qz(ZN) will try to match those of Pz(ZN)
-        self.pre_loss = moments_loss(self.samples, self.encoded[-1])
+        opts = self.opts
+        if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
+            self.pre_loss = moments_loss(self.samples, self.encoded[-1])
+        elif opts['prior']=='implicit':
+            self.pre_loss = moments_loss(self.decoded[-2], self.encoded[0])
 
     def pretrain_encoder(self, data):
-        opts=self.opts
+        opts = self.opts
         steps_max = opts['e_pretrain_it']
         batch_size = opts['e_pretrain_sample_size']
         train_size = data.num_points
@@ -517,11 +530,15 @@ class WAE(object):
 
                     print('')
                     # Making plots
+                    if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
+                        samples_prior = fixed_noise
+                    elif opts['prior']=='implicit':
+                        samples_prior = samples[-2]
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
                                      data.test_labels[:50*npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
-                                     fixed_noise, samples[-1],  # prior samples, model samples
+                                     samples_prior, samples[-1],  # prior samples, model samples
                                      Loss, Loss_match,  # losses
                                      Loss_rec, Loss_rec_test,   # rec losses
                                      Losses_rec,    # rec losses for each latents
@@ -557,12 +574,14 @@ class WAE(object):
 
                 counter += 1
 
+        """
         # Save the final model
         if epoch > 0:
             self.saver.save(self.sess, os.path.join(work_dir,
                                                 'checkpoints',
                                                 'trained-wae-final'),
                                                 global_step=counter)
+        """
 
 
     # def test(self, data, MODEL_DIR, WEIGHTS_FILE):
