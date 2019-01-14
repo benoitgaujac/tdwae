@@ -353,7 +353,7 @@ class WAE(object):
 
         opts = self.opts
         logging.error('Training WAE %d latent layers\n' % opts['nlatents'])
-        print('')
+        #print('')
 
         # Create work_dir
         utils.create_dir(opts['method'])
@@ -441,7 +441,7 @@ class WAE(object):
                     batch_size_te = 200
                     test_size = np.shape(data.test_data)[0]
                     batches_num_te = int(test_size/batch_size_te)
-                    # Test accuracy & loss
+                    # Test loss
                     loss_rec_test = 0.
                     for it_ in range(batches_num_te):
                         # Sample batches of data points
@@ -454,14 +454,22 @@ class WAE(object):
                                                        self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
+
+
                     # Auto-encoding test images
-                    [reconstructed_test, encoded] = self.sess.run(
+                    [reconstructed_test, encoded, samples] = self.sess.run(
                                                 [self.reconstructed,
-                                                 self.encoded],
+                                                 self.encoded,
+                                                 self.decoded[:-1]],
                                                 feed_dict={self.points:data.test_data[:50*npics],
+                                                           self.samples: fixed_noise,
                                                            self.is_training:False})
+
                     if opts['vizu_embedded']:
-                        plot_embedded(opts,encoded,data.test_labels[:50*npics],
+                        decoded = samples[::-1]
+                        decoded.append(fixed_noise)
+                        plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
+                                                data.test_labels[:50*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],

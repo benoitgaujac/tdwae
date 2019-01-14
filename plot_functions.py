@@ -249,19 +249,20 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     plt.close()
 
 
-def plot_embedded(opts, encoded, labels, work_dir, filename):
+def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
-        if np.shape(encoded[i])[-1]==2:
-            embedding = encoded[i]
+        encods = np.concatenate([encoded[i],decoded[i]],axis=0)
+        if np.shape(encods)[-1]==2:
+            embedding = encods
         else:
             if opts['vizu_emb']=='pca':
-                embedding = PCA(n_components=2).fit_transform(encoded[i])
+                embedding = PCA(n_components=2).fit_transform(encods)
             elif opts['vizu_emb']=='umap':
                 embedding = umap.UMAP(n_neighbors=15,
-                                        min_dist=0.3,
-                                        metric='correlation').fit_transform(encoded[i])
+                                        min_dist=0.2,
+                                        metric='correlation').fit_transform(encods)
             else:
                 assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
         embeds.append(embedding)
@@ -276,11 +277,13 @@ def plot_embedded(opts, encoded, labels, work_dir, filename):
     gs = matplotlib.gridspec.GridSpec(1, len(embeds))
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
-        plt.scatter(embeds[i][:, 0], embeds[i][:, 1],
+        plt.scatter(embeds[i][:num_pics, 0], embeds[i][:num_pics, 1],
                     c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
+        plt.scatter(embeds[i][num_pics:, 0], embeds[i][num_pics:, 1],
+                                color='black', s=100, marker='*',label='Pz')
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
