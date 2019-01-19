@@ -182,12 +182,12 @@ def save_train(opts, data_train, data_test,
                                     metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
         else:
             assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
-    plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
+    plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
                 c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                # c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
-                            color='navy', s=10, marker='*',label='Pz')
+                            color='navy', s=50, marker='*',label='Pz')
     xmin = np.amin(embedding[:,0])
     xmax = np.amax(embedding[:,0])
     magnify = 0.3
@@ -277,13 +277,13 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     gs = matplotlib.gridspec.GridSpec(1, len(embeds))
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
-        plt.scatter(embeds[i][:num_pics, 0], embeds[i][:num_pics, 1],
+        plt.scatter(embeds[i][:num_pics, 0], embeds[i][:num_pics, 1], alpha=0.7,
                     c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         plt.scatter(embeds[i][num_pics:, 0], embeds[i][num_pics:, 1],
-                                color='black', s=100, marker='*',label='Pz')
+                                color='black', s=80, marker='*',label='Pz')
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
