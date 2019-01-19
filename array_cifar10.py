@@ -65,7 +65,7 @@ def main():
         opts['encoder'] = ['gauss' for i in range(nlayers-1)]
         opts['encoder'].append('det')
         ## lambda values
-        lambda_values = [10.**i for i in range(1,-2,-1)]
+        lambda_values = [10.**i for i in range(2,-2,-1)]
         for lambda_scalar in lambda_values:
             logging.error('%d layers, zdim %d, lambda %.1f' % (nlayers,FLAGS.zdim,lambda_scalar))
             # lambda Value
