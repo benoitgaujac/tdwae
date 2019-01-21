@@ -462,7 +462,7 @@ class WAE(object):
                                                            self.samples: fixed_noise,
                                                            self.is_training:False})
 
-                    if opts['vizu_embedded']:
+                    if opts['vizu_embedded'] and counter>1:
                         decoded = samples[::-1]
                         decoded.append(fixed_noise)
                         plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
