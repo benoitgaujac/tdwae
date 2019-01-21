@@ -50,9 +50,11 @@ def main():
     else:
         assert False, 'Unknown experiment configuration'
 
-    # Select training method
+    # Select training method and create dir
     if FLAGS.method:
         opts['method'] = FLAGS.method
+    if not tf.gfile.Exists(opts['method']):
+        utils.create_dir(opts['method'])
 
     # Verbose
     if opts['verbose']:
@@ -70,21 +72,21 @@ def main():
 
         # lambda Value
         opts['lambda_scalar'] = lambda_scalar
-        opts['lambda'] = [opts['zdim'][i]*opts['lambda_scalar']**(i+1)/1024 for i in range(len(opts['zdim'])-1)]
-        opts['lambda'].append(opts['coef_rec']*opts['lambda_scalar']**opts['nlatents']/1024)
+        opts['lambda'] = [1. for i in range(len(opts['zdim'])-1)]
+        opts['lambda'].append(opts['lambda_scalar'])
 
-        # Working directory
+        # Create working directories
         if FLAGS.work_dir:
-            opts['work_dir'] = FLAGS.work_dir + '_' + str(lambda_scalar)
-
-        # Create directories
-        utils.create_dir(opts['method'])
-        work_dir = os.path.join(opts['method'],opts['work_dir'])
-        utils.create_dir(work_dir)
-        utils.create_dir(os.path.join(work_dir, 'checkpoints'))
+            work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
+        else:
+            work_dir = opts['work_dir'] + '_' + str(lambda_scalar)
+        work_path = os.path.join(opts['method'],work_dir)
+        utils.create_dir(work_path)
+        opts['work_dir'] = work_path
+        utils.create_dir(os.path.join(work_path, 'checkpoints'))
 
         # Dumping all the configs to the text file
-        with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
+        with utils.o_gfile((work_path, 'params.txt'), 'w') as text:
             text.write('Parameters:\n')
             for key in opts:
                 text.write('%s : %s\n' % (key, opts[key]))

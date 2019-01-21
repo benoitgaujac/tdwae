@@ -354,13 +354,7 @@ class WAE(object):
         opts = self.opts
         logging.error('Training WAE %d latent layers\n' % opts['nlatents'])
         #print('')
-
-        # Create work_dir
-        if not tf.gfile.Exists(opts['method']):
-            utils.create_dir(opts['method'])
-            work_dir = os.path.join(opts['method'],opts['work_dir'])
-        else:
-            work_dir = opts['work_dir']
+        work_dir = opts['work_dir']
 
         # Init sess and load trained weights if needed
         if opts['use_trained']:
