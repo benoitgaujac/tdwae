@@ -579,14 +579,12 @@ class WAE(object):
 
                 counter += 1
 
-        """
         # Save the final model
         if epoch > 0:
             self.saver.save(self.sess, os.path.join(work_dir,
                                                 'checkpoints',
                                                 'trained-wae-final'),
                                                 global_step=counter)
-        """
 
 
     # def test(self, data, MODEL_DIR, WEIGHTS_FILE):
