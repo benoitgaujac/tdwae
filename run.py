@@ -48,16 +48,16 @@ def main():
     elif FLAGS.exp == 'grassli_small':
         opts = configs.config_grassli_small
     else:
-        assert False, 'Unknown experiment configuration'
+        assert False, 'Unknown experiment dataset'
 
     # Select training method
     if FLAGS.method:
         opts['method'] = FLAGS.method
-        
-    # lambda Value
-    opts['lambda_scalar'] = FLAGS.base_lambda
-    opts['lambda'] = [opts['zdim'][i]*opts['lambda_scalar']**(i+1)/784 for i in range(len(opts['zdim'])-1)]
-    opts['lambda'].append(opts['coef_rec']*opts['lambda_scalar']**opts['nlatents']/784)
+
+    # # lambda Value
+    # opts['lambda_scalar'] = FLAGS.base_lambda
+    # opts['lambda'] = [opts['zdim'][i]*opts['lambda_scalar']**(i+1)/784 for i in range(len(opts['zdim'])-1)]
+    # opts['lambda'].append(opts['coef_rec']*opts['lambda_scalar']**opts['nlatents']/784)
 
     # Working directory
     if FLAGS.work_dir:
@@ -94,8 +94,7 @@ def main():
     if FLAGS.mode=="train":
         wae.train(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
-        raise ValueError('To implement')
-        wae.vizu(data, opts['work_dir'], FLAGS.weights_file)
+        wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     else:
         raise ValueError('To implement')
         wae.test(data, opts['work_dir'], FLAGS.weights_file)
