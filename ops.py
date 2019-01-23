@@ -158,3 +158,13 @@ def logsumexp_v2(logits, axis=1, keepdims=True):
 
 def softmax(logits,axis=None):
     return tf.nn.softmax(logits,axis=axis)
+
+def non_linear(inputs,type):
+    if type=='relu':
+        return tf.nn.relu(inputs)
+    elif type=='soft_plus':
+        return tf.nn.softplus(inputs)
+    elif type=='tanh'
+        return tf.nn.tanh(inputs)
+    else:
+        assert False, 'Unknow lon linear operation'

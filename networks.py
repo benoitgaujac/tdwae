@@ -46,7 +46,7 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
             layer_x = ops.batch_norm(opts, layer_x, is_training,
                                                         reuse,
                                                         scope='hid{}/bn'.format(i))
-        layer_x = tf.nn.relu(layer_x)
+        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
 
     return outputs
@@ -69,7 +69,7 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
         if batch_norm:
             layer_x = ops.batch_norm(opts, layer_x, is_training, reuse,
                                             scope='hid{}/bn'.format(i))
-        layer_x = tf.nn.relu(layer_x)
+        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
     outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
     return outputs
 
@@ -107,7 +107,7 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     layer_x = inputs
     for i in range(num_layers):
         layer_x = ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
-        layer_x = tf.nn.relu(layer_x)
+        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
         if batch_norm:
             layer_x = ops.batch_norm(
                 opts, layer_x, is_training, reuse, scope='hid%d/bn' % i)
@@ -151,7 +151,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
                                                             scope='hid0/lin')
         h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
-        h0 = tf.nn.relu(h0)
+        h0 = ops.non_linear(h0,opts['non_linearity'])
         layer_x = h0
         for i in range(num_layers - 1):
             scale = 2**(i + 1)
@@ -162,7 +162,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
             if batch_norm:
                 layer_x = ops.batch_norm(opts, layer_x,
                                          is_training, reuse, scope='hid%d/bn' % i)
-            layer_x = tf.nn.relu(layer_x)
+            layer_x = ops.non_linear(layer_x,opts['non_linearity'])
         _out_shape = [batch_size] + list(output_shape)
         if archi == 'dcgan':
             last_h = ops.deconv2d(
@@ -184,7 +184,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
                                                             scope='hid0/lin')
         h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
-        h0 = tf.nn.relu(h0)
+        h0 = ops.non_linear(h0,opts['non_linearity'])
         layer_x = h0
         for i in range(num_layers - 1):
             scale = 2**(i + 1)
@@ -195,7 +195,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
             if batch_norm:
                 layer_x = ops.batch_norm(opts, layer_x,
                                          is_training, reuse, scope='hid%d/bn' % i)
-            layer_x = tf.nn.relu(layer_x)
+            layer_x = ops.non_linear(layer_x,opts['non_linearity'])
         _out_shape = [batch_size] + list(output_shape)
         if archi == 'dcgan':
             last_h = ops.deconv2d(
