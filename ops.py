@@ -164,7 +164,7 @@ def non_linear(inputs,type):
         return tf.nn.relu(inputs)
     elif type=='soft_plus':
         return tf.nn.softplus(inputs)
-    elif type=='tanh'
+    elif type=='tanh':
         return tf.nn.tanh(inputs)
     else:
         assert False, 'Unknow lon linear operation'
