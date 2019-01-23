@@ -167,4 +167,4 @@ def non_linear(inputs,type):
     elif type=='tanh':
         return tf.nn.tanh(inputs)
     else:
-        assert False, 'Unknow lon linear operation'
+        assert False, 'Unknow non linear operation'
