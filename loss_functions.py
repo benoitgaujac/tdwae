@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import utils
 from datahandler import datashapes
-from ops import logsumexp, logsumexp_v2
+from ops._ops import logsumexp, logsumexp_v2
 
 import pdb
 
@@ -140,6 +140,13 @@ def square_dist_v2(opts, sample_x, sample_y):
     squared_dist = tf.reduce_sum(tf.square(x - y),axis=-1)
     return squared_dist
 
+def kl_penalty(opts,enc_mu,enc_Sigma, prior_mu, prior_Sigma):
+    sigma_ratio = tf.divide(enc_Sigma,prior_Sigma)
+    kl = 1. + tf.log(sigma_ratio) - sigma_ratio \
+        - tf.divide(tf.square(prior_mu-enc_mu),prior_Sigma)
+    kl = tf.reduce_sum(kl,axis=-1) / 2.
+    kl = tf.reduce_mean(kl)
+    return kl
 
 def reconstruction_loss(opts, x1, x2):
     """
@@ -157,23 +164,24 @@ def reconstruction_loss(opts, x1, x2):
         # c(x,y) = ||x - y||_2
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
         cost = tf.sqrt(1e-10 + cost)
-        cost = tf.reduce_mean(cost)
     elif opts['cost'] == 'l2sq':
         # c(x,y) = ||x - y||_2^2
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-        cost = tf.reduce_mean(cost)
     elif opts['cost'] == 'l2sq_norm':
         # c(x,y) = ||x - y||_2^2
         cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
-        cost = tf.reduce_mean(cost)
     elif opts['cost'] == 'l1':
         # c(x,y) = ||x - y||_1
         cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
-        cost = tf.reduce_mean(cost)
+    elif opts['cost']=='cross_entropy':
+        assert False, 'To implement cost function %s' % opts['cost']
+        # c(x,y) = sum_i x[i]log y[i] + (1-x[i](log 1-y[i])
+        eps = 1e-5
+        cost = tf.reduce_sum(x1*tf.log(eps+x2)+(1-x1)*tf.log(eps+1-x2),axis=-1)
     else:
         assert False, 'Unknown cost function %s' % opts['cost']
     # Compute loss
-    loss = opts['coef_rec'] * cost #coef: .2 for L2 and L1, .05 for L2sqr,
+    loss = opts['coef_rec'] * tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr,
     return loss
 
 
