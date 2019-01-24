@@ -314,6 +314,160 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     plt.close()
 
 
+def save_latent_interpolation(opts, label_test, # labels
+                    encoded, # encoded points
+                    inter_anchors, inter_latent, # anchors and latents interpolation
+                    samples, # samples
+                    MODEL_PATH): # working directory
+    # Create saving directory
+    plots_dir = 'test_plots'
+    save_path = os.path.join(opts['work_dir'],plots_dir)
+    utils.create_dir(save_path)
+
+    greyscale = np.shape(inter_latent)[-1] == 1
+
+    if opts['input_normalize_sym']:
+        anchors = anchors / 2. + 0.5
+        inter_anchors = inter_anchors / 2. + 0.5
+        inter_latent = inter_latent / 2. + 0.5
+        samples = samples / 2. + 0.5
+    images = []
+
+    ### Points Interpolation plots
+    white_pix = 4
+    num_rows = np.shape(inter_anchors)[0]
+    num_cols = np.shape(inter_anchors)[1]
+    pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
+    pics = pics[:,0]
+    pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    pics = pics[0]
+    if greyscale:
+        image = 1. - pics
+    else:
+        image = pics
+    images.append(image)
+
+    ### Prior Interpolation plots
+    white_pix = 4
+    num_rows = np.shape(inter_latent)[0]
+    num_cols = np.shape(inter_latent)[1]
+    pics = np.concatenate(np.split(inter_latent,num_cols,axis=1),axis=3)
+    pics = pics[:,0]
+    pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    pics = pics[0]
+    if greyscale:
+        image = 1. - pics
+    else:
+        image = pics
+    images.append(image)
+
+    ### Sample plots
+    num_pics = np.shape(samples)[0]
+    num_cols = np.sqrt(num_pics)
+    pics = []
+    for idx in range(num_pics):
+        if greyscale:
+            pics.append(1. - samples[idx, :, :, :])
+        else:
+            pics.append(samples[idx, :, :, :])
+    pics = np.array(pics)
+    image = np.concatenate(np.split(pics, num_cols), axis=2)
+    image = np.concatenate(image, axis=0)
+    images.append(image)
+
+    img1, img2, img3 = images
+
+    ###Settings for pyplot fig
+    dpi = 100
+    for img, title, filename in zip([img1, img2, img3],
+                         ['Points interpolation',
+                         'Latent interpolation',
+                         'Samples'],
+                         ['point_inter',
+                         'latent_inter',
+                         'pior_samples']):
+        height_pic = img.shape[0]
+        width_pic = img.shape[1]
+        fig_height = height_pic / 10
+        fig_width = width_pic / 10
+        fig = plt.figure(figsize=(fig_width, fig_height))
+        if greyscale:
+            image = img[:, :, 0]
+            # in Greys higher values correspond to darker colors
+            plt.imshow(image, cmap='Greys',
+                            interpolation='none', vmin=0., vmax=1.)
+        else:
+            plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+        # Removing axes, ticks, labels
+        plt.axis('off')
+        # # placing subplot
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+                hspace = 0, wspace = 0)
+        # Saving
+        filename = filename + '.png'
+        plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                    dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+        plt.close()
+
+    ### Embedings vizu
+    num_pics = np.shape(encoded[0])[0]
+    embeds = []
+    for i in range(len(encoded)):
+        encods = encoded[i]
+        if np.shape(encods)[-1]==2:
+            embedding = encods
+        else:
+            if opts['vizu_emb']=='pca':
+                embedding = PCA(n_components=2).fit_transform(encods)
+            elif opts['vizu_emb']=='umap':
+                embedding = umap.UMAP(n_neighbors=15,
+                                        min_dist=0.2,
+                                        metric='correlation').fit_transform(encods)
+            else:
+                assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
+        embeds.append(embedding)
+    # Creating a pyplot fig
+    dpi = 100
+    height_pic = 300
+    width_pic = 300
+    fig_height = 4*height_pic / float(dpi)
+    fig_width = 4*len(embeds) * height_pic  / float(dpi)
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    gs = matplotlib.gridspec.GridSpec(1, len(embeds))
+    for i in range(len(embeds)):
+        ax = plt.subplot(gs[0, i])
+        plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+        if i==len(embeds)-1:
+            plt.colorbar()
+        xmin = np.amin(embeds[i][:,0])
+        xmax = np.amax(embeds[i][:,0])
+        magnify = 0.01
+        width = abs(xmax - xmin)
+        xmin = xmin - width * magnify
+        xmax = xmax + width * magnify
+        ymin = np.amin(embeds[i][:,1])
+        ymax = np.amax(embeds[i][:,1])
+        width = abs(ymin - ymax)
+        ymin = ymin - width * magnify
+        ymax = ymax + width * magnify
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.legend(loc='best')
+        plt.text(0.47, 1., '%s latent %d' % (opts['vizu_emb'],i+1), ha="center", va="bottom",
+                                                size=20, transform=ax.transAxes)
+        # Removing ticks
+        ax.axes.get_xaxis().set_ticks([])
+        ax.axes.get_yaxis().set_ticks([])
+        ax.axes.set_aspect(1)
+    # Saving
+    filename = 'embeddings.png'
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+    plt.close()
+
+
 def discrete_cmap(N, base_cmap=None):
     """Create an N-bin discrete colormap from the specified input map"""
     # Note that if base_cmap is a string or None, you can simply do

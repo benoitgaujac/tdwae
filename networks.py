@@ -1,8 +1,13 @@
 import numpy as np
 import tensorflow as tf
-import ops
-from datahandler import datashapes
 from math import ceil, sqrt
+
+import ops.linear
+import ops.conv2d
+import ops.deconv2d
+# import ops.batchnorm
+import ops._ops
+from datahandler import datashapes
 
 import pdb
 
@@ -41,13 +46,15 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
                                                         is_training=False):
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear(opts, layer_x, num_units, scope='hid{}/lin'.format(i))
+        # layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid{}/lin'.format(i))
+        layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid{}/lin'.format(i))
         if batch_norm:
-            layer_x = ops.batch_norm(opts, layer_x, is_training,
+            layer_x = ops._ops.batch_norm(opts, layer_x, is_training,
                                                         reuse,
                                                         scope='hid{}/bn'.format(i))
-        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
-    outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
+        layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
+    # outputs = ops._ops.linear(opts, layer_x, output_dim, scope='hid_final')
+    outputs = ops.linear.Linear(opts=opts,inputs_=layer_x, output_dim=output_dim, scope='hid_final')
 
     return outputs
 
@@ -64,13 +71,14 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
     layer_x = inputs
     for i in range(num_layers):
         scale = 2**(num_layers - i - 1)
-        layer_x = ops.conv2d(opts, layer_x, int(num_units / scale),
+        layer_x = ops._ops.conv2d(opts, layer_x, int(num_units / scale),
                                             scope='hid{}/conv'.format(i))
         if batch_norm:
-            layer_x = ops.batch_norm(opts, layer_x, is_training, reuse,
+            layer_x = ops._ops.batch_norm(opts, layer_x, is_training, reuse,
                                             scope='hid{}/bn'.format(i))
-        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
-    outputs = ops.linear(opts, layer_x, output_dim, scope='hid_final')
+        layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
+    outputs = ops.linear.Linear(opts=opts,inputs_=layer_x, output_dim=output_dim, scope='hid_final')
+
     return outputs
 
 def decoder(opts, inputs, archi, num_layers, num_units, output_dim, scope,
@@ -106,19 +114,14 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     # Architecture with only fully connected layers and ReLUs
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
-        layer_x = ops.non_linear(layer_x,opts['non_linearity'])
+        # layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
+        layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid%d/lin' % i)
+        layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
         if batch_norm:
-            layer_x = ops.batch_norm(
+            layer_x = ops._ops.batch_norm(
                 opts, layer_x, is_training, reuse, scope='hid%d/bn' % i)
-    out = ops.linear(opts, layer_x, output_dim, 'hid_final')
-    # out = ops.linear(opts, layer_x,
-    #                  np.prod(outputs_shape), 'hid_final')
-    # out = tf.reshape(out, [-1] + list(outputs_shape))
-    # if opts['input_normalize_sym']:
-    #     return tf.nn.tanh(out), out
-    # else:
-    #     return tf.nn.sigmoid(out), out
+    # out = ops._ops.linear(opts, layer_x, output_dim, 'hid_final')
+    out = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=output_dim, scope='hid_final')
     mean, logSigma = tf.split(out,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 50)
     Sigma = tf.nn.softplus(logSigma)
@@ -131,12 +134,6 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
-    # # Reshaping if needed
-    # if len(output_dim)<3:
-    #     assert len(output_dim)==1, 'Wrong shape for inputs'
-    #     outputs_shape = (int(sqrt(output_dim/2)),int(sqrt(output_dim/2)),2)
-    # else:
-    #     outputs_shape = output_dim
 
     if output_dim==2*np.prod(datashapes[opts['dataset']]):
         # Highest latent layer: reconstructions have data shape
@@ -148,27 +145,27 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         elif archi == 'dcgan_mod':
             height = output_shape[0] / 2**(num_layers - 1)
             width = output_shape[1] / 2**(num_layers - 1)
-        h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
+        h0 = ops.linear.Linear(opts=opts, inputs_=inputs, output_dim=num_units * ceil(height) * ceil(width),
                                                             scope='hid0/lin')
         h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
-        h0 = ops.non_linear(h0,opts['non_linearity'])
+        h0 = ops._ops.non_linear(h0,opts['non_linearity'])
         layer_x = h0
         for i in range(num_layers - 1):
             scale = 2**(i + 1)
             _out_shape = [batch_size, ceil(height * scale),
                           ceil(width * scale), int(num_units / scale)]
-            layer_x = ops.deconv2d(opts, layer_x, _out_shape,
+            layer_x = ops._ops.deconv2d(opts, layer_x, _out_shape,
                                    scope='hid%d/deconv' % i)
             if batch_norm:
-                layer_x = ops.batch_norm(opts, layer_x,
+                layer_x = ops._ops.batch_norm(opts, layer_x,
                                          is_training, reuse, scope='hid%d/bn' % i)
-            layer_x = ops.non_linear(layer_x,opts['non_linearity'])
+            layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
         _out_shape = [batch_size] + list(output_shape)
         if archi == 'dcgan':
-            last_h = ops.deconv2d(
+            last_h = ops._ops.deconv2d(
                 opts, layer_x, _out_shape, scope='hid_final/deconv')
         elif archi == 'dcgan_mod':
-            last_h = ops.deconv2d(
+            last_h = ops._ops.deconv2d(
                 opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
         return last_h, None
     else:
@@ -181,34 +178,29 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         elif archi == 'dcgan_mod':
             height = output_shape[0] / 2**(num_layers - 1)
             width = output_shape[1] / 2**(num_layers - 1)
-        h0 = ops.linear(opts, inputs, num_units * ceil(height) * ceil(width),
+        h0 = ops.linear.Linear(opts=opts,inputs_=inputs, output_dim=num_units * ceil(height) * ceil(width),
                                                             scope='hid0/lin')
         h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
-        h0 = ops.non_linear(h0,opts['non_linearity'])
+        h0 = ops._ops.non_linear(h0,opts['non_linearity'])
         layer_x = h0
         for i in range(num_layers - 1):
             scale = 2**(i + 1)
             _out_shape = [batch_size, ceil(height * scale),
                           ceil(width * scale), int(num_units / scale)]
-            layer_x = ops.deconv2d(opts, layer_x, _out_shape,
+            layer_x = ops._ops.deconv2d(opts, layer_x, _out_shape,
                                    scope='hid%d/deconv' % i)
             if batch_norm:
-                layer_x = ops.batch_norm(opts, layer_x,
+                layer_x = ops._ops.batch_norm(opts, layer_x,
                                          is_training, reuse, scope='hid%d/bn' % i)
-            layer_x = ops.non_linear(layer_x,opts['non_linearity'])
+            layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
         _out_shape = [batch_size] + list(output_shape)
         if archi == 'dcgan':
-            last_h = ops.deconv2d(
+            last_h = ops._ops.deconv2d(
                 opts, layer_x, _out_shape, scope='hid_final/deconv')
         elif archi == 'dcgan_mod':
-            last_h = ops.deconv2d(
+            last_h = ops._ops.deconv2d(
                 opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
         mean, logSigma = tf.split(last_h,2,axis=-1)
         logSigma = tf.clip_by_value(logSigma, -50, 50)
         Sigma = tf.nn.softplus(logSigma)
         return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
-
-    # if opts['input_normalize_sym']:
-    #     return tf.nn.tanh(mean), Sigma
-    # else:
-    #     return tf.nn.sigmoid(mean), Sigma

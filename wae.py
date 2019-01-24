@@ -16,12 +16,11 @@ from math import sqrt, cos, sin, pi
 import numpy as np
 import tensorflow as tf
 
-import ops
 import utils
-from sampling_functions import sample_pz, sample_gaussian, generate_linespace
+from sampling_functions import sample_pz, sample_gaussian, linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
-from plot_functions import save_train, plot_sinkhorn, plot_embedded
+from plot_functions import save_train, plot_sinkhorn, plot_embedded, save_latent_interpolation
 from networks import encoder, decoder
 from datahandler import datashapes
 
@@ -330,8 +329,8 @@ class WAE(object):
     def _get_inception_layer(self):
         # Get inception activation layer (and reshape for batching)
         pool3 = self.inception_sess.graph.get_tensor_by_name(layername)
-        ops = pool3.graph.get_operations()
-        for op_idx, op in enumerate(ops):
+        ops_pool3 = pool3.graph.get_operations()
+        for op_idx, op in enumerate(ops_pool3):
             for o in op.outputs:
                 shape = o.get_shape()
                 if shape._dims != []:
@@ -346,7 +345,7 @@ class WAE(object):
         return pool3
 
 
-    def train(self, data, MODEL_DIR, WEIGHTS_FILE):
+    def train(self, data, WEIGHTS_FILE):
         """
         Train top-down model with chosen method
         """
@@ -587,6 +586,78 @@ class WAE(object):
                                                 global_step=counter)
 
 
+    def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Plot and save different latent interpolation
+        """
+
+        opts = self.opts
+        # Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+        # Set up
+        test_size = np.shape(data.test_data)[0]
+        num_steps = 40
+        num_anchors = 10
+        imshape = datashapes[opts['dataset']]
+
+        # Auto-encoding test images
+        logging.error('Encoding test images..')
+        num_pics = 5000
+        encoded = self.sess.run(self.encoded,
+                                feed_dict={self.points:data.test_data[:num_pics],
+                                           self.is_training:False})
+        encshape = list(np.shape(encoded[-1])[1:])
+        # Encode anchors points and interpolate
+        logging.error('Anchors interpolation..')
+        anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
+        data_anchors = data.test_data[anchors_ids]
+        enc_anchors = encoded[-1][anchors_ids]
+        enc_interpolation = linespace(opts, num_steps,
+                                anchors=np.reshape(enc_anchors,[-1,2]+encshape))
+        dec_anchors = self.sess.run(self.decoded[-1],
+                                feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
+                                           self.is_training: False})
+        inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
+        # end_anchors,start_anchors = np.split(np.reshape(data_anchors,[-1,2]+imshape),2,axis=1)
+        # inter_anchors = np.concatenate((start_anchors,
+        #                                 np.concatenate((inter_anchors,end_anchors), axis=1)),
+        #                                 axis=1)
+        # Latent interpolation
+        logging.error('Latent interpolation..')
+        enc_mean = np.mean(encoded[-1],axis=0)
+        enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+        mins, maxs = enc_mean - 3*np.sqrt(enc_var), enc_mean + 3*np.sqrt(enc_var)
+        x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
+        xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
+        xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
+        latent_anchors = np.stack([xymin,xymax],axis=1)
+        grid_interpolation = linespace(opts, num_steps,
+                                anchors=latent_anchors)
+        dec_latent = self.sess.run(self.decoded[-1],
+                                feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+encshape),
+                                           self.is_training: False})
+        inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
+        # Samples generation
+        logging.error('Samples generation..')
+        num_cols = 15
+        npics = num_cols**2
+        prior_noise = sample_pz(opts, self.pz_params, npics)
+        samples = self.sess.run(self.decoded[-1],
+                               feed_dict={self.samples: prior_noise,
+                                          self.is_training: False})
+        # Making plots
+        logging.error('Saving images..')
+        save_latent_interpolation(opts, data.test_labels[:num_pics], # labels
+                        encoded, # encoded points
+                        inter_anchors, inter_latent, # anchors and latents interpolation
+                        samples, # samples
+                        MODEL_PATH) # working directory
+
     # def test(self, data, MODEL_DIR, WEIGHTS_FILE):
     #     """
     #     Test trained MoG model with chosen method
@@ -700,99 +771,3 @@ class WAE(object):
     #     np.save(os.path.join(MODEL_PATH,filename),res_test)
     #
     #
-    # def vizu(self, data, MODEL_DIR, WEIGHTS_FILE):
-    #     """
-    #     Plot and save different visualizations
-    #     """
-    #
-    #     opts = self.opts
-    #     # Load trained weights
-    #     MODEL_PATH = os.path.join(opts['method'],MODEL_DIR)
-    #     if not tf.gfile.IsDirectory(MODEL_PATH):
-    #         raise Exception("model doesn't exist")
-    #     WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-    #     if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
-    #         raise Exception("weights file doesn't exist")
-    #     self.saver.restore(self.sess, WEIGHTS_PATH)
-    #     # Set up
-    #     num_pics = 1000
-    #     test_size = np.shape(data.test_data)[0]
-    #     step_inter = 20
-    #     num_anchors = opts['nmixtures']
-    #     imshape = datashapes[opts['dataset']]
-    #     # Auto-encoding training images
-    #     logging.error('Encoding and decoding train images..')
-    #     rec_train = self.sess.run(self.reconstructed_point,
-    #                               feed_dict={self.points: data.data[:num_pics],
-    #                                          self.is_training: False})
-    #     # Auto-encoding test images
-    #     logging.error('Encoding and decoding test images..')
-    #     [rec_test, encoded, pi] = self.sess.run(
-    #                             [self.reconstructed_point,
-    #                              self.encoded_point,
-    #                              self.pi],
-    #                             feed_dict={self.points:data.test_data[:num_pics],
-    #                                        self.is_training:False})
-    #     # Encode anchors points and interpolate
-    #     logging.error('Encoding anchors points and interpolating..')
-    #     anchors_ids = np.random.choice(test_size,2*num_anchors,replace=False)
-    #     anchors = data.test_data[anchors_ids]
-    #     enc_anchors = self.sess.run(self.encoded_point,
-    #                             feed_dict={self.points: anchors,
-    #                                        self.is_training: False})
-    #     enc_interpolation = generate_linespace(opts, step_inter,
-    #                             'points_interpolation',
-    #                             anchors=enc_anchors)
-    #     #noise = enc_interpolation.reshape(-1,opts['zdim'])
-    #     noise = np.transpose(enc_interpolation,(1,0,2))
-    #     decoded = self.sess.run(self.decoded,
-    #                             feed_dict={self.sample_noise: noise,
-    #                                        self.is_training: False})
-    #     #interpolation = decoded.reshape([-1,step_inter]+imshape)
-    #     interpolation = np.transpose(decoded,(1,0,2,3,4))
-    #     start_anchors = anchors[::2]
-    #     end_anchors = anchors[1::2]
-    #     interpolation = np.concatenate((start_anchors[:,np.newaxis],
-    #                                     np.concatenate((interpolation,end_anchors[:,np.newaxis]), axis=1)),
-    #                                     axis=1)
-    #     # Random samples generated by the model
-    #     logging.error('Decoding random samples..')
-    #     prior_noise = sample_pz(opts, self.pz_mean,
-    #                             self.pz_sigma,
-    #                             num_pics,
-    #                             sampling_mode = 'per_mixture')
-    #     samples = self.sess.run(self.decoded,
-    #                            feed_dict={self.sample_noise: prior_noise,
-    #                                       self.is_training: False})
-    #     # Encode prior means and interpolate
-    #     logging.error('Generating latent linespace and decoding..')
-    #     ancs = np.concatenate((self.pz_mean,self.pz_mean[0][np.newaxis,:]),axis=0)
-    #     if opts['zdim']==2:
-    #         pz_mean_interpolation = generate_linespace(opts, step_inter+2,
-    #                                                    'transformation',
-    #                                                anchors=ancs)
-    #     else:
-    #         pz_mean_interpolation = generate_linespace(opts, step_inter+2,
-    #                                              'priors_interpolation',
-    #                                                anchors=ancs)
-    #     #noise = pz_mean_interpolation.reshape(-1,opts['zdim'])
-    #     noise = np.transpose(pz_mean_interpolation,(1,0,2))
-    #     decoded = self.sess.run(self.decoded,
-    #                             feed_dict={self.sample_noise: noise,
-    #                                        self.is_training: False})
-    #     #prior_interpolation = decoded.reshape([-1,step_inter]+imshape)
-    #     prior_interpolation = np.transpose(decoded,(1,0,2,3,4))
-    #
-    #
-    #
-    #     # Making plots
-    #     logging.error('Saving images..')
-    #     save_vizu(opts, data.data[:num_pics], data.test_data[:num_pics],    # images
-    #                     data.test_labels[:num_pics],                        # labels
-    #                     rec_train, rec_test,                                # reconstructions
-    #                     pi,                                                 # mixweights
-    #                     encoded,                                            # encoded points
-    #                     prior_noise,                                        # prior samples
-    #                     samples,                                            # samples
-    #                     interpolation, prior_interpolation,                 # interpolations
-    #                     MODEL_PATH)                                         # working directory

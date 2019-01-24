@@ -43,6 +43,26 @@ def sample_dirichlet(opts, alpha, batch_size=100):
     return np.random.dirichlet(alpha, batch_size)
 
 
+def linespace(opts,n,anchors):
+    """
+    Genereate linear grid space
+        - n:  Num of steps in the interpolation
+        - anchors[num_interpolations,2,zdim]: start/end of the linear interpolations
+    Return:
+    linespce[num_interpolations,num_steps,zdim]: list of linear interpolations
+    """
+    linespce = []
+    num_inter = np.shape(anchors)[0]
+    for i in range(num_inter):
+        x = np.linspace(anchors[i,0,0],anchors[i,1,0],n,endpoint=True)
+        y = np.linspace(anchors[i,0,1],anchors[i,1,1],n,endpoint=True)
+        linespce.append(np.stack([x,y],axis=-1))
+    linespce = np.stack(linespce,axis=0)
+
+    return linespce
+
+
+
 def generate_linespace(opts, n, mode, anchors):
     """
     Genereate latent linear grid space

@@ -166,5 +166,8 @@ def non_linear(inputs,type):
         return tf.nn.softplus(inputs)
     elif type=='tanh':
         return tf.nn.tanh(inputs)
+    elif type=='leaky_relu':
+        alpha = .2
+        return tf.maximum(alpha*inputs, inputs)
     else:
         assert False, 'Unknow non linear operation'

@@ -71,9 +71,9 @@ def main():
     # Create directories
     utils.create_dir(opts['method'])
     work_dir = os.path.join(opts['method'],opts['work_dir'])
+    opts['work_dir'] = work_dir
     utils.create_dir(work_dir)
     utils.create_dir(os.path.join(work_dir, 'checkpoints'))
-
     # Dumping all the configs to the text file
     with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
         text.write('Parameters:\n')
@@ -92,7 +92,7 @@ def main():
 
     # Training/testing/vizu
     if FLAGS.mode=="train":
-        wae.train(data, opts['work_dir'], FLAGS.weights_file)
+        wae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     else:
