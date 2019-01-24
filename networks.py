@@ -46,15 +46,15 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
                                                         is_training=False):
     layer_x = inputs
     for i in range(num_layers):
-        # layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid{}/lin'.format(i))
-        layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid{}/lin'.format(i))
+        layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid{}/lin'.format(i))
+        # layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid{}/lin'.format(i))
         if batch_norm:
             layer_x = ops._ops.batch_norm(opts, layer_x, is_training,
                                                         reuse,
                                                         scope='hid{}/bn'.format(i))
         layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
-    # outputs = ops._ops.linear(opts, layer_x, output_dim, scope='hid_final')
-    outputs = ops.linear.Linear(opts=opts,inputs_=layer_x, output_dim=output_dim, scope='hid_final')
+    outputs = ops._ops.linear(opts, layer_x, output_dim, scope='hid_final')
+    # outputs = ops.linear.Linear(opts=opts,inputs_=layer_x, output_dim=output_dim, scope='hid_final')
 
     return outputs
 
@@ -114,14 +114,14 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     # Architecture with only fully connected layers and ReLUs
     layer_x = inputs
     for i in range(num_layers):
-        # layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
-        layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid%d/lin' % i)
+        layer_x = ops._ops.linear(opts, layer_x, num_units, scope='hid%d/lin' % i)
+        # layer_x = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=num_units, scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['non_linearity'])
         if batch_norm:
             layer_x = ops._ops.batch_norm(
                 opts, layer_x, is_training, reuse, scope='hid%d/bn' % i)
-    # out = ops._ops.linear(opts, layer_x, output_dim, 'hid_final')
-    out = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=output_dim, scope='hid_final')
+    out = ops._ops.linear(opts, layer_x, output_dim, 'hid_final')
+    # out = ops.linear.Linear(opts=opts, inputs_=layer_x, output_dim=output_dim, scope='hid_final')
     mean, logSigma = tf.split(out,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 50)
     Sigma = tf.nn.softplus(logSigma)
