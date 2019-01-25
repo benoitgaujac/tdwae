@@ -53,6 +53,8 @@ def main():
     # Select training method and create dir
     if FLAGS.method:
         opts['method'] = FLAGS.method
+    if not tf.gfile.Exists(opts['method']):
+        utils.create_dir(opts['method'])
 
     # Verbose
     if opts['verbose']:
@@ -65,7 +67,6 @@ def main():
 
     # Create root directories
     utils.create_dir(opts['method'])
-
     # Experiments
     lambda_values = [FLAGS.base_lambda**i for i in range(1,-3,-1)]
     for lambda_scalar in lambda_values:
