@@ -96,7 +96,7 @@ def main():
 
         # Training/testing/vizu
         if FLAGS.mode=="train":
-            wae.train(data, opts['work_dir'], FLAGS.weights_file)
+            wae.train(data, FLAGS.weights_file)
         elif FLAGS.mode=="vizu":
             raise ValueError('To implement')
             wae.vizu(data, opts['work_dir'], FLAGS.weights_file)
