@@ -53,8 +53,6 @@ def main():
     # Select training method and create dir
     if FLAGS.method:
         opts['method'] = FLAGS.method
-    if not tf.gfile.Exists(opts['method']):
-        utils.create_dir(opts['method'])
 
     # Verbose
     if opts['verbose']:
@@ -65,8 +63,11 @@ def main():
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
+    # Create root directories
+    utils.create_dir(opts['method'])
+
     # Experiments
-    lambda_values = [FLAGS.base_lambda**i for i in range(2,-2,-1)]
+    lambda_values = [FLAGS.base_lambda**i for i in range(1,-3,-1)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
@@ -75,14 +76,11 @@ def main():
         opts['lambda'].append(opts['lambda_scalar'])
 
         # Create working directories
-        if FLAGS.work_dir:
-            work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
-        else:
-            work_dir = opts['work_dir'] + '_' + str(lambda_scalar)
-        work_path = os.path.join(opts['method'],work_dir)
-        utils.create_dir(work_path)
-        opts['work_dir'] = work_path
-        utils.create_dir(os.path.join(work_path, 'checkpoints'))
+        work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
+        work_dir = os.path.join(opts['method'],opts['work_dir'])
+        opts['work_dir'] = work_dir
+        utils.create_dir(work_dir)
+        utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
         # Dumping all the configs to the text file
         with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
