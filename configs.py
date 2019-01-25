@@ -6,7 +6,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 10000
-config_mnist['print_every'] = 10000
+config_mnist['print_every'] = 1000
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['vizu_emb'] = 'umap' #vizualisation method of the embeddings: pca, umap
@@ -38,7 +38,7 @@ config_mnist['lr'] = 0.0005
 config_mnist['lr_adv'] = 0.0008
 config_mnist['batch_norm'] = True
 config_mnist['batch_norm_eps'] = 1e-05
-config_mnist['batch_norm_decay'] = 0.9
+config_mnist['batch_norm_momentum'] = 0.99
 
 # Objective set up
 config_mnist['coef_rec'] = 1. # coef recon loss
@@ -49,35 +49,36 @@ config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_mnist['nlatents'] = 4
-config_mnist['zdim'] = [16,8,4,2]
+config_mnist['nlatents'] = 3
+config_mnist['zdim'] = [9,4,2]
 config_mnist['pz_scale'] = 1.
 config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
 
 # lambda set up
-config_mnist['lambda_scalar'] = 1.
+config_mnist['lambda_scalar'] = .1
 config_mnist['lambda'] = [1. for i in range(len(config_mnist['zdim'])-1)]
-config_mnist['lambda'].append(10.)
+config_mnist['lambda'].append(config_mnist['lambda_scalar'])
 # config_mnist['lambda'] = [config_mnist['zdim'][i]*config_mnist['lambda_scalar']**(i+1)/784 for i in range(len(config_mnist['zdim'])-1)]
 # config_mnist['lambda'].append(config_mnist['coef_rec']*config_mnist['lambda_scalar']**config_mnist['nlatents']/784)
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
-config_mnist['conv_filters_dim'] = 3
+config_mnist['filter_size'] = 3
 config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
 config_mnist['non_linearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-config_mnist['mlp_init'] = 'he' #None, `lecun`, 'glorot', `he`, 'glorot_he', `orthogonal`, `("uniform", range)`
+config_mnist['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
-config_mnist['encoder'] = ['gauss','gauss','gauss',det'] #['gauss','gauss','gauss','det'] # deterministic, gaussian
-config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan
+config_mnist['encoder'] = ['gauss','gauss','gauss'] # deterministic, gaussian
+config_mnist['e_arch'] = ['dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan
 config_mnist['e_nlayers'] = [2,2,2,2]
-config_mnist['e_nfilters'] = [512,256,128,64,32]
+config_mnist['e_nfilters'] = [256,128,64,32]
 
-config_mnist['decoder'] = ['det','det','det','det'] #['det','det','det','det'] # deterministic, gaussian
+config_mnist['decoder'] = ['det','det','det'] # deterministic, gaussian
 config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
 config_mnist['d_nlayers'] = [2,2,2,2]
-config_mnist['d_nfilters'] = [512,256,128,64,32]
+config_mnist['d_nfilters'] = [256,128,64,32]
 
 
 ### CIFAR 10 config
@@ -116,7 +117,7 @@ config_cifar10['lr'] = 0.0001
 config_cifar10['lr_adv'] = 0.0008
 config_cifar10['batch_norm'] = True
 config_cifar10['batch_norm_eps'] = 1e-05
-config_cifar10['batch_norm_decay'] = 0.9
+config_cifar10['batch_norm_momentum'] = 0.99
 
 # Objective set up
 config_cifar10['coef_rec'] = 1. # coef recon loss
@@ -139,10 +140,12 @@ config_cifar10['lambda'].append(config_cifar10['coef_rec']*config_cifar10['lambd
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
-config_cifar10['conv_filters_dim'] = 3
+config_cifar10['filter_size'] = 3
 config_cifar10['init_std'] = 0.099999
 config_cifar10['init_bias'] = 0.0
 config_cifar10['non_linearity'] = 'soft_plus' # soft_plus, relu, tanh
+config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
 config_cifar10['encoder'] = ['gauss','gauss','det'] # deterministic, gaussian
 config_cifar10['e_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began

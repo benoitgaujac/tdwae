@@ -271,7 +271,9 @@ class WAE(object):
         decoder_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                                 scope='decoder')
         ae_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-        self.wae_opt = opt.minimize(loss=self.objective, var_list=ae_vars)
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            self.wae_opt = opt.minimize(loss=self.objective, var_list=ae_vars)
         # Pretraining optimizer
         if opts['e_pretrain']:
             pre_opt = self.optimizer(0.001)
