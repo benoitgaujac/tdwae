@@ -50,12 +50,12 @@ def Deconv2D(opts, input_, output_shape, stride=2, scope=None, filter_size=3, in
             raise Exception('Invalid %s conv initialization!' % opts['conv_init'])
         deconv = tf.nn.conv2d_transpose(
             input_, w, output_shape=output_shape,
-            strides=[1, stride, stride, 1], padding='padding')
+            strides=[1, stride, stride, 1], padding=padding)
 
         if biases:
             biais = tf.get_variable(
                 'b', [output_dim],
                 initializer=tf.constant_initializer(0.0))
-            deconv = tf.nn.bias_add(result, biais)
+            deconv = tf.nn.bias_add(deconv, biais)
 
     return deconv

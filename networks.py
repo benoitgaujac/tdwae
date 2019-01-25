@@ -164,7 +164,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                           ceil(width * scale), int(num_units / scale)]
             # layer_x = ops._ops.deconv2d(opts, layer_x, _out_shape,
             #            scope='hid%d/deconv' % i)
-            layer_x = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
+            layer_x = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
                        scope='hid%d/deconv' % i, init= opts['conv_init'])
             if batch_norm:
                 layer_x = ops.batchnorm.Batchnorm_layers(
@@ -176,13 +176,13 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         if archi == 'dcgan':
             # last_h = ops._ops.deconv2d(
             #             opts, layer_x, _out_shape, scope='hid_final/deconv')
-            layer_h = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
-                        scope='hid_final/deconv' % i, init= opts['conv_init'])
+            last_h = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+                        scope='hid_final/deconv', init= opts['conv_init'])
         elif archi == 'dcgan_mod':
             # last_h = ops._ops.deconv2d(
             #             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
-            layer_h = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
-                        stride = [1,1,1,1], scope='hid_final/deconv' % i, init= opts['conv_init'])
+            last_h = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+                        stride = [1,1,1,1], scope='hid_final/deconv', init= opts['conv_init'])
         return last_h, None
     else:
         # Deeper latent layers: reconstructions have shape (h,w,2)
@@ -205,7 +205,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                           ceil(width * scale), int(num_units / scale)]
             # layer_x = ops._ops.deconv2d(opts, layer_x, _out_shape,
             #                        scope='hid%d/deconv' % i)
-            layer_x = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
+            layer_x = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
                        scope='hid%d/deconv' % i, init= opts['conv_init'])
             if batch_norm:
                 layer_x = ops.batchnorm.Batchnorm_layers(
@@ -217,13 +217,13 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         if archi == 'dcgan':
             # last_h = ops._ops.deconv2d(
             #     opts, layer_x, _out_shape, scope='hid_final/deconv')
-            layer_h = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
-                        scope='hid_final/deconv' % i, init= opts['conv_init'])
+            last_h = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+                        scope='hid_final/deconv', init= opts['conv_init'])
         elif archi == 'dcgan_mod':
             # last_h = ops._ops.deconv2d(
             #     opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
-            layer_h = ops.deconv2d.Deconv2d(opts, layer_x, _out_shape,
-                        stride = [1,1,1,1], scope='hid_final/deconv' % i, init= opts['conv_init'])
+            last_h = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+                        stride = [1,1,1,1], scope='hid_final/deconv', init= opts['conv_init'])
         mean, logSigma = tf.split(last_h,2,axis=-1)
         logSigma = tf.clip_by_value(logSigma, -50, 50)
         Sigma = tf.nn.softplus(logSigma)
