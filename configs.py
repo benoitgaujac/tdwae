@@ -6,7 +6,7 @@ config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 10000
-config_mnist['print_every'] = 1000
+config_mnist['print_every'] = 500
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['vizu_emb'] = 'umap' #vizualisation method of the embeddings: pca, umap
@@ -23,7 +23,7 @@ config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-ce
 
 # Experiment set up
 config_mnist['train_dataset_size'] = -1
-config_mnist['batch_size'] = 256
+config_mnist['batch_size'] = 128
 config_mnist['epoch_num'] = 100
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
@@ -49,8 +49,8 @@ config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_mnist['nlatents'] = 3
-config_mnist['zdim'] = [9,4,2]
+config_mnist['nlatents'] = 2
+config_mnist['zdim'] = [9,2]
 config_mnist['pz_scale'] = 1.
 config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
 
@@ -66,19 +66,20 @@ config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 config_mnist['filter_size'] = 3
 config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
-config_mnist['non_linearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 config_mnist['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
-config_mnist['encoder'] = ['gauss','gauss','gauss'] # deterministic, gaussian
+config_mnist['encoder'] = ['det','det'] # deterministic, gaussian
 config_mnist['e_arch'] = ['dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan
 config_mnist['e_nlayers'] = [2,2,2,2]
-config_mnist['e_nfilters'] = [256,128,64,32]
+config_mnist['e_nfilters'] = [32,16]
+config_mnist['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
-config_mnist['decoder'] = ['det','det','det'] # deterministic, gaussian
-config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-config_mnist['d_nlayers'] = [2,2,2,2]
-config_mnist['d_nfilters'] = [256,128,64,32]
+config_mnist['decoder'] = ['gauss','gauss'] # deterministic, gaussian
+config_mnist['d_arch'] = ['dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod
+config_mnist['d_nlayers'] = [2,2]
+config_mnist['d_nfilters'] = [32,16]
+config_mnist['d_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
 
 
 ### CIFAR 10 config
@@ -86,7 +87,7 @@ config_cifar10 = {}
 # Outputs set up
 config_cifar10['verbose'] = False
 config_cifar10['save_every_epoch'] = 1000
-config_cifar10['print_every'] = 400
+config_cifar10['print_every'] = 500
 config_cifar10['vizu_sinkhorn'] = False
 config_cifar10['vizu_embedded'] = True
 config_cifar10['vizu_emb'] = 'pca' #vizualisation method of the embeddings: pca, umap
@@ -129,7 +130,7 @@ config_cifar10['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
 config_cifar10['nlatents'] = 3
-config_cifar10['zdim'] = [16,8,4]
+config_cifar10['zdim'] = [9,4,2]
 config_cifar10['pz_scale'] = 1.
 config_cifar10['prior'] = 'gaussian' # dirichlet or gaussian
 
@@ -143,16 +144,18 @@ config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 config_cifar10['filter_size'] = 3
 config_cifar10['init_std'] = 0.099999
 config_cifar10['init_bias'] = 0.0
-config_cifar10['non_linearity'] = 'soft_plus' # soft_plus, relu, tanh
 config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
 config_cifar10['encoder'] = ['gauss','gauss','det'] # deterministic, gaussian
-config_cifar10['e_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
-config_cifar10['e_nlayers'] = [5,4,3,2,2]
-config_cifar10['e_nfilters'] = [512,256,128,64,32]
+config_cifar10['e_arch'] = ['dcgan','dcgan','mlp','mlp','mlp'] # mlp, dcgan, ali, began
+config_cifar10['e_nlayers'] = [2,2,2,2,2]
+config_cifar10['e_nfilters'] = [64,32,16]
+config_cifar10['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
 
 config_cifar10['decoder'] = ['det','det','det'] # deterministic, gaussian
-config_cifar10['d_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
-config_cifar10['d_nlayers'] = [5,4,3,2,2]
-config_cifar10['d_nfilters'] = [512,256,128,64,32]
+config_cifar10['d_arch'] = ['dcgan','dcgan','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
+config_cifar10['d_nlayers'] = [2,2,2,2,2]
+config_cifar10['d_nfilters'] = [64,32,16]
+config_cifar10['d_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
