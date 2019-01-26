@@ -85,11 +85,16 @@ class WAE(object):
         for n in range(opts['nlatents']):
             if opts['prior']=='implicit' and n==0 or opts['prior']!='implicit':
                 # - Encoding points
+                # Setting output_dim
+                if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
+                    enc_output_dim = 2*opts['zdim'][n]
+                else:
+                    enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
                 enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
                                                     archi=opts['e_arch'][n],
                                                     num_layers=opts['e_nlayers'][n],
                                                     num_units=opts['e_nfilters'][n],
-                                                    output_dim=opts['zdim'][n],
+                                                    output_dim=enc_output_dim,
                                                     scope='encoder/layer_%d' % (n+1),
                                                     reuse=False,
                                                     is_training=self.is_training)
@@ -109,7 +114,7 @@ class WAE(object):
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
                                                     num_units=opts['d_nfilters'][n],
-                                                    output_dim=np.prod(datashapes[opts['dataset']]),
+                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                     scope='decoder/layer_%d' % n,
                                                     reuse=False,
                                                     is_training=self.is_training)
@@ -129,11 +134,16 @@ class WAE(object):
                                                     reconstructed)
                     self.loss_reconstruct += loss_reconstruct
                 else:
+                    # Setting output_dim
+                    if opts['e_arch'][n-1]=='mlp':
+                        dec_output_dim = 2*opts['zdim'][n-1]
+                    else:
+                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
                                                     num_units=opts['d_nfilters'][n],
-                                                    output_dim=opts['zdim'][n-1],
+                                                    output_dim=dec_output_dim,
                                                     scope='decoder/layer_%d' % n,
                                                     reuse=False,
                                                     is_training=self.is_training)
@@ -149,7 +159,6 @@ class WAE(object):
                     self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
                 self.reconstructed.append(reconstructed)
                 self.losses_reconstruct.append(loss_reconstruct)
-
         # --- Sampling from model (only for generation)
         # reuse cariable
         if opts['prior']=='implicit':
@@ -163,7 +172,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
-                                                output_dim=np.prod(datashapes[opts['dataset']]),
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
@@ -180,11 +189,16 @@ class WAE(object):
                     decoded=tf.nn.sigmoid(decoded)
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
             else:
+                # Setting output_dim
+                if opts['e_arch'][n-1]=='mlp':
+                    dec_output_dim = 2*opts['zdim'][n-1]
+                else:
+                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
                 decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
-                                                output_dim=opts['zdim'][n-1],
+                                                output_dim=dec_output_dim,
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
                                                 is_training=self.is_training)

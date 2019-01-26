@@ -65,8 +65,6 @@ def main():
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
-    # Create root directories
-    utils.create_dir(opts['method'])
     # Experiments
     lambda_values = [FLAGS.base_lambda**i for i in range(1,-3,-1)]
     for lambda_scalar in lambda_values:
