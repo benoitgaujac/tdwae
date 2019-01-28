@@ -10,7 +10,7 @@ def custom_uniform(stdev, size):
                             size=size
                             ).astype('float32')
 
-def Linear(opts, input_, output_dim, scope=None, init=None, reuse=None):
+def Linear(opts, input_, input_dim, output_dim, scope=None, init=None, reuse=None):
     """Fully connected linear layer.
 
     Args:
@@ -23,8 +23,8 @@ def Linear(opts, input_, output_dim, scope=None, init=None, reuse=None):
 
     stddev = opts['init_std']
     bias_start = opts['init_bias']
-    shape = input_.get_shape().as_list()
-    input_dim = np.prod(shape[1:])
+    # shape = input_.get_shape().as_list()
+    # input_dim = np.prod(shape[1:])
 
     assert len(shape) > 0
     in_shape = shape[1]

@@ -46,7 +46,7 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
                                                         is_training=False):
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear.Linear(opts=opts, input_=layer_x,
+        layer_x = ops.linear.Linear(opts=opts, input_=layer_x, input_dim=layer_x.get_shape().as_list()[-1],
             output_dim=num_units, init=opts['mlp_init'], scope='hid{}/lin'.format(i))
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
@@ -54,7 +54,7 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #    opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-    outputs = ops.linear.Linear(opts=opts, input_=layer_x,
+    outputs = ops.linear.Linear(opts=opts, input_=layer_x, input_dim=layer_x.get_shape().as_list()[-1],
         output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
@@ -76,7 +76,7 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
         scale = 2**(num_layers - i - 1)
         # layer_x = ops._ops.conv2d(opts, layer_x, int(num_units / scale), opts['filter_size']
         #                                     scope='hid{}/conv'.format(i),init=opts['conv_init'])
-        layer_x = ops.conv2d.Conv2d(opts, layer_x, int(num_units / scale),
+        layer_x = ops.conv2d.Conv2d(opts, layer_x, layer_x.get_shape().as_list()[-1], int(num_units / scale),
                 opts['filter_size'],scope='hid{}/conv'.format(i),init=opts['conv_init'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
@@ -84,7 +84,7 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-    outputs = ops.linear.Linear(opts=opts,input_=layer_x,
+    outputs = ops.linear.Linear(opts=opts,input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
         output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
@@ -127,7 +127,7 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     # Architecture with only fully connected layers and ReLUs
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear.Linear(opts=opts, input_=layer_x,
+        layer_x = ops.linear.Linear(opts=opts, input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
             output_dim=num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
         if batch_norm:
@@ -135,7 +135,7 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
-    outputs = ops.linear.Linear(opts=opts, input_=layer_x,
+    outputs = ops.linear.Linear(opts=opts, input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
             output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
@@ -200,10 +200,10 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
     elif archi == 'dcgan_mod':
         height = output_shape[0] / 2**(num_layers - 1)
         width = output_shape[1] / 2**(num_layers - 1)
-    h0 = ops.linear.Linear(opts=opts,input_=inputs,
+    h0 = ops.linear.Linear(opts=opts,input_=inputs,input_dim=inputs.get_shape().as_list()[-1],
             output_dim=num_units * ceil(height) * ceil(width), scope='hid0/lin')
     if batch_norm:
-        layer_x = ops.batchnorm.Batchnorm_layers(
+        h0 = ops.batchnorm.Batchnorm_layers(
             opts, h0, 'hid0/bn_lin', is_training, reuse)
     h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
     h0 = ops._ops.non_linear(h0,opts['d_nonlinearity'])
@@ -214,7 +214,7 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
                       ceil(width * scale), int(num_units / scale)]
         # layer_x = ops._ops.deconv2d(opts, layer_x, _out_shape,
         #                        scope='hid%d/deconv' % i)
-        layer_x = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+        layer_x = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
                    scope='hid%d/deconv' % i, init= opts['conv_init'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
@@ -226,12 +226,12 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
     if archi == 'dcgan':
         # last_h = ops._ops.deconv2d(
         #     opts, layer_x, _out_shape, scope='hid_final/deconv')
-        outputs = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+        outputs = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
                     scope='hid_final/deconv', init= opts['conv_init'])
     elif archi == 'dcgan_mod':
         # last_h = ops._ops.deconv2d(
         #     opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hid_final/deconv')
-        outputs = ops.deconv2d.Deconv2D(opts, layer_x, _out_shape,
+        outputs = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
                     stride = [1,1,1,1], scope='hid_final/deconv', init= opts['conv_init'])
 
     # return tf.layers.flatten(mean), tf.layers.flatten(Sigma)

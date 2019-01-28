@@ -11,7 +11,7 @@ def custom_uniform(stdev, size):
     ).astype('float32')
 
 
-def Conv2d(opts, input_, output_dim, filter_size, stride=1, padding='SAME', scope=None, init='he', biases=True):
+def Conv2d(opts, input_, input_dim, output_dim, filter_size, stride=1, padding='SAME', scope=None, init='he', biases=True):
     """Convolutional layer.
 
     Args:
@@ -19,8 +19,8 @@ def Conv2d(opts, input_, output_dim, filter_size, stride=1, padding='SAME', scop
 
     """
 
-    shape = input_.get_shape().as_list()
-    input_dim = shape[-1]
+    # shape = input_.get_shape().as_list()
+    # input_dim = shape[-1]
     if filter_size is None:
         filter_size = opts['filter_size']
 

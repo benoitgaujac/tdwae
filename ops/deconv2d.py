@@ -11,14 +11,14 @@ def custom_uniform(stdev, size):
     ).astype('float32')
 
 
-def Deconv2D(opts, input_, output_shape, stride=2, scope=None, filter_size=3, init='he', padding='SAME', biases=True):
+def Deconv2D(opts, input_, input_dim, output_shape, stride=2, scope=None, filter_size=3, init='he', padding='SAME', biases=True):
     """2D Transposed convolution (fractional stride convolution) layer.
     input_: tensor of shape (batch size, height, width, input_dim)
     returns: tensor of shape (batch size, height, width, output_dim)
     """
 
-    shape = input_.get_shape().as_list()
-    input_dim = shape[-1]
+    # shape = input_.get_shape().as_list()
+    # input_dim = shape[-1]
     output_dim = output_shape[-1]
     if filter_size is None:
         filter_size = opts['filter_size']
