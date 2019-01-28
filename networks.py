@@ -77,7 +77,7 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
         # layer_x = ops._ops.conv2d(opts, layer_x, int(num_units / scale), opts['filter_size']
         #                                     scope='hid{}/conv'.format(i),init=opts['conv_init'])
         layer_x = ops.conv2d.Conv2d(opts, layer_x, layer_x.get_shape().as_list()[-1], int(num_units / scale),
-                opts['filter_size'],scope='hid{}/conv'.format(i),init=opts['conv_init'])
+                opts['filter_size'],stride=2,scope='hid{}/conv'.format(i),init=opts['conv_init'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
