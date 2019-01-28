@@ -24,7 +24,7 @@ def Conv2d(opts, input_, input_dim, output_dim, filter_size, stride=1, padding='
     if filter_size is None:
         filter_size = opts['filter_size']
 
-    assert len(shape) == 4, 'Conv2d works only with 4d tensors.'
+    assert len(input_.get_shape().as_list()) == 4, 'Conv2d works only with 4d tensors.'
 
     with tf.variable_scope(scope or 'conv2d'):
         if init=='he':

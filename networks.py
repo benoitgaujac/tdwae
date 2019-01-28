@@ -46,16 +46,16 @@ def mlp_encoder(opts, inputs, num_layers, num_units, output_dim,
                                                         is_training=False):
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear.Linear(opts=opts, input_=layer_x, input_dim=layer_x.get_shape().as_list()[-1],
-            output_dim=num_units, init=opts['mlp_init'], scope='hid{}/lin'.format(i))
+        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                    num_units, init=opts['mlp_init'], scope='hid{}/lin'.format(i))
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse,)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #    opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-    outputs = ops.linear.Linear(opts=opts, input_=layer_x, input_dim=layer_x.get_shape().as_list()[-1],
-        output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
+    outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
 
@@ -84,8 +84,8 @@ def dcgan_encoder(opts, inputs, num_layers, num_units, output_dim,
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-    outputs = ops.linear.Linear(opts=opts,input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
-        output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
+    outputs = ops.linear.Linear(opts,layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                output_dim, scope='hid_final')
 
     return outputs
 
@@ -127,16 +127,16 @@ def mlp_decoder(opts, inputs, num_layers, num_units, output_dim,
     # Architecture with only fully connected layers and ReLUs
     layer_x = inputs
     for i in range(num_layers):
-        layer_x = ops.linear.Linear(opts=opts, input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
-            output_dim=num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
+        layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                    num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
-    outputs = ops.linear.Linear(opts=opts, input_=layer_x,input_dim=layer_x.get_shape().as_list()[-1],
-            output_dim=output_dim, init=opts['mlp_init'], scope='hid_final')
+    outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
 
@@ -200,8 +200,8 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
     elif archi == 'dcgan_mod':
         height = output_shape[0] / 2**(num_layers - 1)
         width = output_shape[1] / 2**(num_layers - 1)
-    h0 = ops.linear.Linear(opts=opts,input_=inputs,input_dim=inputs.get_shape().as_list()[-1],
-            output_dim=num_units * ceil(height) * ceil(width), scope='hid0/lin')
+    h0 = ops.linear.Linear(opts,inputs,np.prod(inputs.get_shape().as_list()[1:]),
+            num_units * ceil(height) * ceil(width), scope='hid0/lin')
     if batch_norm:
         h0 = ops.batchnorm.Batchnorm_layers(
             opts, h0, 'hid0/bn_lin', is_training, reuse)

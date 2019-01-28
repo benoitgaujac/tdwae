@@ -23,9 +23,9 @@ def Linear(opts, input_, input_dim, output_dim, scope=None, init=None, reuse=Non
 
     stddev = opts['init_std']
     bias_start = opts['init_bias']
-    # shape = input_.get_shape().as_list()
     # input_dim = np.prod(shape[1:])
 
+    shape = input_.get_shape().as_list()
     assert len(shape) > 0
     in_shape = shape[1]
     if len(shape) > 2:
