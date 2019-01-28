@@ -202,6 +202,9 @@ def  dcgan_decoder(opts, inputs, archi, num_layers, num_units,
         width = output_shape[1] / 2**(num_layers - 1)
     h0 = ops.linear.Linear(opts=opts,input_=inputs,
             output_dim=num_units * ceil(height) * ceil(width), scope='hid0/lin')
+    if batch_norm:
+        layer_x = ops.batchnorm.Batchnorm_layers(
+            opts, h0, 'hid0/bn', is_training, reuse)
     h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
     h0 = ops._ops.non_linear(h0,opts['d_nonlinearity'])
     layer_x = h0
