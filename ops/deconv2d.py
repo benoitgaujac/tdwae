@@ -11,13 +11,13 @@ def custom_uniform(stdev, size):
     ).astype('float32')
 
 
-def Deconv2D(opts, input_, input_dim, output_shape, stride=2, scope=None, filter_size=3, init='he', padding='SAME', biases=True):
+def Deconv2D(opts, input, input_dim, output_shape, stride=2, scope=None, filter_size=3, init='he', padding='SAME', biases=True):
     """2D Transposed convolution (fractional stride convolution) layer.
-    input_: tensor of shape (batch size, height, width, input_dim)
+    input: tensor of shape (batch size, height, width, input_dim)
     returns: tensor of shape (batch size, height, width, output_dim)
     """
 
-    # shape = input_.get_shape().as_list()
+    # shape = input.get_shape().as_list()
     # input_dim = shape[-1]
     output_dim = output_shape[-1]
     if filter_size is None:
@@ -49,7 +49,7 @@ def Deconv2D(opts, input_, input_dim, output_shape, stride=2, scope=None, filter
         else:
             raise Exception('Invalid %s conv initialization!' % opts['conv_init'])
         deconv = tf.nn.conv2d_transpose(
-            input_, w, output_shape=output_shape,
+            input, w, output_shape=output_shape,
             strides=[1, stride, stride, 1], padding=padding)
 
         if biases:

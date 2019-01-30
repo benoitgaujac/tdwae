@@ -11,20 +11,20 @@ def custom_uniform(stdev, size):
     ).astype('float32')
 
 
-def Conv2d(opts, input_, input_dim, output_dim, filter_size, stride=1, padding='SAME', scope=None, init='he', biases=True):
+def Conv2d(opts, input, input_dim, output_dim, filter_size, stride=1, padding='SAME', scope=None, init='he', biases=True):
     """Convolutional layer.
 
     Args:
-        input_: should be a 4d tensor with [num_points, dim1, dim2, dim3].
+        input: should be a 4d tensor with [num_points, dim1, dim2, dim3].
 
     """
 
-    # shape = input_.get_shape().as_list()
+    # shape = input.get_shape().as_list()
     # input_dim = shape[-1]
     if filter_size is None:
         filter_size = opts['filter_size']
 
-    assert len(input_.get_shape().as_list()) == 4, 'Conv2d works only with 4d tensors.'
+    assert len(input.get_shape().as_list()) == 4, 'Conv2d works only with 4d tensors.'
 
     with tf.variable_scope(scope or 'conv2d'):
         if init=='he':
@@ -51,7 +51,7 @@ def Conv2d(opts, input_, input_dim, output_dim, filter_size, stride=1, padding='
                 initializer=tf.truncated_normal_initializer(stddev=opts['init_std']))
         else:
             raise Exception('Invalid %s conv initialization!' % opts['conv_init'])
-        conv = tf.nn.conv2d(input_, w, strides=[1, stride, stride, 1], padding=padding)
+        conv = tf.nn.conv2d(input, w, strides=[1, stride, stride, 1], padding=padding)
 
         if biases:
             bias = tf.get_variable(

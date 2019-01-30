@@ -10,11 +10,11 @@ def custom_uniform(stdev, size):
                             size=size
                             ).astype('float32')
 
-def Linear(opts, input_, input_dim, output_dim, scope=None, init=None, reuse=None):
+def Linear(opts, input, input_dim, output_dim, scope=None, init=None, reuse=None):
     """Fully connected linear layer.
 
     Args:
-        input_: [num_points, ...] tensor, where every point can have an
+        input: [num_points, ...] tensor, where every point can have an
             arbitrary shape. In case points are more than 1 dimensional,
             we will stretch them out in [numpoints, prod(dims)].
         output_dim: number of features for the output. I.e., the second
@@ -25,14 +25,13 @@ def Linear(opts, input_, input_dim, output_dim, scope=None, init=None, reuse=Non
     bias_start = opts['init_bias']
     # input_dim = np.prod(shape[1:])
 
-    shape = input_.get_shape().as_list()
+    shape = input.get_shape().as_list()
     assert len(shape) > 0
-    in_shape = shape[1]
     if len(shape) > 2:
-        # This means points contained in input_ have more than one
+        # This means points contained in input have more than one
         # dimensions. In this case we first stretch them in one
         # dimensional vectors
-        input_ = tf.reshape(input_, [-1, input_dim])
+        input = tf.reshape(input, [-1, input_dim])
 
     with tf.variable_scope(scope or "lin", reuse=reuse):
         if init == 'normal' or init == None:
@@ -75,4 +74,4 @@ def Linear(opts, input_, input_dim, output_dim, scope=None, init=None, reuse=Non
             initializer=tf.constant_initializer(bias_start))
 
 
-    return tf.matmul(input_, matrix) + bias
+    return tf.matmul(input, matrix) + bias

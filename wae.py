@@ -90,7 +90,7 @@ class WAE(object):
                     enc_output_dim = 2*opts['zdim'][n]
                 else:
                     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
-                enc_mean, enc_Sigma = encoder(self.opts, inputs=encoded,
+                enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                     archi=opts['e_arch'][n],
                                                     num_layers=opts['e_nlayers'][n],
                                                     num_units=opts['e_nfilters'][n],
@@ -110,7 +110,7 @@ class WAE(object):
                 self.encoded.append(encoded)
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
-                    recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
+                    recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
                                                     num_units=opts['d_nfilters'][n],
@@ -135,11 +135,11 @@ class WAE(object):
                     self.loss_reconstruct += loss_reconstruct
                 else:
                     # Setting output_dim
-                    if opts['e_arch'][n-1]=='mlp':
-                        dec_output_dim = 2*opts['zdim'][n-1]
-                    else:
+                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
                         dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    recon_mean, recon_Sigma = decoder(self.opts, inputs=encoded,
+                    else:
+                        dec_output_dim = 2*opts['zdim'][n-1]
+                    recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
                                                     num_units=opts['d_nfilters'][n],
@@ -168,7 +168,7 @@ class WAE(object):
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
-                decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
+                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
@@ -190,11 +190,11 @@ class WAE(object):
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
             else:
                 # Setting output_dim
-                if opts['e_arch'][n-1]=='mlp':
-                    dec_output_dim = 2*opts['zdim'][n-1]
-                else:
+                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
                     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                decoded_mean, decoded_Sigma = decoder(self.opts, inputs=decoded,
+                else:
+                    dec_output_dim = 2*opts['zdim'][n-1]
+                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],

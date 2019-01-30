@@ -22,8 +22,6 @@ parser.add_argument("--method",
                     help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
 parser.add_argument("--weights_file")
-parser.add_argument("--base_lambda", type=int, default=100,
-                    help='base lambda',)
 
 
 FLAGS = parser.parse_args()
@@ -53,11 +51,6 @@ def main():
     # Select training method
     if FLAGS.method:
         opts['method'] = FLAGS.method
-
-    # # lambda Value
-    # opts['lambda_scalar'] = FLAGS.base_lambda
-    # opts['lambda'] = [opts['zdim'][i]*opts['lambda_scalar']**(i+1)/784 for i in range(len(opts['zdim'])-1)]
-    # opts['lambda'].append(opts['coef_rec']*opts['lambda_scalar']**opts['nlatents']/784)
 
     # Working directory
     if FLAGS.work_dir:
