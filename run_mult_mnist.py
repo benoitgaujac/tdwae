@@ -13,46 +13,21 @@ import pdb
 
 parser = argparse.ArgumentParser()
 # Args for experiment
-parser.add_argument("--mode", default='test',
-                    help='mode to run [train/test/vizu]')
-parser.add_argument("--exp", default='mnist',
-                    help='dataset [mnist/cifar10/].'\
-                    ' celebA/dsprites Not implemented yet')
-parser.add_argument("--method",
-                    help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
-parser.add_argument("--weights_file")
 parser.add_argument("--base_lambda", type=int, default=100,
-                    help='base lambda',)
+                    help='base lambda')
+parser.add_argument("--weights_file")
+
 
 
 FLAGS = parser.parse_args()
 
 def main():
 
-    # Select dataset to use
-    if FLAGS.exp == 'celebA':
-        opts = configs.config_celebA
-    elif FLAGS.exp == 'celebA_small':
-        opts = configs.config_celebA_small
-    elif FLAGS.exp == 'mnist':
-        opts = configs.config_mnist
-    elif FLAGS.exp == 'mnist_small':
-        opts = configs.config_mnist_small
-    elif FLAGS.exp == 'cifar10':
-        opts = configs.config_cifar10
-    elif FLAGS.exp == 'dsprites':
-        opts = configs.config_dsprites
-    elif FLAGS.exp == 'grassli':
-        opts = configs.config_grassli
-    elif FLAGS.exp == 'grassli_small':
-        opts = configs.config_grassli_small
-    else:
-        assert False, 'Unknown experiment configuration'
+    opts = configs.config_mnist
 
     # Select training method and create dir
-    if FLAGS.method:
-        opts['method'] = FLAGS.method
+    opts['method'] = 'wae'
     if not tf.gfile.Exists(opts['method']):
         utils.create_dir(opts['method'])
 
@@ -93,14 +68,7 @@ def main():
         # build WAE
         wae = WAE(opts)
 
-        # Training/testing/vizu
-        if FLAGS.mode=="train":
-            wae.train(data, FLAGS.weights_file)
-        elif FLAGS.mode=="vizu":
-            raise ValueError('To implement')
-            wae.vizu(data, opts['work_dir'], FLAGS.weights_file)
-        else:
-            raise ValueError('To implement')
-            wae.test(data, opts['work_dir'], FLAGS.weights_file)
+        # Training
+        wae.train(data, FLAGS.weights_file)
 
 main()
