@@ -171,7 +171,7 @@ def save_train(opts, data_train, data_test,
     # ###UMAP visualization of the embedings
     num_pics = np.shape(encoded)[0]
     ax = plt.subplot(gs[1, 2])
-    if opts['zdim'][-1]==2:
+    if np.shape(encoded)[1]==2:
         embedding = np.concatenate((encoded,samples_prior),axis=0)
     else:
         if opts['vizu_emb']=='pca':
