@@ -20,7 +20,7 @@ import utils
 from sampling_functions import sample_pz, sample_gaussian, linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
-from plot_functions import save_train, plot_sinkhorn, plot_embedded, save_latent_interpolation
+from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation
 from networks import encoder, decoder
 from datahandler import datashapes
 
@@ -75,6 +75,7 @@ class WAE(object):
             assert False, 'Unknown prior %s' % opts['prior']
 
         # --- Initialize list container
+        self.enc_Sigma = []
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -83,7 +84,7 @@ class WAE(object):
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['nlatents']):
-            if opts['prior']=='implicit' and n==0 or opts['prior']!='implicit':
+            if (opts['prior']=='implicit' and n==0) or opts['prior']!='implicit':
                 # - Encoding points
                 # Setting output_dim
                 if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
@@ -108,6 +109,7 @@ class WAE(object):
                 else:
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
+                self.enc_Sigma.append(tf.reduce_mean(enc_Sigma,axis=0))
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -160,7 +162,7 @@ class WAE(object):
                 self.reconstructed.append(reconstructed)
                 self.losses_reconstruct.append(loss_reconstruct)
         # --- Sampling from model (only for generation)
-        # reuse cariable
+        # reuse variable
         if opts['prior']=='implicit':
             reuse = False
         else:
@@ -473,7 +475,7 @@ class WAE(object):
                                                 [self.reconstructed,
                                                  self.encoded,
                                                  self.decoded[:-1]],
-                                                feed_dict={self.points:data.test_data[:50*npics],
+                                                feed_dict={self.points:data.test_data[:30*npics],
                                                            self.samples: fixed_noise,
                                                            self.is_training:False})
 
@@ -481,7 +483,7 @@ class WAE(object):
                         decoded = samples[::-1]
                         decoded.append(fixed_noise)
                         plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
-                                                data.test_labels[:50*npics],
+                                                data.test_labels[:30*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -490,6 +492,14 @@ class WAE(object):
                                                                self.is_training:False})
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                     'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
+                    if opts['vizu_encSigma']:
+                        enc_sigma = self.sess.run(self.enc_Sigma,
+                                                    feed_dict={self.points:data.test_data[:npics],
+                                                               self.samples: fixed_noise,
+                                                               self.is_training:False})
+                        plot_encSigma(opts, enc_sigma, work_dir,
+                                                    'encSigma_e%04d_mb%05d.png' % (epoch, it))
+
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.reconstructed,
                                                 feed_dict={self.points:data.data[200:200+npics],
@@ -555,7 +565,7 @@ class WAE(object):
                     elif opts['prior']=='implicit':
                         samples_prior = samples[-2]
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:50*npics],    # labels
+                                     data.test_labels[:30*npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
@@ -579,13 +589,15 @@ class WAE(object):
                         logging.error('Reduction in lr: %f\n' % decay)
                         print('')
                         wait = 0
+
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
                     if wait_lambda >= 999 and len(Loss_rec) > 0:
-                        last_rec = Loss_rec[-1]
+                        last_rec = np.array(Losses_rec[-1])
                         last_match = Loss_match[-1]
-                        wae_lambda = 0.98 * wae_lambda + \
+                        new_lambda = 0.98 * np.array(wae_lambda) + \
                                      0.02 * last_rec / abs(last_match)
+                        wae_lambda = list(new_lambda)
                         logging.error('Lambda updated to %f\n' % wae_lambda)
                         print('')
                         wait_lambda = 0
