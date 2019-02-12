@@ -46,8 +46,9 @@ def main():
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
         opts['lambda_scalar'] = lambda_scalar
-        opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
-        #opts['lambda'].append(opts['lambda_scalar'])
+        # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
+        opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
+        opts['lambda'].append(opts['lambda_scalar'])
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
