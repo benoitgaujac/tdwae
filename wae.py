@@ -603,7 +603,7 @@ class WAE(object):
                         new_lambda = 0.98 * np.array(wae_lambda) + \
                                      0.02 * last_rec / abs(last_match)
                         wae_lambda = list(new_lambda)
-                        logging.error('Lambda updated to %f\n' % wae_lambda)
+                        logging.error('Lambda updated to %f\n' % wae_lambda[-1])
                         print('')
                         wait_lambda = 0
                     else:
