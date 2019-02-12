@@ -174,14 +174,14 @@ def save_train(opts, data_train, data_test,
     if np.shape(encoded)[1]==2:
         embedding = np.concatenate((encoded,samples_prior),axis=0)
     else:
-        if opts['vizu_emb']=='pca':
+        if opts['embedding']=='pca':
             embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
-        elif opts['vizu_emb']=='umap':
+        elif opts['embedding']=='umap':
             embedding = umap.UMAP(n_neighbors=15,
                                     min_dist=0.2,
                                     metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
         else:
-            assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
+            assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
                 c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                 # c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
@@ -249,6 +249,34 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     plt.close()
 
 
+def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
+    dpi = 100
+    fig = plt.figure()
+    Sigmas = np.stack(enc_Sigmas,axis=0)
+    shape = np.shape(Sigmas)
+    # base = plt.cm.get_cmap('Vega10')
+    base = plt.cm.get_cmap('tab10')
+    color_list = base(np.linspace(0, 1, 10))
+    total_num = shape[0]
+    x_step = max(int(total_num / 200), 1)
+    x = np.arange(1, total_num + 1, x_step)
+    for i in range(shape[1]):
+        mean, var = Sigmas[::x_step,i,0], Sigmas[::x_step,i,1]
+        y = np.log(mean)
+        plt.plot(x, y, linewidth=4, color=color_list[i], label=r'$\Sigma_%d$' % i)
+        y = np.log(mean+np.sqrt(var))
+        plt.plot(x, y, linewidth=2, linestyle='--',color=color_list[i])
+    plt.grid(axis='y')
+    plt.legend(loc='lower left')
+    plt.title('logSigma curves')
+    ### Saving plot
+    plots_dir = 'train_plots'
+    save_path = os.path.join(work_dir,plots_dir)
+    utils.create_dir(save_path)
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=dpi,cformat='png')
+    plt.close()
+
+
 def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
@@ -257,14 +285,14 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
         if np.shape(encods)[-1]==2:
             embedding = encods
         else:
-            if opts['vizu_emb']=='pca':
+            if opts['embedding']=='pca':
                 embedding = PCA(n_components=2).fit_transform(encods)
-            elif opts['vizu_emb']=='umap':
+            elif opts['embedding']=='umap':
                 embedding = umap.UMAP(n_neighbors=15,
                                         min_dist=0.2,
                                         metric='correlation').fit_transform(encods)
             else:
-                assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
+                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
         embeds.append(embedding)
     # Creating a pyplot fig
     dpi = 100
@@ -417,14 +445,14 @@ def save_latent_interpolation(opts, label_test, # labels
         if np.shape(encods)[-1]==2:
             embedding = encods
         else:
-            if opts['vizu_emb']=='pca':
+            if opts['embedding']=='pca':
                 embedding = PCA(n_components=2).fit_transform(encods)
-            elif opts['vizu_emb']=='umap':
+            elif opts['embedding']=='umap':
                 embedding = umap.UMAP(n_neighbors=15,
                                         min_dist=0.2,
                                         metric='correlation').fit_transform(encods)
             else:
-                assert False, 'Unknown %s method for embedgins vizu' % opts['vizu_emb']
+                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
         embeds.append(embedding)
     # Creating a pyplot fig
     dpi = 100
@@ -455,7 +483,7 @@ def save_latent_interpolation(opts, label_test, # labels
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
         plt.legend(loc='best')
-        plt.text(0.47, 1., '%s latent %d' % (opts['vizu_emb'],i+1), ha="center", va="bottom",
+        plt.text(0.47, 1., '%s latent %d' % (opts['embedding'],i+1), ha="center", va="bottom",
                                                 size=20, transform=ax.transAxes)
         # Removing ticks
         ax.axes.get_xaxis().set_ticks([])

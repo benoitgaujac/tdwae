@@ -75,7 +75,7 @@ class WAE(object):
             assert False, 'Unknown prior %s' % opts['prior']
 
         # --- Initialize list container
-        self.enc_Sigma = []
+        encSigmas_stats = []
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -109,7 +109,8 @@ class WAE(object):
                 else:
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
-                self.enc_Sigma.append(tf.reduce_mean(enc_Sigma,axis=0))
+                Smean, Svar = tf.nn.moments(tf.layers.flatten(enc_Sigma),axes=[-1])
+                encSigmas_stats.append(tf.reduce_mean(tf.stack([Smean,Svar],axis=-1),axis=0))
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -161,6 +162,7 @@ class WAE(object):
                     self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
                 self.reconstructed.append(reconstructed)
                 self.losses_reconstruct.append(loss_reconstruct)
+        self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
         # --- Sampling from model (only for generation)
         # reuse variable
         if opts['prior']=='implicit':
@@ -409,6 +411,7 @@ class WAE(object):
         Loss = []
         Loss_rec, Losses_rec, Loss_rec_test = [], [], []
         Loss_match = []
+        enc_Sigmas = []
         """
         mean_blurr, fid_scores = [], [],
         """
@@ -449,6 +452,11 @@ class WAE(object):
                 Loss_rec.append(loss_rec)
                 Losses_rec.append(losses_rec)
                 Loss_match.append(loss_match)
+                if opts['vizu_encSigma']:
+                    enc_sigmastats = self.sess.run(self.encSigmas_stats,
+                                                feed_dict=feed_dict)
+                    enc_Sigmas.append(enc_sigmastats)
+
                 ##### TESTING LOOP #####
                 if counter % opts['print_every'] == 0:
                     now = time.time()
@@ -493,12 +501,9 @@ class WAE(object):
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                     'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_encSigma']:
-                        enc_sigma = self.sess.run(self.enc_Sigma,
-                                                    feed_dict={self.points:data.test_data[:npics],
-                                                               self.samples: fixed_noise,
-                                                               self.is_training:False})
-                        plot_encSigma(opts, enc_sigma, work_dir,
+                        plot_encSigma(opts, enc_Sigmas, work_dir,
                                                     'encSigma_e%04d_mb%05d.png' % (epoch, it))
+
 
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.reconstructed,
