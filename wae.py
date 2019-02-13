@@ -504,7 +504,6 @@ class WAE(object):
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                     'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_encSigma']:
-                        pdb.set_trace()
                         plot_encSigma(opts, enc_Sigmas, work_dir,
                                                     'encSigma_e%04d_mb%05d.png' % (epoch, it))
 
