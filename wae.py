@@ -503,7 +503,7 @@ class WAE(object):
                                                                self.is_training:False})
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                     'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
-                    if opts['vizu_encSigma']:
+                    if opts['vizu_encSigma'] and counter>1:
                         plot_encSigma(opts, enc_Sigmas, work_dir,
                                                     'encSigma_e%04d_mb%05d.png' % (epoch, it))
 
