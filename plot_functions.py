@@ -158,7 +158,8 @@ def save_train(opts, data_train, data_test,
             y = np.log(l[::x_step])
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'rec$_%d$' % i)
         else:
-            y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
+            # y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
+            y = np.log(np.array(l[::x_step]))
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
     l = np.array(loss_match)
     y = np.log(np.abs(l[::x_step]))

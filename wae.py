@@ -109,10 +109,10 @@ class WAE(object):
                 else:
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
-                Smean, Svar = tf.nn.moments(tf.layers.flatten(enc_Sigma),axes=[-1])
-                max_Svar = tf.argmax(Svar,axis=0)
+                Smean, Svar = tf.nn.moments(tf.layers.flatten(enc_Sigma),axes=[0])
                 stats = tf.stack([Smean,Svar],axis=-1)
                 #encSigmas_stats.append(tf.reduce_mean(tf.stack([Smean,Svar],axis=-1),axis=0))
+                max_Svar = tf.argmax(Smean,axis=0)
                 encSigmas_stats.append(stats[max_Svar])
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
@@ -453,6 +453,7 @@ class WAE(object):
                                                 feed_dict=feed_dict)
                 Loss.append(loss)
                 Loss_rec.append(loss_rec)
+                losses_rec = list(np.array(losses_rec)*np.concatenate((np.ones(1),np.array(wae_lambda[:-1]))))
                 Losses_rec.append(losses_rec)
                 Loss_match.append(loss_match)
                 if opts['vizu_encSigma']:
@@ -600,17 +601,20 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 400 and len(Loss_rec) > 0:
+                    if epoch >= 500 and len(Loss_rec) > 0:
                         # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
                         if wait_lambda > 50 * batches_num:
-                            last_rec = np.array(Losses_rec[-1])
-                            last_match = Loss_match[-1]
-                            new_lambda = 0.98 * np.array(wae_lambda) + \
-                                         0.02 * last_rec / abs(last_match)
-                            wae_lambda = list(new_lambda)
+                            wae_lambda = list(2.*np.array(wae_lambda))
+                            opts['lambda'] = wae_lambda
+                            # last_rec = np.array(Losses_rec[-1])
+                            # last_match = Loss_match[-1]
+                            #
+                            # new_lambda = 0.98 * np.array(wae_lambda) + \
+                            #              0.02 * last_rec / abs(last_match)
+                            # wae_lambda = list(new_lambda)
                             logging.error('Lambda updated to %f\n' % wae_lambda[-1])
                             print('')
                             wait_lambda = 0
