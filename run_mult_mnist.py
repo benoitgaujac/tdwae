@@ -18,13 +18,32 @@ parser.add_argument("--base_lambda", type=int, default=100,
                     help='base lambda')
 parser.add_argument("--weights_file")
 
-
-
 FLAGS = parser.parse_args()
+
+
+# Model set up
+configs.config_mnist['nlatents'] = 3
+configs.config_mnist['zdim'] = [8,4,2]
+# NN set up
+configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss'] # deterministic, gaussian
+configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan
+configs.config_mnist['e_nlayers'] = [2,2,2,2]
+configs.config_mnist['e_nfilters'] = [256,128,64,32]
+configs.config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+configs.config_mnist['decoder'] = ['det','det','det','det'] # deterministic, gaussian
+configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+configs.config_mnist['d_nlayers'] = [2,2,2,2]
+configs.config_mnist['d_nfilters'] = [256,128,64,32]
+configs.config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
 
 def main():
 
+
     opts = configs.config_mnist
+
 
     # Select training method and create dir
     opts['method'] = 'wae'
@@ -41,7 +60,7 @@ def main():
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
     # Experiments
-    lambda_values = [FLAGS.base_lambda**i for i in range(1,-3,-1)]
+    lambda_values = [FLAGS.base_lambda**i for i in range(-3,1)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
