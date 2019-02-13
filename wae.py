@@ -601,11 +601,11 @@ class WAE(object):
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
                     if epoch >= 400 and len(Loss_rec) > 0:
-                        if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
-                            wait_lambda = 0
-                        else:
-                            wait_lambda += 1
-                        if wait_lambda > 10 * batches_num:
+                        # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
+                        #     wait_lambda = 0
+                        # else:
+                        #     wait_lambda += 1
+                        if wait_lambda > 50 * batches_num:
                             last_rec = np.array(Losses_rec[-1])
                             last_match = Loss_match[-1]
                             new_lambda = 0.98 * np.array(wae_lambda) + \
@@ -614,6 +614,8 @@ class WAE(object):
                             logging.error('Lambda updated to %f\n' % wae_lambda[-1])
                             print('')
                             wait_lambda = 0
+                        else:
+                            wait_lambda+=1
 
                 counter += 1
 
