@@ -606,7 +606,7 @@ class WAE(object):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 50 * batches_num:
+                        if wait_lambda > 100 * batches_num:
                             wae_lambda = list(2.*np.array(wae_lambda))
                             opts['lambda'] = wae_lambda
                             # last_rec = np.array(Losses_rec[-1])
