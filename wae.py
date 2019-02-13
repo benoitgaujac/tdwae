@@ -110,7 +110,10 @@ class WAE(object):
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
                 Smean, Svar = tf.nn.moments(tf.layers.flatten(enc_Sigma),axes=[-1])
-                encSigmas_stats.append(tf.reduce_mean(tf.stack([Smean,Svar],axis=-1),axis=0))
+                max_Svar = tf.argmax(Svar,axis=0)
+                stats = tf.stack([Smean,Svar],axis=-1)
+                #encSigmas_stats.append(tf.reduce_mean(tf.stack([Smean,Svar],axis=-1),axis=0))
+                encSigmas_stats.append(stats[max_Svar])
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -501,6 +504,7 @@ class WAE(object):
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                     'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_encSigma']:
+                        pdb.set_trace()
                         plot_encSigma(opts, enc_Sigmas, work_dir,
                                                     'encSigma_e%04d_mb%05d.png' % (epoch, it))
 

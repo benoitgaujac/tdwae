@@ -250,7 +250,6 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
 
 
 def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
-    dpi = 100
     fig = plt.figure()
     Sigmas = np.stack(enc_Sigmas,axis=0)
     shape = np.shape(Sigmas)
@@ -263,9 +262,9 @@ def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
     for i in range(shape[1]):
         mean, var = Sigmas[::x_step,i,0], Sigmas[::x_step,i,1]
         y = np.log(mean)
-        plt.plot(x, y, linewidth=4, color=color_list[i], label=r'$\Sigma_%d$' % i)
+        plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\Sigma_%d$' % i)
         y = np.log(mean+np.sqrt(var))
-        plt.plot(x, y, linewidth=2, linestyle='--',color=color_list[i])
+        plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.title('logSigma curves')
@@ -273,7 +272,7 @@ def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=dpi,cformat='png')
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),cformat='png')
     plt.close()
 
 
