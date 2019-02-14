@@ -606,15 +606,15 @@ class WAE(object):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 100 * batches_num:
-                            wae_lambda = list(2.*np.array(wae_lambda))
+                        if wait_lambda > 50 * batches_num:
+                            # wae_lambda = list(1.1*np.array(wae_lambda))
+                            # opts['lambda'] = wae_lambda
+                            last_rec = np.array(losses_rec)
+                            last_match = np.concatenate((last_rec[1:],abs(loss_match)*np.ones(1)),axis=0)
+                            new_lambda = 0.98 * np.array(wae_lambda) + \
+                                         0.02 * last_rec / last_match
+                            wae_lambda = list(new_lambda)
                             opts['lambda'] = wae_lambda
-                            # last_rec = np.array(Losses_rec[-1])
-                            # last_match = Loss_match[-1]
-                            #
-                            # new_lambda = 0.98 * np.array(wae_lambda) + \
-                            #              0.02 * last_rec / abs(last_match)
-                            # wae_lambda = list(new_lambda)
                             logging.error('Lambda updated to %f\n' % wae_lambda[-1])
                             print('')
                             wait_lambda = 0
