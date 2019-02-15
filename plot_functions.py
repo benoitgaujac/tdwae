@@ -17,7 +17,7 @@ def save_train(opts, data_train, data_test,
                      rec_train, rec_test,
                      encoded,
                      samples_prior, samples,
-                     loss, loss_match,
+                     loss, imp_loss, loss_match,
                      loss_rec, loss_rec_test,
                      losses_rec,
                      work_dir,
@@ -132,6 +132,9 @@ def save_train(opts, data_train, data_test,
     x = np.arange(1, len(loss) + 1, x_step)
     y = np.log(loss[::x_step])
     plt.plot(x, y, linewidth=3, color='black', label='loss')
+    if opts['prior']!='implicit':
+        y = np.log(imp_loss[::x_step])
+        plt.plot(x, y, linewidth=2, linestyle = '--',color='black', label='non-hierarchical loss')
     # l = np.array(loss_rec)
     # y = np.log(l[::x_step])
     # plt.plot(x, y, linewidth=2, color='red', label='rec')
@@ -226,7 +229,7 @@ def save_train(opts, data_train, data_test,
     #             encoded = encoded[-1],
     #             rec_train=rec_train, rec_test=rec_test,
     #             samples_prior=samples_prior, samples=samples,
-    #             loss=np.array(loss), loss_match=np.array(loss_match),
+    #             loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
     #             loss_rec=np.array(loss_rec),
     #             loss_rec_test=np.array(loss_rec_test),
     #             losses_rec=np.array(losses_rec))

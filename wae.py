@@ -222,6 +222,9 @@ class WAE(object):
         if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
             self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
             self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
+            imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
+            self.imp_objective = self.losses_reconstruct[0] \
+                                + self.lmbd[-1] * imp_match_penalty
         elif opts['prior']=='implicit':
             self.match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
             self.C = square_dist_v2(self.opts,self.decoded[-2], self.encoded[0])
@@ -230,6 +233,14 @@ class WAE(object):
         # Compute obj
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
+        if opts['prior']=='gaussian' or opts['prior']=='dirichlet':
+            self.imp_objective = self.losses_reconstruct[0] \
+                                + self.lmbd[-1] * imp_match_penalty
+        elif opts['prior']=='implicit':
+            self.imp_objective = self.objective
+        else:
+            assert False, 'Unknown prior %s' % opts['prior']
+
         # Logging info
         self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
         # Pre Training
@@ -410,7 +421,7 @@ class WAE(object):
         """
 
         # Init all monitoring variables
-        Loss = []
+        Loss, imp_Loss = [], []
         Loss_rec, Losses_rec, Loss_rec_test = [], [], []
         Loss_match = []
         enc_Sigmas = []
@@ -443,14 +454,16 @@ class WAE(object):
                            self.lmbd: wae_lambda,
                            self.is_training: True}
                 # Update encoder and decoder
-                [_, loss, loss_rec, losses_rec, loss_match] = self.sess.run([
+                [_, loss, imp_loss, loss_rec, losses_rec, loss_match] = self.sess.run([
                                                 self.wae_opt,
                                                 self.objective,
+                                                self.imp_objective,
                                                 self.loss_reconstruct,
                                                 self.losses_reconstruct,
                                                 self.match_penalty],
                                                 feed_dict=feed_dict)
                 Loss.append(loss)
+                imp_Loss.append(imp_loss)
                 Loss_rec.append(loss_rec)
                 losses_rec = list(np.array(losses_rec)*np.concatenate((np.ones(1),np.array(wae_lambda[:-1]))))
                 Losses_rec.append(losses_rec)
@@ -577,7 +590,7 @@ class WAE(object):
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
-                                     Loss, Loss_match,  # losses
+                                     Loss, imp_Loss, Loss_match,  # losses
                                      Loss_rec, Loss_rec_test,   # rec losses
                                      Losses_rec,    # rec losses for each latents
                                      work_dir,  # working directory
@@ -605,8 +618,8 @@ class WAE(object):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 100 * batches_num:
-                            wae_lambda = list(1.2*np.array(wae_lambda))
+                        if wait_lambda > 200 * batches_num:
+                            wae_lambda = list(1.5*np.array(wae_lambda))
                             opts['lambda'] = wae_lambda
                             # last_rec = np.array(losses_rec)
                             # last_match = np.concatenate((last_rec[1:],abs(loss_match)*np.ones(1)),axis=0)
