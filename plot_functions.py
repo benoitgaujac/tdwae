@@ -364,18 +364,18 @@ def save_latent_interpolation(opts, label_test, # labels
         samples = samples / 2. + 0.5
     images = []
 
-    ### Points Interpolation plots
-    white_pix = 4
-    num_rows = np.shape(inter_anchors)[0]
-    num_cols = np.shape(inter_anchors)[1]
-    pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
-    pics = pics[:,0]
-    pics = np.concatenate(np.split(pics,num_rows),axis=1)
-    pics = pics[0]
-    if greyscale:
-        image = 1. - pics
-    else:
-        image = pics
+    ### Sample plots
+    num_pics = np.shape(samples)[0]
+    num_cols = np.sqrt(num_pics)
+    pics = []
+    for idx in range(num_pics):
+        if greyscale:
+            pics.append(1. - samples[idx, :, :, :])
+        else:
+            pics.append(samples[idx, :, :, :])
+    pics = np.array(pics)
+    image = np.concatenate(np.split(pics, num_cols), axis=2)
+    image = np.concatenate(image, axis=0)
     images.append(image)
 
     ### Prior Interpolation plots
@@ -392,31 +392,40 @@ def save_latent_interpolation(opts, label_test, # labels
         image = pics
     images.append(image)
 
-    ### Sample plots
-    num_pics = np.shape(samples)[0]
-    num_cols = np.sqrt(num_pics)
-    pics = []
-    for idx in range(num_pics):
+    if opts['prior']!='implicit':
+        ### Points Interpolation plots
+        white_pix = 4
+        num_rows = np.shape(inter_anchors)[0]
+        num_cols = np.shape(inter_anchors)[1]
+        pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
+        pics = pics[:,0]
+        pics = np.concatenate(np.split(pics,num_rows),axis=1)
+        pics = pics[0]
         if greyscale:
-            pics.append(1. - samples[idx, :, :, :])
+            image = 1. - pics
         else:
-            pics.append(samples[idx, :, :, :])
-    pics = np.array(pics)
-    image = np.concatenate(np.split(pics, num_cols), axis=2)
-    image = np.concatenate(image, axis=0)
-    images.append(image)
+            image = pics
+        images.append(image)
 
-    img1, img2, img3 = images
+        img1, img2, img3 = images
+        to_plot_list = zip([img1, img2, img3],
+                             ['Samples',
+                             'Latent interpolation',
+                             'Points interpolation'],
+                             ['pior_samples',
+                             'latent_inter',
+                             'point_inter'])
+    else:
+        img1, img2 = images
+        to_plot_list = zip([img1, img2],
+                             ['Samples',
+                             'Latent interpolation'],
+                             ['pior_samples',
+                             'latent_inter'])
 
     ###Settings for pyplot fig
     dpi = 100
-    for img, title, filename in zip([img1, img2, img3],
-                         ['Points interpolation',
-                         'Latent interpolation',
-                         'Samples'],
-                         ['point_inter',
-                         'latent_inter',
-                         'pior_samples']):
+    for img, title, filename in to_plot_list:
         height_pic = img.shape[0]
         width_pic = img.shape[1]
         fig_height = height_pic / 10
@@ -468,7 +477,7 @@ def save_latent_interpolation(opts, label_test, # labels
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
-                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()

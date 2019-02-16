@@ -613,14 +613,15 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 500 and len(Loss_rec) > 0:
+                    if epoch >= 0 and len(Loss_rec) > 0:
                         # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 200 * batches_num:
-                            wae_lambda = list(1.5*np.array(wae_lambda))
-                            opts['lambda'] = wae_lambda
+                        if wait_lambda > 1 * batches_num:
+                            opts['lambda_scalar'] *= 1.5
+                            opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
+                            wae_lambda = opts['lambda']
                             # last_rec = np.array(losses_rec)
                             # last_match = np.concatenate((last_rec[1:],abs(loss_match)*np.ones(1)),axis=0)
                             # new_lambda = 0.98 * np.array(wae_lambda) + \
@@ -668,26 +669,30 @@ class WAE(object):
         encoded = self.sess.run(self.encoded,
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.is_training:False})
-        encshape = list(np.shape(encoded[-1])[1:])
+
         # Encode anchors points and interpolate
-        logging.error('Anchors interpolation..')
-        anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
-        data_anchors = data.test_data[anchors_ids]
-        enc_anchors = encoded[-1][anchors_ids]
-        enc_interpolation = linespace(opts, num_steps,
-                                anchors=np.reshape(enc_anchors,[-1,2]+encshape))
-        dec_anchors = self.sess.run(self.decoded[-1],
-                                feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
-                                           self.is_training: False})
-        inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
-        # end_anchors,start_anchors = np.split(np.reshape(data_anchors,[-1,2]+imshape),2,axis=1)
-        # inter_anchors = np.concatenate((start_anchors,
-        #                                 np.concatenate((inter_anchors,end_anchors), axis=1)),
-        #                                 axis=1)
+        if opts['prior']!='implicit':
+            logging.error('Anchors interpolation..')
+            anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
+            data_anchors = data.test_data[anchors_ids]
+            enc_anchors = encoded[-1][anchors_ids]
+            enc_interpolation = linespace(opts, num_steps,
+                                    anchors=np.reshape(enc_anchors,[-1,2]+encshape))
+            dec_anchors = self.sess.run(self.decoded[-1],
+                                    feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.is_training: False})
+            inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
+        else:
+            encshape = list([opts['zdim'][-1]])
+            inter_anchors = None
         # Latent interpolation
         logging.error('Latent interpolation..')
-        enc_mean = np.mean(encoded[-1],axis=0)
-        enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+        if opts['prior']!='implicit':
+            enc_mean = np.mean(encoded[-1],axis=0)
+            enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+        else:
+            enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
+            enc_var = np.ones(opts['zdim'][-1], dtype='float32')
         mins, maxs = enc_mean - 3*np.sqrt(enc_var), enc_mean + 3*np.sqrt(enc_var)
         x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
         xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
