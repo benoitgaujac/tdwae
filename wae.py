@@ -613,13 +613,13 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 0 and len(Loss_rec) > 0:
+                    if epoch >= 800 and len(Loss_rec) > 0:
                         # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 1 * batches_num:
-                            opts['lambda_scalar'] *= 1.5
+                        if wait_lambda > 200 * batches_num:
+                            opts['lambda_scalar'] *= 1.6
                             opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
                             wae_lambda = opts['lambda']
                             # last_rec = np.array(losses_rec)
