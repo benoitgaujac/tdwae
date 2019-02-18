@@ -20,7 +20,9 @@ parser.add_argument("--weights_file")
 
 FLAGS = parser.parse_args()
 
-
+# Experiment set up
+configs.config_cifar10['dataset'] = 'cifar10'
+configs.config_cifar10['data_dir'] = 'cifar10'
 # Model set up
 configs.config_cifar10['nlatents'] = 10
 configs.config_cifar10['zdim'] = [100,81,64,49,36,25,16,9,4,2]
