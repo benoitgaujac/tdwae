@@ -1,0 +1,2 @@
+model_checkpoint_path: "trained-wae-final-24102"
+all_model_checkpoint_paths: "trained-wae-final-24102"

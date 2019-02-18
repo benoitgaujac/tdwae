@@ -22,21 +22,21 @@ FLAGS = parser.parse_args()
 
 
 # Model set up
-configs.config_mnist['nlatents'] = 3
-configs.config_mnist['zdim'] = [8,4,2]
+#configs.config_mnist['nlatents'] = 3
+#configs.config_mnist['zdim'] = [8,4,2]
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss'] # deterministic, gaussian
-configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan
-configs.config_mnist['e_nlayers'] = [2,2,2,2]
-configs.config_mnist['e_nfilters'] = [256,128,64,32]
-configs.config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-configs.config_mnist['decoder'] = ['det','det','det','det'] # deterministic, gaussian
-configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-configs.config_mnist['d_nlayers'] = [2,2,2,2]
-configs.config_mnist['d_nfilters'] = [256,128,64,32]
-configs.config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+#configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss'] # deterministic, gaussian
+#configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan
+#configs.config_mnist['e_nlayers'] = [2,2,2,2]
+#configs.config_mnist['e_nfilters'] = [256,128,64,32]
+#configs.config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+#configs.config_mnist['decoder'] = ['det','det','det','det'] # deterministic, gaussian
+#configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+#configs.config_mnist['d_nlayers'] = [2,2,2,2]
+#configs.config_mnist['d_nfilters'] = [256,128,64,32]
+#configs.config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
 
 def main():
@@ -66,8 +66,9 @@ def main():
         # lambda Value
         opts['lambda_scalar'] = lambda_scalar
         # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
-        opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
-        opts['lambda'].append(opts['lambda_scalar'])
+        #opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
+        #opts['lambda'].append(opts['lambda_scalar'])
+        opts['lambda']=[lambda_scalar**(1/i) for i in range(opts['nlatents'],0,-1)]	
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
