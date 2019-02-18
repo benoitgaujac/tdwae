@@ -14,16 +14,36 @@ import pdb
 parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--work_dir")
-parser.add_argument("--weights_file")
 parser.add_argument("--base_lambda", type=int, default=100,
-                    help='base lambda',)
-
+                    help='base lambda')
+parser.add_argument("--weights_file")
 
 FLAGS = parser.parse_args()
 
+
+# Model set up
+configs.config_cifar10['nlatents'] = 10
+configs.config_cifar10['zdim'] = [100,81,64,49,36,25,16,9,4,2]
+# NN set up
+configs.config_cifar10['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+configs.config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+configs.config_cifar10['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+configs.config_cifar10['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan
+configs.config_cifar10['e_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
+configs.config_cifar10['e_nfilters'] = [128,64,64,64,32,32,32]
+configs.config_cifar10['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+configs.config_cifar10['decoder'] = ['det','det','det','det','det','det','det','det','det','det'] # deterministic, gaussian
+configs.config_cifar10['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod
+configs.config_cifar10['d_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
+configs.config_cifar10['d_nfilters'] = [128,64,64,64,32,32,32]
+configs.config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
+
 def main():
 
+
     opts = configs.config_cifar10
+
 
     # Select training method and create dir
     opts['method'] = 'wae'
@@ -40,12 +60,13 @@ def main():
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
     # Experiments
-    lambda_values = [FLAGS.base_lambda*(i+1) for i in range(5)]
+    lambda_values = [FLAGS.base_lambda**i for i in range(-4,2)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
         opts['lambda_scalar'] = lambda_scalar
-        opts['lambda'] = [1. for i in range(len(opts['zdim'])-1)]
+        # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
+        opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
         opts['lambda'].append(opts['lambda_scalar'])
 
         # Create working directories
