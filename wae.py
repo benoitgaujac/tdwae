@@ -62,7 +62,6 @@ class WAE(object):
         # --- Placeholders
         self.add_model_placeholders()
         self.add_training_placeholders()
-        sample_size = tf.shape(self.points,out_type=tf.int32)[0]
 
         # --- Initialize prior parameters
         if opts['prior']=='gaussian' or opts['prior']=='implicit':
@@ -165,8 +164,8 @@ class WAE(object):
                 self.reconstructed.append(reconstructed)
                 self.losses_reconstruct.append(loss_reconstruct)
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
+
         # --- Sampling from model (only for generation)
-        # reuse variable
         if opts['prior']=='implicit':
             reuse = False
         else:
@@ -216,6 +215,29 @@ class WAE(object):
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
             self.decoded.append(decoded)
+
+        # --- Point interpolation for implicit-prrior WAE (only for generation)
+        decoded = self.anchors_points
+        decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
+                                        archi=opts['d_arch'][0],
+                                        num_layers=opts['d_nlayers'][0],
+                                        num_units=opts['d_nfilters'][0],
+                                        output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                        scope='decoder/layer_0',
+                                        reuse=True,
+                                        is_training=self.is_training)
+        if opts['decoder'][0] == 'det':
+            decoded = decoded_mean
+        elif opts['decoder'][0] == 'gauss':
+            p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+            decoded = sample_gaussian(opts, p_params, 'tensorflow')
+        else:
+            assert False, 'Unknown encoder %s' % opts['decoder'][0]
+        if opts['input_normalize_sym']:
+            decoded=tf.nn.tanh(decoded)
+        else:
+            decoded=tf.nn.sigmoid(decoded)
+        self.anchors_decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
 
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
@@ -267,6 +289,8 @@ class WAE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
+        self.anchors_points = tf.placeholder(tf.float32, [None] + [opts['zdim'][0],],
+                                                name='anchors_ph')
 
     def add_training_placeholders(self):
         opts = self.opts
@@ -613,13 +637,13 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 800 and len(Loss_rec) > 0:
+                    if epoch >= 500 and len(Loss_rec) > 0:
                         # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
                         #     wait_lambda = 0
                         # else:
                         #     wait_lambda += 1
-                        if wait_lambda > 200 * batches_num:
-                            opts['lambda_scalar'] *= 1.6
+                        if wait_lambda > 500 * batches_num:
+                            opts['lambda_scalar'] *= 2.
                             opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
                             wae_lambda = opts['lambda']
                             # last_rec = np.array(losses_rec)
@@ -671,20 +695,19 @@ class WAE(object):
                                            self.is_training:False})
 
         # Encode anchors points and interpolate
-        if opts['prior']!='implicit':
-            logging.error('Anchors interpolation..')
-            anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
-            data_anchors = data.test_data[anchors_ids]
-            enc_anchors = encoded[-1][anchors_ids]
-            enc_interpolation = linespace(opts, num_steps,
-                                    anchors=np.reshape(enc_anchors,[-1,2]+encshape))
-            dec_anchors = self.sess.run(self.decoded[-1],
-                                    feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
-                                               self.is_training: False})
-            inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
-        else:
-            encshape = list([opts['zdim'][-1]])
-            inter_anchors = None
+        # if opts['prior']!='implicit':
+        logging.error('Anchors interpolation..')
+        encshape = list(np.shape(encoded[-1])[1:])
+        anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
+        data_anchors = data.test_data[anchors_ids]
+        enc_anchors = encoded[-1][anchors_ids]
+        enc_interpolation = linespace(opts, num_steps,
+                                anchors=np.reshape(enc_anchors,[-1,2]+encshape))
+        dec_anchors = self.sess.run(self.anchors_decoded,
+                                feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
+                                           self.is_training: False})
+        inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
+
         # Latent interpolation
         logging.error('Latent interpolation..')
         if opts['prior']!='implicit':
@@ -701,7 +724,7 @@ class WAE(object):
         grid_interpolation = linespace(opts, num_steps,
                                 anchors=latent_anchors)
         dec_latent = self.sess.run(self.decoded[-1],
-                                feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+encshape),
+                                feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
                                            self.is_training: False})
         inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
         # Samples generation

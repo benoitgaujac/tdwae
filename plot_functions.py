@@ -392,36 +392,29 @@ def save_latent_interpolation(opts, label_test, # labels
         image = pics
     images.append(image)
 
-    if opts['prior']!='implicit':
-        ### Points Interpolation plots
-        white_pix = 4
-        num_rows = np.shape(inter_anchors)[0]
-        num_cols = np.shape(inter_anchors)[1]
-        pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
-        pics = pics[:,0]
-        pics = np.concatenate(np.split(pics,num_rows),axis=1)
-        pics = pics[0]
-        if greyscale:
-            image = 1. - pics
-        else:
-            image = pics
-        images.append(image)
-
-        img1, img2, img3 = images
-        to_plot_list = zip([img1, img2, img3],
-                             ['Samples',
-                             'Latent interpolation',
-                             'Points interpolation'],
-                             ['pior_samples',
-                             'latent_inter',
-                             'point_inter'])
+    # if opts['prior']!='implicit':
+    ### Points Interpolation plots
+    white_pix = 4
+    num_rows = np.shape(inter_anchors)[0]
+    num_cols = np.shape(inter_anchors)[1]
+    pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
+    pics = pics[:,0]
+    pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    pics = pics[0]
+    if greyscale:
+        image = 1. - pics
     else:
-        img1, img2 = images
-        to_plot_list = zip([img1, img2],
-                             ['Samples',
-                             'Latent interpolation'],
-                             ['pior_samples',
-                             'latent_inter'])
+        image = pics
+    images.append(image)
+
+    img1, img2, img3 = images
+    to_plot_list = zip([img1, img2, img3],
+                         ['Samples',
+                         'Latent interpolation',
+                         'Points interpolation'],
+                         ['pior_samples',
+                         'latent_inter',
+                         'point_inter'])
 
     ###Settings for pyplot fig
     dpi = 100
