@@ -72,7 +72,7 @@ def main():
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
-        work_dir = os.path.join(opts['result_dir'],work_dir)
+        work_dir = os.path.join(opts['method'],work_dir)
         opts['work_dir'] = work_dir
         utils.create_dir(work_dir)
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))

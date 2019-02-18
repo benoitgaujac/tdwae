@@ -177,7 +177,8 @@ config_celeba['plot_num_cols'] = 10
 
 # Data set up
 config_celeba['dataset'] = 'celebA'
-config_celeba['data_dir'] = 'CelebA'
+config_celeba['data_dir'] = 'CelebA/images'
+config_celeba['celebA_crop'] = 'closecrop' # closecrop, resizecrop
 config_celeba['input_normalize_sym'] = False
 config_celeba['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
 

@@ -2,533 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8e5fb568-f4f4-4fdd-afc8-6172a352cace" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/celeba_run.sub" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/run_mult_celeba.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/checkpoints/trained-wae-final-24102.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/checkpoints/trained-wae-final-24102.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/checkpoints/trained-wae-final-24102.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/embedded_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/encSigma_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.001/train_plots/res_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/checkpoints/trained-wae-final-24102.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/checkpoints/trained-wae-final-24102.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/checkpoints/trained-wae-final-24102.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/embedded_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/encSigma_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0049_mb00034.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0051_mb00066.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0053_mb00098.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0055_mb00130.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0057_mb00162.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0059_mb00194.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0061_mb00226.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0064_mb00024.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0066_mb00056.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0068_mb00088.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0070_mb00120.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0072_mb00152.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0074_mb00184.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0076_mb00216.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0079_mb00014.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0081_mb00046.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0083_mb00078.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0085_mb00110.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0087_mb00142.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0089_mb00174.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0091_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0094_mb00004.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0096_mb00036.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0098_mb00068.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0100_mb00100.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.01/train_plots/res_e0102_mb00132.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/embedded_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/encSigma_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0002_mb00032.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0004_mb00064.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0006_mb00096.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0008_mb00128.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0010_mb00160.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0012_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0014_mb00224.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0017_mb00022.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0019_mb00054.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0021_mb00086.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0023_mb00118.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0027_mb00182.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0029_mb00214.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0032_mb00012.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0034_mb00044.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0036_mb00076.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0038_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0040_mb00140.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0042_mb00172.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0044_mb00204.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/4l_mnist_nobatchnorm_0.1/train_plots/res_e0047_mb00002.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/checkpoints/trained-wae-final-468000.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/checkpoints/trained-wae-final-468000.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/checkpoints/trained-wae-final-468000.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/embedded_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/encSigma_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.001/train_plots/res_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/checkpoints/trained-wae-final-468000.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/checkpoints/trained-wae-final-468000.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/checkpoints/trained-wae-final-468000.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/embedded_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/encSigma_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.01/train_plots/res_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/checkpoints/trained-wae-final-468000.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/checkpoints/trained-wae-final-468000.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/checkpoints/trained-wae-final-468000.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/embedded_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/encSigma_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_0.1/train_plots/res_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/checkpoints/checkpoint" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/checkpoints/trained-wae-final-468000.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/checkpoints/trained-wae-final-468000.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/checkpoints/trained-wae-final-468000.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/params.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/embedded_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/encSigma_e1880_mb00080.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0000_mb00000.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0170_mb00220.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0341_mb00206.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0512_mb00192.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0683_mb00178.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e0854_mb00164.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1025_mb00150.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1196_mb00136.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1367_mb00122.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1538_mb00108.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1709_mb00094.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/wae/6l_fa_mnist_batchnorm_1/train_plots/res_e1880_mb00080.png" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/configs.py" afterPath="$PROJECT_DIR$/configs.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/run_mult_celeba.py" afterPath="$PROJECT_DIR$/run_mult_celeba.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -563,21 +39,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="wae.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/wae.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="680">
-              <caret line="165" column="54" lean-forward="false" selection-start-line="165" selection-start-column="54" selection-end-line="165" selection-end-column="54" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="configs.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/configs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="444">
-              <caret line="166" column="24" lean-forward="true" selection-start-line="166" selection-start-column="24" selection-end-line="166" selection-end-column="24" />
+            <state relative-caret-position="684">
+              <caret line="182" column="27" lean-forward="false" selection-start-line="182" selection-start-column="27" selection-end-line="182" selection-end-column="27" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -588,8 +54,8 @@
       <file leaf-file-name="run_mult_celeba.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/run_mult_celeba.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="560">
-              <caret line="83" column="39" lean-forward="false" selection-start-line="83" selection-start-column="39" selection-end-line="83" selection-end-column="39" />
+            <state relative-caret-position="367">
+              <caret line="73" column="55" lean-forward="false" selection-start-line="73" selection-start-column="55" selection-end-line="73" selection-end-column="55" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -597,7 +63,29 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="celeba_run.sub" pinned="false" current-in-tab="true">
+      <file leaf-file-name="datahandler.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/datahandler.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="670">
+              <caret line="228" column="26" lean-forward="false" selection-start-line="228" selection-start-column="9" selection-end-line="228" selection-end-column="26" />
+              <folding>
+                <element signature="e#228#237#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="wae.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/wae.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-398">
+              <caret line="375" column="28" lean-forward="false" selection-start-line="375" selection-start-column="23" selection-end-line="375" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="celeba_run.sub" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/celeba_run.sub">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="418">
@@ -612,16 +100,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="88">
               <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="zalando_run.sub" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/zalando_run.sub">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -660,6 +138,11 @@
       <find>config_cifar10</find>
       <find>loss</find>
       <find>FLAGS</find>
+      <find>cele</find>
+      <find>cel</find>
+      <find>train</find>
+      <find>_read_celeba_image</find>
+      <find>read_celeba_image</find>
     </findStrings>
     <replaceStrings>
       <replace>config_celeba</replace>
@@ -672,9 +155,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/mnist_run.sub" />
-        <option value="$PROJECT_DIR$/run_mult_celeba.py" />
-        <option value="$PROJECT_DIR$/configs.py" />
         <option value="$PROJECT_DIR$/celeba_run.sub" />
+        <option value="$PROJECT_DIR$/configs.py" />
+        <option value="$PROJECT_DIR$/run_mult_celeba.py" />
       </list>
     </option>
   </component>
@@ -854,14 +337,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/datahandler.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="239">
-          <caret line="638" column="20" lean-forward="false" selection-start-line="638" selection-start-column="8" selection-end-line="638" selection-end-column="20" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-511">
@@ -942,16 +417,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/configs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="444">
-          <caret line="166" column="24" lean-forward="true" selection-start-line="166" selection-start-column="24" selection-end-line="166" selection-end-column="24" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/run_mult_celeba.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="560">
@@ -967,6 +432,180 @@
         <state relative-caret-position="418">
           <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datahandler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="318">
+          <caret line="46" column="51" lean-forward="false" selection-start-line="46" selection-start-column="45" selection-end-line="46" selection-end-column="51" />
+          <folding>
+            <element signature="e#228#237#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/configs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="618">
+          <caret line="179" column="0" lean-forward="false" selection-start-line="179" selection-start-column="0" selection-end-line="179" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/networks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_mult_cifar10.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-624">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/fa_mnist_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_mult_mnist.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="646">
+          <caret line="75" column="35" lean-forward="true" selection-start-line="75" selection-start-column="35" selection-end-line="75" selection-end-column="35" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-511">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tensorflow_test.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/zalando_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gaussdet_array_mnist.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/loss_functions.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mnist_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="88">
+          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/networks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/plots.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/configs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="684">
+          <caret line="182" column="27" lean-forward="false" selection-start-line="182" selection-start-column="27" selection-end-line="182" selection-end-column="27" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/celeba_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="418">
+          <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wae.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-398">
+          <caret line="375" column="28" lean-forward="false" selection-start-line="375" selection-start-column="23" selection-end-line="375" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run_mult_celeba.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="367">
+          <caret line="73" column="55" lean-forward="false" selection-start-line="73" selection-start-column="55" selection-end-line="73" selection-end-column="55" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datahandler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="670">
+          <caret line="228" column="26" lean-forward="false" selection-start-line="228" selection-start-column="9" selection-end-line="228" selection-end-column="26" />
+          <folding>
+            <element signature="e#228#237#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
