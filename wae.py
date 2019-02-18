@@ -217,27 +217,28 @@ class WAE(object):
             self.decoded.append(decoded)
 
         # --- Point interpolation for implicit-prrior WAE (only for generation)
-        decoded = self.anchors_points
-        decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
-                                        archi=opts['d_arch'][0],
-                                        num_layers=opts['d_nlayers'][0],
-                                        num_units=opts['d_nfilters'][0],
-                                        output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                        scope='decoder/layer_0',
-                                        reuse=True,
-                                        is_training=self.is_training)
-        if opts['decoder'][0] == 'det':
-            decoded = decoded_mean
-        elif opts['decoder'][0] == 'gauss':
-            p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
-            decoded = sample_gaussian(opts, p_params, 'tensorflow')
-        else:
-            assert False, 'Unknown encoder %s' % opts['decoder'][0]
-        if opts['input_normalize_sym']:
-            decoded=tf.nn.tanh(decoded)
-        else:
-            decoded=tf.nn.sigmoid(decoded)
-        self.anchors_decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+        if opts['prior']!='implicit':
+            decoded = self.anchors_points
+            decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
+                                            archi=opts['d_arch'][0],
+                                            num_layers=opts['d_nlayers'][0],
+                                            num_units=opts['d_nfilters'][0],
+                                            output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                            scope='decoder/layer_0',
+                                            reuse=True,
+                                            is_training=self.is_training)
+            if opts['decoder'][0] == 'det':
+                decoded = decoded_mean
+            elif opts['decoder'][0] == 'gauss':
+                p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                decoded = sample_gaussian(opts, p_params, 'tensorflow')
+            else:
+                assert False, 'Unknown encoder %s' % opts['decoder'][0]
+            if opts['input_normalize_sym']:
+                decoded=tf.nn.tanh(decoded)
+            else:
+                decoded=tf.nn.sigmoid(decoded)
+            self.anchors_decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
 
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
@@ -703,9 +704,14 @@ class WAE(object):
         enc_anchors = encoded[-1][anchors_ids]
         enc_interpolation = linespace(opts, num_steps,
                                 anchors=np.reshape(enc_anchors,[-1,2]+encshape))
-        dec_anchors = self.sess.run(self.anchors_decoded,
-                                feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
-                                           self.is_training: False})
+        if opts['prior']=='implicit':
+            dec_anchors = self.sess.run(self.anchors_decoded,
+                                    feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.is_training: False})
+        else:
+            dec_anchors = self.sess.run(self.decoded[-1],
+                                    feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.is_training: False})
         inter_anchors = np.reshape(dec_anchors,[-1,num_steps]+imshape)
 
         # Latent interpolation
@@ -716,7 +722,7 @@ class WAE(object):
         else:
             enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
             enc_var = np.ones(opts['zdim'][-1], dtype='float32')
-        mins, maxs = enc_mean - 3*np.sqrt(enc_var), enc_mean + 3*np.sqrt(enc_var)
+        mins, maxs = enc_mean - 2*np.sqrt(enc_var), enc_mean + 2*np.sqrt(enc_var)
         x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
         xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
         xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
