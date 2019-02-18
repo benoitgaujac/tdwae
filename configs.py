@@ -160,3 +160,82 @@ config_cifar10['d_arch'] = ['resnet',]#['dcgan','mlp','mlp','mlp','mlp'] # mlp, 
 config_cifar10['d_nlayers'] = [2,2,2,2,2]
 config_cifar10['d_nfilters'] = [64,32,16]
 config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
+### celeba config
+config_celeba = {}
+# Outputs set up
+config_celeba['verbose'] = False
+config_celeba['save_every_epoch'] = 1000
+config_celeba['print_every'] = 5
+config_celeba['vizu_sinkhorn'] = False
+config_celeba['vizu_embedded'] = True
+config_celeba['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
+config_celeba['work_dir'] = 'results_celeba'
+config_celeba['result_dir'] = '../results_celeba'
+config_celeba['plot_num_pics'] = 100
+config_celeba['plot_num_cols'] = 10
+
+# Data set up
+config_celeba['dataset'] = 'CelebA'
+config_celeba['data_dir'] = 'CelebA'
+config_celeba['input_normalize_sym'] = False
+config_celeba['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
+
+# Experiment set up
+config_celeba['train_dataset_size'] = -1
+config_celeba['batch_size'] = 64
+config_celeba['epoch_num'] = 10
+config_celeba['method'] = 'wae' #vae, wae
+config_celeba['use_trained'] = False #train from pre-trained model
+config_celeba['e_pretrain'] = False #pretrained the encoder parameters
+config_celeba['e_pretrain_sample_size'] = 200
+config_celeba['e_pretrain_it'] = 1000
+
+# Opt set up
+config_celeba['optimizer'] = 'adam' # adam, sgd
+config_celeba['adam_beta1'] = 0.5
+config_celeba['lr'] = 0.0001
+config_celeba['lr_adv'] = 0.0008
+config_celeba['batch_norm'] = True
+config_celeba['batch_norm_eps'] = 1e-05
+config_celeba['batch_norm_momentum'] = 0.99
+
+# Objective set up
+config_celeba['coef_rec'] = 1. # coef recon loss
+config_celeba['cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config_celeba['penalty'] = 'mmd' #sinkhorn, mmd
+config_celeba['epsilon'] = 0.1 #Sinkhorn regularization parameters
+config_celeba['L'] = 30 #Sinkhorn iteration
+config_celeba['mmd_kernel'] = 'IMQ' # RBF, IMQ
+
+# Model set up
+config_celeba['nlatents'] = 4
+config_celeba['zdim'] = [1024,512,128,32] #[64,16,8]
+config_celeba['pz_scale'] = 1.
+config_celeba['prior'] = 'gaussian' # dirichlet or gaussian
+
+# lambda set up
+config_celeba['lambda_scalar'] = 10.
+config_celeba['lambda'] = [1. for i in range(len(config_celeba['zdim'])-1)]
+config_celeba['lambda'].append(config_celeba['lambda_scalar'])
+config_celeba['lambda_schedule'] = 'constant' # adaptive, constant
+
+# NN set up
+config_celeba['filter_size'] = 3
+config_celeba['init_std'] = 0.099999
+config_celeba['init_bias'] = 0.0
+config_celeba['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+config_celeba['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+
+config_celeba['encoder'] = ['gauss']*config_celeba['nlatents']   #['gauss','gauss','gauss'] # deterministic, gaussian
+config_celeba['e_arch'] = ['dcgan']*config_celeba['nlatents']  #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
+config_celeba['e_nlayers'] = [2]*config_celeba['nlatents']
+config_celeba['e_nfilters'] = [1024,512,128,32]
+config_celeba['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+
+
+config_celeba['decoder'] = ['det']*config_celeba['nlatents']  #['det','det','det'] # deterministic, gaussian
+config_celeba['d_arch'] = ['dcgan']*config_celeba['nlatents'] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
+config_celeba['d_nlayers'] = [2]*config_celeba['nlatents']
+config_celeba['d_nfilters'] = [1024,512,128,32]
+config_celeba['d_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
