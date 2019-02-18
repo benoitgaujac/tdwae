@@ -2,7 +2,7 @@
 
 #$ -S /bin/bash
 
-#$ -wd /home/minzhang/hwae/
+#$ -wd /home/minzhang/hwae/hi
 
 #$ -l gpu=1
 #$ -l tmem=2G
