@@ -648,7 +648,7 @@ class DataHandler(object):
         seed = 123
         random.seed(seed)
         random.shuffle(paths)
-        random.shuffle(datapoint_ids)
+        random.shuffle(list(datapoint_ids))
         random.seed()
 
         saver = ArraySaver('disk', workdir=opts['work_dir'])
