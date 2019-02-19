@@ -216,29 +216,27 @@ class WAE(object):
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
             self.decoded.append(decoded)
 
-        # --- Point interpolation for implicit-prrior WAE (only for generation)
-        if opts['prior']!='implicit':
-            decoded = self.anchors_points
-            decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
-                                            archi=opts['d_arch'][0],
-                                            num_layers=opts['d_nlayers'][0],
-                                            num_units=opts['d_nfilters'][0],
-                                            output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                            scope='decoder/layer_0',
-                                            reuse=True,
-                                            is_training=self.is_training)
-            if opts['decoder'][0] == 'det':
-                decoded = decoded_mean
-            elif opts['decoder'][0] == 'gauss':
-                p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
-                decoded = sample_gaussian(opts, p_params, 'tensorflow')
-            else:
-                assert False, 'Unknown encoder %s' % opts['decoder'][0]
-            if opts['input_normalize_sym']:
-                decoded=tf.nn.tanh(decoded)
-            else:
-                decoded=tf.nn.sigmoid(decoded)
-            self.anchors_decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+        # --- Point interpolation for implicit-prior WAE (only for generation)
+        anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
+                                        archi=opts['d_arch'][0],
+                                        num_layers=opts['d_nlayers'][0],
+                                        num_units=opts['d_nfilters'][0],
+                                        output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                        scope='decoder/layer_0',
+                                        reuse=True,
+                                        is_training=False)
+        if opts['decoder'][0] == 'det':
+            anchors_decoded = anc_mean
+        elif opts['decoder'][0] == 'gauss':
+            p_params = tf.concat((anc_mean,anc_Sigma),axis=-1)
+            anchors_decoded = sample_gaussian(opts, p_params, 'tensorflow')
+        else:
+            assert False, 'Unknown encoder %s' % opts['decoder'][0]
+        if opts['input_normalize_sym']:
+            anchors_decoded=tf.nn.tanh(anchors_decoded)
+        else:
+            anchors_decoded=tf.nn.sigmoid(anchors_decoded)
+        self.anchors_decoded = tf.reshape(anchors_decoded,[-1]+datashapes[opts['dataset']])
 
         # --- Objectives, penalties, pretraining, FID
         # Compute matching penalty cost
@@ -290,8 +288,10 @@ class WAE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
-        self.anchors_points = tf.placeholder(tf.float32, [None] + [opts['zdim'][0],],
-                                                name='anchors_ph')
+        self.anchors_points = tf.placeholder(tf.float32,
+                                    [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
+                                    name='anchors_ph')
+
 
     def add_training_placeholders(self):
         opts = self.opts

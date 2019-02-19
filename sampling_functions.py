@@ -54,9 +54,8 @@ def linespace(opts,n,anchors):
     linespce = []
     num_inter = np.shape(anchors)[0]
     for i in range(num_inter):
-        x = np.linspace(anchors[i,0,0],anchors[i,1,0],n,endpoint=True)
-        y = np.linspace(anchors[i,0,1],anchors[i,1,1],n,endpoint=True)
-        linespce.append(np.stack([x,y],axis=-1))
+        x = np.linspace(anchors[i,0],anchors[i,1],n,endpoint=True)
+        linespce.append(x)
     linespce = np.stack(linespce,axis=0)
 
     return linespce

@@ -149,7 +149,7 @@ def save_train(opts, data_train, data_test,
     ### The reconstruction loss curves
     # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, 10))
+    color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
     x_step = max(int(total_num / 200), 1)
@@ -187,8 +187,8 @@ def save_train(opts, data_train, data_test,
         else:
             assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
-                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
+                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(opts['nlatents'], base_cmap='tab10'))
+                # c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(opts['nlatents'], base_cmap='Vega10'))
     plt.colorbar()
     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
                             color='navy', s=50, marker='*',label='Pz')
@@ -259,7 +259,7 @@ def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
     shape = np.shape(Sigmas)
     # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, 10))
+    color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
     x = np.arange(1, total_num + 1, x_step)
@@ -309,8 +309,8 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:num_pics, 0], embeds[i][:num_pics, 1], alpha=0.7,
-                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(opts['nlatents'], base_cmap='tab10'))
+                    # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(opts['nlatents'], base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         plt.scatter(embeds[i][num_pics:, 0], embeds[i][num_pics:, 1],
@@ -470,8 +470,8 @@ def save_latent_interpolation(opts, label_test, # labels
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
-                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(opts['nlatents'], base_cmap='tab10'))
+                    # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(opts['nlatents'], base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
@@ -744,7 +744,7 @@ def discrete_cmap(N, base_cmap=None):
 #     fig_width = width_pic / float(dpi)
 #     fig = plt.figure(figsize=(fig_width, fig_height))
 #     plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1],
-#                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='Vega10'))
+#                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(opts['nlatents'], base_cmap='Vega10'))
 #     plt.colorbar()
 #     plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
 #                             color='navy', s=3, alpha=0.5, marker='*',label='Pz')
