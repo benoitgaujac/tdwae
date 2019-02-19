@@ -211,7 +211,7 @@ config_celeba['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
 config_celeba['nlatents'] = 4
-config_celeba['zdim'] = [1024,512,128,32] #[64,16,8]
+config_celeba['zdim'] = [1024,256,64,32] #[64,16,8]
 config_celeba['pz_scale'] = 1.
 config_celeba['prior'] = 'gaussian' # dirichlet or gaussian
 

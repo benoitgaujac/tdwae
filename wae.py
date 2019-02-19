@@ -84,6 +84,7 @@ class WAE(object):
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['nlatents']):
+            #print('layer: ', n)
             if (opts['prior']=='implicit' and n==0) or opts['prior']!='implicit':
                 # - Encoding points
                 # Setting output_dim
@@ -91,6 +92,7 @@ class WAE(object):
                     enc_output_dim = 2*opts['zdim'][n]
                 else:
                     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+                #print('enc_output_dim',enc_output_dim)
                 enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                     archi=opts['e_arch'][n],
                                                     num_layers=opts['e_nlayers'][n],
@@ -109,6 +111,9 @@ class WAE(object):
                 else:
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
+
+                #print('encoded: ',encoded)
+
                 Sigma_det = tf.reduce_prod(enc_Sigma,axis=-1)
                 Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
                 Sstats = tf.stack([Smean,Svar],axis=-1)
@@ -134,6 +139,8 @@ class WAE(object):
                         reconstructed=tf.nn.tanh(reconstructed)
                     else:
                         reconstructed=tf.nn.sigmoid(reconstructed)
+
+                    #print('decoded: ', reconstructed)
                     reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                     loss_reconstruct = reconstruction_loss(opts, self.points,
                                                     reconstructed)
@@ -144,6 +151,7 @@ class WAE(object):
                         dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
                     else:
                         dec_output_dim = 2*opts['zdim'][n-1]
+                    #print('dec_output_dim', dec_output_dim)
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
@@ -159,6 +167,8 @@ class WAE(object):
                         reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
                     else:
                         assert False, 'Unknown encoder %s' % opts['decoder'][n]
+
+                    #print('decoded: ', reconstructed)
                     loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
                                                     reconstructed)
                     self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
