@@ -41,28 +41,30 @@ def maybe_download(opts):
     if not tf.gfile.Exists(DATA_DIRECTORY):
         tf.gfile.MakeDirs(DATA_DIRECTORY)
     data_path = os.path.join(DATA_DIRECTORY, opts['data_dir'])
-    if not tf.gfile.Exists(data_path):
-        tf.gfile.MakeDirs(data_path)
-    if opts['dataset']=='mnist':
-        maybe_download_file(data_path,'train-images-idx3-ubyte.gz',opts['MNIST_data_source_url'])
-        maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['MNIST_data_source_url'])
-        maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['MNIST_data_source_url'])
-        maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['MNIST_data_source_url'])
-    elif opts['dataset']=='zalando':
-        maybe_download_file(data_path,'train-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
-        maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
-        maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
-        maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
-    elif opts['dataset']=='cifar10':
-        maybe_download_file(data_path,'cifar-10-python.tar.gz',opts['cifar10_data_source_url'])
-        tar = tarfile.open(os.path.join(data_path,'cifar-10-python.tar.gz'))
-        tar.extractall(path=data_path)
-        tar.close()
-        data_path = os.path.join(data_path,'cifar-10-batches-py')
+    if tf.gfile.Exists(data_path):
+        return data_path
     else:
-        assert False, 'Unknow dataset'
+        tf.gfile.MakeDirs(data_path)
+        if opts['dataset']=='mnist':
+            maybe_download_file(data_path,'train-images-idx3-ubyte.gz',opts['MNIST_data_source_url'])
+            maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['MNIST_data_source_url'])
+            maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['MNIST_data_source_url'])
+            maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['MNIST_data_source_url'])
+        elif opts['dataset']=='zalando':
+            maybe_download_file(data_path,'train-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
+            maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
+            maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
+            maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
+        elif opts['dataset']=='cifar10':
+            maybe_download_file(data_path,'cifar-10-python.tar.gz',opts['cifar10_data_source_url'])
+            tar = tarfile.open(os.path.join(data_path,'cifar-10-python.tar.gz'))
+            tar.extractall(path=data_path)
+            tar.close()
+            data_path = os.path.join(data_path,'cifar-10-batches-py')
+        else:
+            assert False, 'Unknow dataset'
 
-    return data_path
+        return data_path
 
 def maybe_download_file(name,filename,url):
     filepath = os.path.join(name, filename)
