@@ -645,7 +645,8 @@ class WAE(object):
                         #     wait_lambda += 1
                         if wait_lambda > 500 * batches_num:
                             opts['lambda_scalar'] *= 2.
-                            opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
+                            # opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
+                            opts['lambda'] = [opts['lambda_scalar']*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
                             wae_lambda = opts['lambda']
                             # last_rec = np.array(losses_rec)
                             # last_match = np.concatenate((last_rec[1:],abs(loss_match)*np.ones(1)),axis=0)
@@ -716,13 +717,14 @@ class WAE(object):
 
         # Latent interpolation
         logging.error('Latent interpolation..')
-        if opts['prior']!='implicit':
+        # if opts['prior']!='implicit':
+        if False:
             enc_mean = np.mean(encoded[-1],axis=0)
             enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
         else:
             enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
             enc_var = np.ones(opts['zdim'][-1], dtype='float32')
-        mins, maxs = enc_mean - 2*np.sqrt(enc_var), enc_mean + 2*np.sqrt(enc_var)
+        mins, maxs = enc_mean - 4*np.sqrt(enc_var), enc_mean + 4*np.sqrt(enc_var)
         x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
         xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
         xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
