@@ -21,21 +21,25 @@ parser.add_argument("--weights_file")
 FLAGS = parser.parse_args()
 
 
+# Experiment set up
+configs.config_mnist['dataset'] = 'mnist'
+configs.config_mnist['data_dir'] = 'mnist'
 # Model set up
-configs.config_mnist['nlatents'] = 3
-configs.config_mnist['zdim'] = [8,4,2]
+configs.config_mnist['nlatents'] = 5
+configs.config_mnist['zdim'] = [32,16,8,4,2]
+configs.config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss'] # deterministic, gaussian
-configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan
-configs.config_mnist['e_nlayers'] = [2,2,2,2]
-configs.config_mnist['e_nfilters'] = [256,128,64,32]
+configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
+configs.config_mnist['e_nlayers'] = [2,2,2,2,2,2,2]
+configs.config_mnist['e_nfilters'] = [512,256,128,64,32,16]
 configs.config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-configs.config_mnist['decoder'] = ['det','det','det','det'] # deterministic, gaussian
-configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-configs.config_mnist['d_nlayers'] = [2,2,2,2]
-configs.config_mnist['d_nfilters'] = [256,128,64,32]
+configs.config_mnist['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
+configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+configs.config_mnist['d_nlayers'] = [2,2,2,2,2,2,2]
+configs.config_mnist['d_nfilters'] = [512,256,128,64,32,16]
 configs.config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
 
@@ -60,14 +64,15 @@ def main():
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
     # Experiments
-    lambda_values = [FLAGS.base_lambda**i for i in range(-3,1)]
+    lambda_values = [FLAGS.base_lambda**i for i in range(2)]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
         opts['lambda_scalar'] = lambda_scalar
         # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
-        opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
-        opts['lambda'].append(opts['lambda_scalar'])
+        # opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
+        # opts['lambda'].append(opts['lambda_scalar'])
+        opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
