@@ -27,7 +27,7 @@ configs.config_mnist['data_dir'] = 'mnist'
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]
-configs.config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
+configs.config_mnist['prior'] = 'implicit' # dirichlet, gaussian or implicit
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
@@ -72,7 +72,8 @@ def main():
         # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
         # opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
         # opts['lambda'].append(opts['lambda_scalar'])
-        opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
+        # opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
+        opts['lambda'] = [lambda_scalar for i in range(opts['nlatents'])]
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
