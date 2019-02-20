@@ -638,7 +638,7 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 500 and len(Loss_rec) > 0:
+                    if epoch >= 1000 and len(Loss_rec) > 0:
                         # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
                         #     wait_lambda = 0
                         # else:
