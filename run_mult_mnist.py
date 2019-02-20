@@ -72,8 +72,8 @@ def main():
         # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
         # opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
         # opts['lambda'].append(opts['lambda_scalar'])
-        # opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
-        opts['lambda'] = [lambda_scalar for i in range(opts['nlatents'])]
+        opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
+        # opts['lambda'] = [lambda_scalar for i in range(opts['nlatents'])]
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
