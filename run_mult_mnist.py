@@ -27,7 +27,7 @@ configs.config_mnist['data_dir'] = 'mnist'
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]
-configs.config_mnist['prior'] = 'implicit' # dirichlet, gaussian or implicit
+configs.config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
