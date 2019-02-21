@@ -440,6 +440,8 @@ class WAE(object):
                                                 global_step=counter)
             ##### TRAINING LOOP #####
             for it in range(batches_num):
+                #logging.error('epoch %d \n' % epoch)
+                #logging.error('iterations %d \n' % it)
                 # Sample batches of data points and Pz noise
                 data_ids = np.random.choice(train_size, opts['batch_size'],
                                                 replace=True)
@@ -496,7 +498,7 @@ class WAE(object):
                                                 [self.reconstructed,
                                                  self.encoded,
                                                  self.decoded[:-1]],
-                                                feed_dict={self.points:data.test_data[:30*npics],
+                                                feed_dict={self.points:data.test_data[:npics],
                                                            self.samples: fixed_noise,
                                                            self.is_training:False})
 
@@ -504,7 +506,7 @@ class WAE(object):
                         decoded = samples[::-1]
                         decoded.append(fixed_noise)
                         plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
-                                                data.test_labels[:30*npics],
+                                                data.test_labels[:npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -583,7 +585,7 @@ class WAE(object):
                     elif opts['prior']=='implicit':
                         samples_prior = samples[-2]
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:30*npics],    # labels
+                                     data.test_labels[:npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples

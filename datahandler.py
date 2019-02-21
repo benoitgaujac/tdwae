@@ -34,6 +34,7 @@ DATA_DIRECTORY = '../data'
 
 def _data_dir(opts):
     data_path = maybe_download(opts)
+    logging.error('data_path %s' % data_path)
     return data_path
 
 def maybe_download(opts):
@@ -233,6 +234,9 @@ class Data(object):
         height = 218
         new_width = 140
         new_height = 140
+        #logging.error('data_dir %s' % data_dir)
+        #logging.error('filename %s' % filename)
+        data_dir='/home/minzhang/hwae/data/CelebA/images'
         im = Image.open(utils.o_gfile((data_dir, filename), 'rb'))
         if self.crop_style == 'closecrop':
             # This method was used in DCGAN, pytorch-gan-collection, AVB, ...
@@ -432,7 +436,10 @@ class DataHandler(object):
         np.random.seed()
 
         self.data_shape = (64, 64, 1)
-        test_size = 10000
+        if opts['test_size']:
+            test_size=opts['test_size']
+        else:
+            test_size = 10000
 
         self.data = Data(opts, X[:-test_size])
         self.test_data = Data(opts, X[-test_size:])
