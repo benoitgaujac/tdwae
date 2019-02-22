@@ -152,7 +152,7 @@ def save_train(opts, data_train, data_test,
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
-    x_step = max(int(total_num / 200), 1)
+    x_step = max(int(total_num / 500), 1)
     x = np.arange(1, len(losses_rec) + 1, x_step)
     losses = np.array(losses_rec)
     for i in range(np.shape(losses)[-1]):
@@ -166,7 +166,7 @@ def save_train(opts, data_train, data_test,
             plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
     l = np.array(loss_match)
     y = np.log(np.abs(l[::x_step]))
-    plt.plot(x, y, linewidth=2, color=color_list[i+1], label='|match|')
+    plt.plot(x, y, linewidth=2, color=color_list[i+1], label=r'|$\lambda_%d$match|' % (i+1))
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",
@@ -226,16 +226,16 @@ def save_train(opts, data_train, data_test,
     save_path = os.path.join(work_dir,data_dir)
     utils.create_dir(save_path)
     name = filename[:-4]
-    # np.savez(os.path.join(save_path,name),
-    #             data_test=data_test, data_train=data_train,
-    #             label_test=label_test,
-    #             encoded = encoded[-1],
-    #             rec_train=rec_train, rec_test=rec_test,
-    #             samples_prior=samples_prior, samples=samples,
-    #             loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
-    #             loss_rec=np.array(loss_rec),
-    #             loss_rec_test=np.array(loss_rec_test),
-    #             losses_rec=np.array(losses_rec))
+    np.savez(os.path.join(save_path,name),
+                data_test=data_test, data_train=data_train,
+                label_test=label_test,
+                encoded = encoded[-1],
+                rec_train=rec_train, rec_test=rec_test,
+                samples_prior=samples_prior, samples=samples,
+                loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
+                loss_rec=np.array(loss_rec),
+                loss_rec_test=np.array(loss_rec_test),
+                losses_rec=np.array(losses_rec))
 
 
 def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
