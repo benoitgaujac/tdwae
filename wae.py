@@ -50,8 +50,6 @@ class WAE(object):
         self.sess = tf.Session()
         self.opts = opts
         # Check len hyperparams
-        assert len(opts['lambda'])==opts['nlatents'], \
-                'Num lambdas does match number of latents'
         assert len(opts['zdim'])==opts['nlatents'], \
                 'Num zdim does match number of latents'
 
@@ -62,7 +60,6 @@ class WAE(object):
         # --- Placeholders
         self.add_model_placeholders()
         self.add_training_placeholders()
-        pdb.set_trace()
         # --- Initialize prior parameters
         if opts['prior']=='gaussian':
             mean = np.zeros(opts['zdim'][-1], dtype='float32')
