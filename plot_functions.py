@@ -222,20 +222,21 @@ def save_train(opts, data_train, data_test,
     plt.close()
 
     # data
-    data_dir = 'train_data'
-    save_path = os.path.join(work_dir,data_dir)
-    utils.create_dir(save_path)
-    name = filename[:-4]
-    np.savez(os.path.join(save_path,name),
-                data_test=data_test, data_train=data_train,
-                label_test=label_test,
-                encoded = encoded[-1],
-                rec_train=rec_train, rec_test=rec_test,
-                samples_prior=samples_prior, samples=samples,
-                loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
-                loss_rec=np.array(loss_rec),
-                loss_rec_test=np.array(loss_rec_test),
-                losses_rec=np.array(losses_rec))
+    if opts['save_train_data']:
+        data_dir = 'train_data'
+        save_path = os.path.join(work_dir,data_dir)
+        utils.create_dir(save_path)
+        name = filename[:-4]
+        np.savez(os.path.join(save_path,name),
+                    data_test=data_test, data_train=data_train,
+                    label_test=label_test,
+                    encoded = encoded[-1],
+                    rec_train=rec_train, rec_test=rec_test,
+                    samples_prior=samples_prior, samples=samples,
+                    loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
+                    loss_rec=np.array(loss_rec),
+                    loss_rec_test=np.array(loss_rec_test),
+                    losses_rec=np.array(losses_rec))
 
 
 def plot_sinkhorn(opts, sinkhorn, work_dir, filename):

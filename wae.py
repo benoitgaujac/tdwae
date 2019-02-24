@@ -658,7 +658,7 @@ class WAE(object):
                 counter += 1
 
         # Save the final model
-        if epoch > 0:
+        if opts['save_final'] and epoch > 0:
             self.saver.save(self.sess, os.path.join(work_dir,
                                                 'checkpoints',
                                                 'trained-wae-final'),
@@ -711,14 +711,14 @@ class WAE(object):
 
         # Latent interpolation
         logging.error('Latent interpolation..')
-        # if opts['prior']!='implicit':
-        if False:
+        # if False:
+        if opts['prior']!='implicit':
             enc_mean = np.mean(encoded[-1],axis=0)
             enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
         else:
             enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
             enc_var = np.ones(opts['zdim'][-1], dtype='float32')
-        mins, maxs = enc_mean - 2*np.sqrt(enc_var), enc_mean + 2*np.sqrt(enc_var)
+        mins, maxs = enc_mean - 1*np.sqrt(enc_var), enc_mean + 2*np.sqrt(enc_var)
         x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
         xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
         xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
