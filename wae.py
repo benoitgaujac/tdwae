@@ -252,9 +252,13 @@ class WAE(object):
         # Compute objs
         self.objective = self.loss_reconstruct \
                          + self.lmbd[-1] * self.match_penalty
-        imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
-        self.imp_objective = self.losses_reconstruct[0] \
-                            + self.lmbd[0] * imp_match_penalty
+
+        if opts['nlatents']>1:
+            imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
+            self.imp_objective = self.losses_reconstruct[0] \
+                                + self.lmbd[0] * imp_match_penalty
+        else:
+            self.imp_objective = self.objective
 
         # Logging info
         self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
@@ -718,7 +722,7 @@ class WAE(object):
         else:
             enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
             enc_var = np.ones(opts['zdim'][-1], dtype='float32')
-        mins, maxs = enc_mean - 1*np.sqrt(enc_var), enc_mean + 2*np.sqrt(enc_var)
+        mins, maxs = enc_mean - 1.5*np.sqrt(enc_var), enc_mean + 1.5*np.sqrt(enc_var)
         x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
         xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
         xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
