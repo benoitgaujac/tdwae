@@ -12,6 +12,8 @@
 
 #$ -P gpu
 
+#$ -j y
+
 source /share/apps/examples/python/python-3.6.5.source
 source /share/apps/examples/cuda/cuda-9.0.source
 

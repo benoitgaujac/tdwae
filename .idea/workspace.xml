@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8e5fb568-f4f4-4fdd-afc8-6172a352cace" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/configs.py" afterPath="$PROJECT_DIR$/configs.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wae.py" afterPath="$PROJECT_DIR$/wae.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ops/resnet_mingtian.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/celeba_run.sub" afterPath="$PROJECT_DIR$/celeba_run.sub" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,7 +18,7 @@
       <file leaf-file-name="networks.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/networks.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
+            <state relative-caret-position="-3959">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -26,25 +27,59 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="plots.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/plots.py">
+      <file leaf-file-name="mnist_run.sub" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/mnist_run.sub">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="88">
+              <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="resnet.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ops/resnet.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-4">
+              <caret line="41" column="21" lean-forward="false" selection-start-line="41" selection-start-column="21" selection-end-line="41" selection-end-column="21" />
               <folding>
-                <element signature="e#0#10#0" expanded="true" />
+                <element signature="e#0#18#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="configs.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/configs.py">
+      <file leaf-file-name="resnet_mingtian.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ops/resnet_mingtian.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="463">
-              <caret line="216" column="0" lean-forward="true" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
+            <state relative-caret-position="-3021">
+              <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
               <folding>
-                <element signature="e#0#11#0" expanded="true" />
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="deconv2d.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ops/deconv2d.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-14">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="conv2d.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ops/conv2d.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-513">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -65,8 +100,8 @@
       <file leaf-file-name="datahandler.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/datahandler.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="696">
-              <caret line="45" column="9" lean-forward="false" selection-start-line="45" selection-start-column="9" selection-end-line="45" selection-end-column="9" />
+            <state relative-caret-position="-9491">
+              <caret line="215" column="43" lean-forward="false" selection-start-line="215" selection-start-column="43" selection-end-line="215" selection-end-column="43" />
               <folding>
                 <element signature="e#228#237#0" expanded="true" />
               </folding>
@@ -74,13 +109,32 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="wae.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="wae.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/wae.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="714">
-              <caret line="170" column="21" lean-forward="false" selection-start-line="170" selection-start-column="21" selection-end-line="170" selection-end-column="21" />
+            <state relative-caret-position="315">
+              <caret line="500" column="89" lean-forward="false" selection-start-line="500" selection-start-column="89" selection-end-line="500" selection-end-column="89" />
               <folding>
-                <element signature="e#224#234#0" expanded="true" />
+                <marker date="1550737979334" expanded="true" signature="18090:32072" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="20016:31754" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="29028:29711" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="29729:29821" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="29855:30450" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="29876:29986" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="30255:30450" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="30559:31724" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="30618:31724" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="30643:30865" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="30925:31651" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="31082:31488" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="31808:32072" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="32151:32219" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+                <marker date="1550737979334" expanded="true" signature="32973:33077" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="33636:33762" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="33844:34166" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="34876:35003" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="35353:35445" ph="..." />
+                <marker date="1550737979334" expanded="true" signature="35833:41885" ph="..." />
               </folding>
             </state>
           </provider>
@@ -89,43 +143,9 @@
       <file leaf-file-name="celeba_run.sub" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/celeba_run.sub">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="418">
-              <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+            <state relative-caret-position="308">
+              <caret line="14" column="7" lean-forward="false" selection-start-line="14" selection-start-column="7" selection-end-line="14" selection-end-column="7" />
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="mnist_run.sub" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/mnist_run.sub">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="88">
-              <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="gaussdet_array_mnist.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gaussdet_array_mnist.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="loss_functions.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/loss_functions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2891">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#10#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -141,12 +161,29 @@
       <find>FLAGS</find>
       <find>cele</find>
       <find>cel</find>
-      <find>_read_celeba_image</find>
       <find>read_celeba_image</find>
       <find>data_path</find>
       <find>train</find>
       <find>datashapes</find>
       <find>data</find>
+      <find>print</find>
+      <find>save_ever</find>
+      <find>counter</find>
+      <find>print_</find>
+      <find>test_size</find>
+      <find>training</find>
+      <find>training wae</find>
+      <find>_read_celeba_image</find>
+      <find>data_dir</find>
+      <find>self.paths[key])</find>
+      <find>log</find>
+      <find>test_labels[</find>
+      <find>test_labels</find>
+      <find>npics</find>
+      <find>test</find>
+      <find>30</find>
+      <find>read_</find>
+      <find>conv_shortcut</find>
     </findStrings>
     <replaceStrings>
       <replace>config_celeba</replace>
@@ -159,11 +196,12 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/mnist_run.sub" />
-        <option value="$PROJECT_DIR$/celeba_run.sub" />
         <option value="$PROJECT_DIR$/run_mult_celeba.py" />
-        <option value="$PROJECT_DIR$/datahandler.py" />
         <option value="$PROJECT_DIR$/configs.py" />
         <option value="$PROJECT_DIR$/wae.py" />
+        <option value="$PROJECT_DIR$/datahandler.py" />
+        <option value="$PROJECT_DIR$/celeba_run.sub" />
+        <option value="$PROJECT_DIR$/ops/resnet_mingtian.py" />
       </list>
     </option>
   </component>
@@ -224,6 +262,11 @@
               <item name="tdwae" type="b2602c69:ProjectViewProjectNode" />
               <item name="tdwae" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="tdwae" type="b2602c69:ProjectViewProjectNode" />
+              <item name="tdwae" type="462c0819:PsiDirectoryNode" />
+              <item name="ops" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -239,6 +282,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/ops" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
@@ -320,7 +364,7 @@
         <state relative-caret-position="-624">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -338,7 +382,7 @@
         <state relative-caret-position="646">
           <caret line="75" column="35" lean-forward="true" selection-start-line="75" selection-start-column="35" selection-end-line="75" selection-end-column="35" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -380,7 +424,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -476,7 +520,7 @@
         <state relative-caret-position="-624">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -493,16 +537,8 @@
         <state relative-caret-position="646">
           <caret line="75" column="35" lean-forward="true" selection-start-line="75" selection-start-column="35" selection-end-line="75" selection-end-column="35" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-511">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -526,25 +562,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mnist_run.sub">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="88">
-          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/networks.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -559,11 +577,70 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/celeba_run.sub">
+    <entry file="file://$PROJECT_DIR$/loss_functions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="418">
-          <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+        <state relative-caret-position="-2891">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="572">
+          <caret line="32" column="43" lean-forward="false" selection-start-line="32" selection-start-column="43" selection-end-line="32" selection-end-column="43" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/configs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1566">
+          <caret line="226" column="20" lean-forward="false" selection-start-line="226" selection-start-column="20" selection-end-line="226" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wae.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="500" column="89" lean-forward="false" selection-start-line="500" selection-start-column="89" selection-end-line="500" selection-end-column="89" />
+          <folding>
+            <marker date="1550737979334" expanded="true" signature="18090:32072" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="20016:31754" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="29028:29711" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="29729:29821" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="29855:30450" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="29876:29986" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="30255:30450" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="30559:31724" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="30618:31724" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="30643:30865" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="30925:31651" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="31082:31488" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="31808:32072" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="32151:32219" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1550737979334" expanded="true" signature="32973:33077" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="33636:33762" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="33844:34166" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="34876:35003" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="35353:35445" ph="..." />
+            <marker date="1550737979334" expanded="true" signature="35833:41885" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/datahandler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9491">
+          <caret line="215" column="43" lean-forward="false" selection-start-line="215" selection-start-column="43" selection-end-line="215" selection-end-column="43" />
+          <folding>
+            <element signature="e#228#237#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -577,42 +654,68 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/loss_functions.py">
+    <entry file="file://$PROJECT_DIR$/celeba_run.sub">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2891">
+        <state relative-caret-position="308">
+          <caret line="14" column="7" lean-forward="false" selection-start-line="14" selection-start-column="7" selection-end-line="14" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ops/deconv2d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-14">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#10#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/datahandler.py">
+    <entry file="file://$PROJECT_DIR$/ops/conv2d.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="696">
-          <caret line="45" column="9" lean-forward="false" selection-start-line="45" selection-start-column="9" selection-end-line="45" selection-end-column="9" />
+        <state relative-caret-position="-513">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#228#237#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/configs.py">
+    <entry file="file://$PROJECT_DIR$/mnist_run.sub">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="463">
-          <caret line="216" column="0" lean-forward="true" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
+        <state relative-caret-position="88">
+          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/networks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3959">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#0#11#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wae.py">
+    <entry file="file://$PROJECT_DIR$/ops/resnet.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="714">
-          <caret line="170" column="21" lean-forward="false" selection-start-line="170" selection-start-column="21" selection-end-line="170" selection-end-column="21" />
+        <state relative-caret-position="-4">
+          <caret line="41" column="21" lean-forward="false" selection-start-line="41" selection-start-column="21" selection-end-line="41" selection-end-column="21" />
           <folding>
-            <element signature="e#224#234#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ops/resnet_mingtian.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3021">
+          <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
