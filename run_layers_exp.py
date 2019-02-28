@@ -22,10 +22,14 @@ FLAGS = parser.parse_args()
 # Experiment set up
 configs.config_mnist['dataset'] = 'mnist'
 configs.config_mnist['data_dir'] = 'mnist'
+
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]
-# configs.config_mnist['lambda'].append(FLAGS.base_lambda**configs.config_mnist['nlatents'])
+configs.config_mnist['lambda_schedule'] = 'constant'
+configs.config_mnist['lambda_scalar'] = 2.
+configs.config_mnist['lambda'] = [config_mnist['lambda_scalar']**i/config_mnist['zdim'][0] for i in range(config_mnist['nlatents'])]
+configs.config_mnist['lambda'].append(0.01*config_mnist['lambda_scalar']**5/config_mnist['zdim'][0])
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
@@ -65,7 +69,7 @@ def main():
     for n in range(1,opts['nlatents']+1):
         logging.error('Experiment encoder %d layers' % n)
         opts['e_nlatents'] = n
-        opts['lambda'] = [FLAGS.base_lambda**(1/(n-i))*opts['zdim'][i]/784. for i in range(n)]
+        # opts['lambda'] = [FLAGS.base_lambda**(1/(n-i))*opts['zdim'][i]/784. for i in range(n)]
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(n) + 'elayers'
         work_dir = os.path.join(opts['method'],work_dir)
