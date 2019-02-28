@@ -8,7 +8,7 @@ config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 10000
 config_mnist['save_final'] = True
 config_mnist['save_train_data'] = True
-config_mnist['print_every'] = 115000
+config_mnist['print_every'] = 375000
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
@@ -27,7 +27,7 @@ config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-ce
 # Experiment set up
 config_mnist['train_dataset_size'] = -1
 config_mnist['batch_size'] = 128
-config_mnist['epoch_num'] = 2460
+config_mnist['epoch_num'] = 4001
 config_mnist['method'] = 'wae' #vae, wae
 config_mnist['use_trained'] = False #train from pre-trained model
 config_mnist['e_pretrain'] = False #pretrained the encoder parameters
@@ -52,20 +52,15 @@ config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_mnist['nlatents'] = 1
-config_mnist['zdim'] = [8,] #[32,16,8,4,2]
+config_mnist['nlatents'] = 5
+config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['pz_scale'] = 1.
 config_mnist['prior'] = 'gaussian' # dirichlet, gaussian
 
 # lambda set up
-config_mnist['lambda_scalar'] = 10.
-config_mnist['lambda'] = [config_mnist['lambda_scalar'],]
-# config_mnist['lambda'] = [784/config_mnist['zdim'][i]*config_mnist['lambda_scalar']**(1/(5-i)) for i in range(config_mnist['nlatents'])]
-# config_mnist['lambda'].append(784.*config_mnist['lambda_scalar'])
-# config_mnist['lambda'].append(config_mnist['lambda_scalar']**config_mnist['nlatents'])
-# config_mnist['lambda'].append(config_mnist['lambda_scalar'])
-# config_mnist['lambda'] = [config_mnist['zdim'][i]*config_mnist['lambda_scalar']**(i+1)/784 for i in range(len(config_mnist['zdim'])-1)]
-# config_mnist['lambda'].append(config_mnist['coef_rec']*config_mnist['lambda_scalar']**config_mnist['nlatents']/784)
+config_mnist['lambda_scalar'] = 2.
+config_mnist['lambda'] = [config_mnist['lambda_scalar']**i/config_mnist['zdim'][0] for i in range(config_mnist['nlatents'])]
+config_mnist['lambda'].append(0.0001*config_mnist['lambda_scalar']**5/config_mnist['zdim'][0])
 config_mnist['lambda_schedule'] = 'adaptive' # adaptive, constant
 
 # NN set up
