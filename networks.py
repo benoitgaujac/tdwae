@@ -38,6 +38,14 @@ def encoder(opts, input, archi, num_layers, num_units, output_dim, scope,
             outputs = resnet_encoder(opts, input, 128, reuse,
                                                         is_training)
 
+        elif archi == 'new_resnet':
+            outputs = new_res_encoder(opts, input,  num_layers,
+                                                        num_units,
+                                                        output_dim,
+                                                        opts['batch_norm'],
+                                                        reuse,
+                                                        is_training)
+
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % archi)
 
@@ -98,6 +106,9 @@ def new_res_encoder(opts, input, num_layers, num_units, output_dim,
                                                         batch_norm=False,
                                                         reuse=False,
                                                         is_training=False):
+
+    print('this is resnet encoder')
+    print('res_encoder_input: ',input)
     # Reshaping if needed
     shape = input.get_shape().as_list()
     if len(shape)<4:
@@ -107,15 +118,22 @@ def new_res_encoder(opts, input, num_layers, num_units, output_dim,
         reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),datashapes[opts['dataset']][-1])
         input = tf.reshape(input,(-1,)+reshape)
     layer_x = input
+    print('res_encoder_input_after)reshape: ',layer_x)
     for i in range(num_layers):
-        layer_x = ops.resnet.ResidualBlock(opts, layer_x, layer_x.get_shape().as_list()[-1], num_units, 3, scope='hid{}/res'.format(i), resample='down', reuse=reuse, is_training=is_training)
+        print('layer: ',i)
+        if i==0:
+            layer_x = ops.resnet.ResidualBlock(opts, layer_x, layer_x.get_shape().as_list()[-1], num_units, 3, scope='hid{}/res'.format(i), resample='down', reuse=reuse, is_training=is_training)
+        else:
+            layer_x = ops.resnet.ResidualBlock(opts, layer_x, layer_x.get_shape().as_list()[-1], num_units, 3, scope='hid{}/res'.format(i), resample=None, reuse=reuse, is_training=is_training)
+
+        print('resnet_block_output: ',layer_x)
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
-        layer_x = ops.ops.non_linear(layer_x,opts['e_nonlinearity'])
+        layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
     outputs = ops.linear.Linear(opts,layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, scope='hid_final')
-
+    print('encoder_block_output: ',outputs)
     return outputs
 
 
@@ -205,6 +223,9 @@ def decoder(opts, input, archi, num_layers, num_units, output_dim, scope,
             # Resnet archi similar to Imporved training of WAGAN
             outputs = resnet_decoder(opts, input, output_dim, reuse,
                                                         is_training)
+
+        elif archi == 'new_resnet':
+            outputs = new_res_decoder(opts, input,num_layers,num_units,output_dim,opts['batch_norm'],reuse,is_training)
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
@@ -234,11 +255,14 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
 
     return outputs
 
-def  new_res_decoder(opts, input, archi, num_layers, num_units,
+def  new_res_decoder(opts, input,num_layers, num_units,
                                                         output_dim,
                                                         batch_norm,
                                                         reuse,
                                                         is_training):
+
+    print('this is resnet decoder')
+    print('res_decoder_input: ',input)
 
     h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
     w_sqr = h_sqr
@@ -246,26 +270,35 @@ def  new_res_decoder(opts, input, archi, num_layers, num_units,
     batch_size = tf.shape(input)[0]
     height = output_shape[0] / 2
     width = output_shape[1] / 2
+    print('')
     h0 = ops.linear.Linear(opts,input,np.prod(input.get_shape().as_list()[1:]),
             num_units * ceil(height) * ceil(width), scope='hid0/lin')
+
+    print('res_decoder_linear_output: ',h0)
     if batch_norm:
         h0 = ops.batchnorm.Batchnorm_layers(
             opts, h0, 'hid0/bn_lin', is_training, reuse)
     h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
     h0 = ops._ops.non_linear(h0,opts['d_nonlinearity'])
     layer_x = h0
-    for i in range(num_layers - 1):
+    print('res_decoder_linear_output_reshape: ',layer_x)
+    for i in range(num_layers):
+        print('layer: ',i)
         # layer_x = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
         #            scope='hid%d/deconv' % i, init= opts['conv_init'])
         channel_input_dim = layer_x.get_shape().as_list()[-1]
-        layer_x = ops.resnet.ResidualBlock(opts, layer_x, channel_input_dim, num_units, 3, scope='hid%d/res_deconv' % i, resample='up', reuse=reuse, is_training=is_training)
+        if i==0:
+            layer_x = ops.resnet.ResidualBlock(opts, layer_x, channel_input_dim, num_units, 3, scope='hid%d/res_deconv' % i, resample='up', reuse=reuse, is_training=is_training)
+        else:
+            layer_x = ops.resnet.ResidualBlock(opts, layer_x, channel_input_dim, num_units, 3, scope='hid%d/res_deconv' % i, resample=None, reuse=reuse, is_training=is_training)
 
+        print('decoder_resblock_output: ', layer_x)
     if batch_norm:
        layer_x = ops.batchnorm.Batchnorm_layers(
            opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
     layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
     output = ops.conv2d.Conv2d(opts, layer_x, num_units, 2 * 3, 3, scope='hid_final/conv', init='normilized_glorot')
-
+    print('res_decoder_output: ',output)
     return output
 
 

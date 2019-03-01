@@ -84,7 +84,7 @@ class WAE(object):
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['nlatents']):
-            #print('layer: ', n)
+            print('encoder_outer_layer: ', n)
             if (opts['prior']=='implicit' and n==0) or opts['prior']!='implicit':
                 # - Encoding points
                 # Setting output_dim
@@ -92,7 +92,7 @@ class WAE(object):
                     enc_output_dim = 2*opts['zdim'][n]
                 else:
                     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
-                #print('enc_output_dim',enc_output_dim)
+                print('enc_output_dim',enc_output_dim)
                 enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                     archi=opts['e_arch'][n],
                                                     num_layers=opts['e_nlayers'][n],
@@ -112,7 +112,7 @@ class WAE(object):
                     assert False, 'Unknown encoder %s' % opts['encoder']
                 self.encoded.append(encoded)
 
-                #print('encoded: ',encoded)
+                print('encoded: ',encoded)
 
                 Sigma_det = tf.reduce_prod(enc_Sigma,axis=-1)
                 Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
@@ -120,6 +120,8 @@ class WAE(object):
                 encSigmas_stats.append(Sstats)
                 # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
                 if n==0:
+                    print('decoder_outer_layer: ', n)
+                    print('decoder_output_dim:',2*np.prod(datashapes[opts['dataset']]))
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
@@ -140,18 +142,20 @@ class WAE(object):
                     else:
                         reconstructed=tf.nn.sigmoid(reconstructed)
 
-                    #print('decoded: ', reconstructed)
+                    print('decoded: ', reconstructed)
                     reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                     loss_reconstruct = reconstruction_loss(opts, self.points,
                                                     reconstructed)
                     self.loss_reconstruct += loss_reconstruct
                 else:
+                    print('decoder_outer_layer: ', n)
                     # Setting output_dim
-                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    else:
+
+                    if opts['e_arch'][n-1]=='mlp':
                         dec_output_dim = 2*opts['zdim'][n-1]
-                    #print('dec_output_dim', dec_output_dim)
+                    else:
+                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    print('decoder_output_dim', dec_output_dim)
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
@@ -168,7 +172,7 @@ class WAE(object):
                     else:
                         assert False, 'Unknown encoder %s' % opts['decoder'][n]
 
-                    #print('decoded: ', reconstructed)
+                    print('decoded: ', reconstructed)
                     loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
                                                     reconstructed)
                     self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
@@ -177,6 +181,7 @@ class WAE(object):
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
         # --- Sampling from model (only for generation)
         # reuse variable
+        print('sampling')
         if opts['prior']=='implicit':
             reuse = False
         else:
@@ -206,10 +211,11 @@ class WAE(object):
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
             else:
                 # Setting output_dim
-                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                else:
+                if opts['e_arch'][n-1]=='mlp':
                     dec_output_dim = 2*opts['zdim'][n-1]
+
+                else:
+                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
                 decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
