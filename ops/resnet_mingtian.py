@@ -70,7 +70,7 @@ def dense(x_, num_units, nonlinearity=None, init_scale=1., counters={}, init=Fal
 
 
 @add_arg_scope
-def conv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1.,
+def conv2d(x_, num_filters, filter_size=[3, 3], stride=[2, 2, 2, 2], pad='SAME', nonlinearity=None, init_scale=1.,
            counters={}, init=False, ema=None, **kwargs):
     ''' convolutional layer '''
     name = get_name('conv2d', counters)
@@ -86,7 +86,7 @@ def conv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonli
         W = tf.reshape(g, [1, 1, 1, num_filters]) * tf.nn.l2_normalize(V, [0, 1, 2])
 
         # calculate convolutional layer output
-        x = tf.nn.bias_add(tf.nn.conv2d(x_, W, [1] + stride + [1], pad), b)
+        x = tf.nn.bias_add(tf.nn.conv2d(x_, W, stride, pad), b)
 
         if init:  # normalize x
             m_init, v_init = tf.nn.moments(x, [0, 1, 2])
@@ -105,7 +105,7 @@ def conv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonli
 
 
 @add_arg_scope
-def deconv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', nonlinearity=None, init_scale=1.,
+def deconv2d(x_, num_filters, filter_size=[3, 3], stride=[2, 2, 2, 2], pad='SAME', nonlinearity=None, init_scale=1.,
              counters={}, init=False, ema=None, **kwargs):
     ''' transposed convolutional layer '''
     name = get_name('deconv2d', counters)
@@ -127,7 +127,7 @@ def deconv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', non
         W = tf.reshape(g, [1, 1, num_filters, 1]) * tf.nn.l2_normalize(V, [0, 1, 3])
 
         # calculate convolutional layer output
-        x = tf.nn.conv2d_transpose(x_, W, target_shape, [1] + stride + [1], padding=pad)
+        x = tf.nn.conv2d_transpose(x_, W, target_shape, stride , padding=pad)
         x = tf.nn.bias_add(x, b)
 
         if init:  # normalize x
@@ -144,13 +144,6 @@ def deconv2d(x_, num_filters, filter_size=[3, 3], stride=[1, 1], pad='SAME', non
             x = nonlinearity(x)
 
         return x
-
-
-
-
-
-
-
 
 
 

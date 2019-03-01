@@ -76,3 +76,5 @@ def OptimizedResBlockEnc1(opts, input, output_dim):
     output = ops._ops.non_linear(output,'relu')
     output = conv_2(opts,input=output,scope='enc_res1/Conv2', filter_size=3)
     return shortcut + output
+
+
