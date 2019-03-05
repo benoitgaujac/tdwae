@@ -56,6 +56,15 @@ def main():
     if FLAGS.work_dir:
         opts['work_dir'] = FLAGS.work_dir
 
+    # Experiemnts set up
+    opts['print_every'] = 375000
+    opts['epoch_num'] = 4001
+    opts['use_trained'] = False
+    opts['lambda_scalar'] = 2.
+    opts['lambda'] = [opts['lambda_scalar']**i/opts['zdim'][0] for i in range(opts['nlatents'])]
+    opts['lambda'].append(0.0001*opts['lambda_scalar']**5/opts['zdim'][0])
+    opts['lambda_schedule'] = 'adaptive'
+
     # Verbose
     if opts['verbose']:
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
