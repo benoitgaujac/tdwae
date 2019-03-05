@@ -70,7 +70,7 @@ config_mnist['init_bias'] = 0.0
 config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
-config_mnist['e_nlatents'] = config_mnist['nlatents']
+config_mnist['e_nlatents'] = config_mnist['nlatents'] #config_mnist['nlatents']
 config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
 config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
 config_mnist['e_nlayers'] = [2,2,2,2,2,2,2]
@@ -88,14 +88,14 @@ config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 config_cifar10 = {}
 # Outputs set up
 config_cifar10['verbose'] = False
-config_cifar10['save_every_epoch'] = 1000
-config_cifar10['print_every'] = 5
+config_cifar10['save_every_epoch'] = 2000
+config_cifar10['print_every'] = 200000
 config_cifar10['save_final'] = True
-config_cifar10['save_train_data'] = True
+config_cifar10['save_train_data'] = False
 config_cifar10['vizu_sinkhorn'] = False
 config_cifar10['vizu_embedded'] = True
 config_cifar10['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
-config_cifar10['vizu_encSigma'] = True
+config_cifar10['vizu_encSigma'] = False
 config_cifar10['work_dir'] = 'results_cifar'
 config_cifar10['plot_num_pics'] = 100
 config_cifar10['plot_num_cols'] = 10
@@ -109,7 +109,7 @@ config_cifar10['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
 # Experiment set up
 config_cifar10['train_dataset_size'] = -1
 config_cifar10['batch_size'] = 64
-config_cifar10['epoch_num'] = 10
+config_cifar10['epoch_num'] = 4120
 config_cifar10['method'] = 'wae' #vae, wae
 config_cifar10['use_trained'] = False #train from pre-trained model
 config_cifar10['e_pretrain'] = False #pretrained the encoder parameters
@@ -134,15 +134,15 @@ config_cifar10['L'] = 30 #Sinkhorn iteration
 config_cifar10['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_cifar10['nlatents'] = 1
-config_cifar10['zdim'] = [128,] #[64,16,8]
+config_cifar10['nlatents'] = 8
+config_cifar10['zdim'] = [64,49,36,25,16,9,4,2]
 config_cifar10['pz_scale'] = 1.
 config_cifar10['prior'] = 'gaussian' # dirichlet or gaussian
 
 # lambda set up
 config_cifar10['lambda_scalar'] = 10.
-config_cifar10['lambda'] = [1. for i in range(len(config_cifar10['zdim'])-1)]
-config_cifar10['lambda'].append(config_cifar10['lambda_scalar'])
+config_cifar10['lambda'] = [1/config_cifar10['zdim'][n] for i in range(config_cifar10['nlatents'])]
+config_cifar10['lambda'].append(0.0001/config_cifar10['zdim'][-1])
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
@@ -152,15 +152,16 @@ config_cifar10['init_bias'] = 0.0
 config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
-config_cifar10['encoder'] = ['det',]#['gauss','gauss','gauss'] # deterministic, gaussian
-config_cifar10['e_arch'] = ['resnet',] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
-config_cifar10['e_nlayers'] = [2,2,2,2,2]
-config_cifar10['e_nfilters'] = [64,32,16]
-config_cifar10['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+config_cifar10['e_nlatents'] = config_cifar10['nlatents'] #config_mnist['nlatents']
+config_cifar10['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+config_cifar10['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, ali, began
+config_cifar10['e_nlayers'] = [2,2,2,2,2,2,2,2]
+config_cifar10['e_nfilters'] = [128,64,64,64,32,32,32,32]
+config_cifar10['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
 
 
-config_cifar10['decoder'] = ['det',] #['det','det','det'] # deterministic, gaussian
-config_cifar10['d_arch'] = ['resnet',]#['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
-config_cifar10['d_nlayers'] = [2,2,2,2,2]
-config_cifar10['d_nfilters'] = [64,32,16]
+config_cifar10['decoder'] = ['det','det','det','det','det','det','det','det'] # deterministic, gaussian
+config_cifar10['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod, ali, began
+config_cifar10['d_nlayers'] = [2,2,2,2,2,2,2,2]
+config_cifar10['d_nfilters'] = [128,64,64,64,32,32,32,32]
 config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
