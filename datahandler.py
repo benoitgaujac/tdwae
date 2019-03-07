@@ -236,7 +236,7 @@ class Data(object):
         new_height = 140
         #logging.error('data_dir %s' % data_dir)
         #logging.error('filename %s' % filename)
-        data_dir='/home/minzhang/hwae/data/CelebA/images'
+        data_dir='/home/mingtianzhang/data/CelebA/images'
         im = Image.open(utils.o_gfile((data_dir, filename), 'rb'))
         if self.crop_style == 'closecrop':
             # This method was used in DCGAN, pytorch-gan-collection, AVB, ...

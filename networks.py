@@ -113,9 +113,10 @@ def new_res_encoder(opts, input, num_layers, num_units, output_dim,
     shape = input.get_shape().as_list()
     if len(shape)<4:
         assert len(shape)==2, 'Wrong shape for inputs'
-        h_sqr = shape[-1]/datashapes[opts['dataset']][-1]
+        h_sqr = shape[-1]
         w_sqr = h_sqr
-        reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),datashapes[opts['dataset']][-1])
+        #reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),datashapes[opts['dataset']][-1])
+        reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),1)
         input = tf.reshape(input,(-1,)+reshape)
     layer_x = input
     print('res_encoder_input_after)reshape: ',layer_x)
@@ -225,7 +226,9 @@ def decoder(opts, input, archi, num_layers, num_units, output_dim, scope,
                                                         is_training)
 
         elif archi == 'new_resnet':
-            outputs = new_res_decoder(opts, input,num_layers,num_units,output_dim,opts['batch_norm'],reuse,is_training)
+            n=int(scope.split("_")[1])
+            print('yo, see here',n)
+            outputs = new_res_decoder(opts,n, input,num_layers,num_units,output_dim,opts['batch_norm'],reuse,is_training)
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
@@ -255,7 +258,7 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
 
     return outputs
 
-def  new_res_decoder(opts, input,num_layers, num_units,
+def  new_res_decoder(opts,n, input,num_layers, num_units,
                                                         output_dim,
                                                         batch_norm,
                                                         reuse,
@@ -263,22 +266,31 @@ def  new_res_decoder(opts, input,num_layers, num_units,
 
     print('this is resnet decoder')
     print('res_decoder_input: ',input)
+    print('res_decoder_ouput_dim: ',output_dim)
+    if n==0:
+        h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
+        w_sqr = h_sqr
+        output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
+        batch_size = tf.shape(input)[0]
+        height = output_shape[0] / 2
+        width = output_shape[1] / 2
+    else:
+        h_sqr = output_dim / 2
+        w_sqr = h_sqr
+        output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
+        batch_size = tf.shape(input)[0]
+        height = output_shape[0] / 2
+        width = output_shape[1] / 2
 
-    h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
-    w_sqr = h_sqr
-    output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
-    batch_size = tf.shape(input)[0]
-    height = output_shape[0] / 2
-    width = output_shape[1] / 2
-    print('')
+
     h0 = ops.linear.Linear(opts,input,np.prod(input.get_shape().as_list()[1:]),
-            num_units * ceil(height) * ceil(width), scope='hid0/lin')
+            ceil(height) * ceil(width), scope='hid0/lin')
 
     print('res_decoder_linear_output: ',h0)
     if batch_norm:
         h0 = ops.batchnorm.Batchnorm_layers(
             opts, h0, 'hid0/bn_lin', is_training, reuse)
-    h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
+    h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), 1])
     h0 = ops._ops.non_linear(h0,opts['d_nonlinearity'])
     layer_x = h0
     print('res_decoder_linear_output_reshape: ',layer_x)
@@ -297,7 +309,11 @@ def  new_res_decoder(opts, input,num_layers, num_units,
        layer_x = ops.batchnorm.Batchnorm_layers(
            opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
     layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-    output = ops.conv2d.Conv2d(opts, layer_x, num_units, 2 * 3, 3, scope='hid_final/conv', init='normilized_glorot')
+    if n==0:
+        output = ops.conv2d.Conv2d(opts, layer_x, num_units, 2 * 3, 3, scope='hid_final/conv', init='normilized_glorot')
+    else:
+        output = ops.conv2d.Conv2d(opts, layer_x, num_units, 2, 3, scope='hid_final/conv', init='normilized_glorot')
+
     print('res_decoder_output: ',output)
     return output
 

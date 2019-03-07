@@ -91,6 +91,7 @@ config_cifar10['save_every_epoch'] = 1000
 config_cifar10['print_every'] = 50000
 config_cifar10['vizu_sinkhorn'] = False
 config_cifar10['vizu_embedded'] = True
+config_cifar10['vizu_encSigma'] = True
 config_cifar10['embedding'] = 'pca' #vizualisation method of the embeddings: pca, umap
 config_cifar10['work_dir'] = 'results_cifar'
 config_cifar10['plot_num_pics'] = 100
@@ -149,14 +150,14 @@ config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
 config_cifar10['encoder'] = ['det',]#['gauss','gauss','gauss'] # deterministic, gaussian
-config_cifar10['e_arch'] = ['new_resnet',] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
+config_cifar10['e_arch'] = ['resnet',] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
 config_cifar10['e_nlayers'] = [2,2,2,2,2]
 config_cifar10['e_nfilters'] = [64,32,16]
 config_cifar10['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
 
 config_cifar10['decoder'] = ['det',] #['det','det','det'] # deterministic, gaussian
-config_cifar10['d_arch'] = ['new_resnet',]#['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
+config_cifar10['d_arch'] = ['resnet',]#['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
 config_cifar10['d_nlayers'] = [2,2,2,2,2]
 config_cifar10['d_nfilters'] = [64,32,16]
 config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
@@ -184,7 +185,7 @@ config_celeba['input_normalize_sym'] = False
 
 # Experiment set up
 config_celeba['train_dataset_size'] = -1
-config_celeba['batch_size'] = 64
+config_celeba['batch_size'] = 16
 config_celeba['epoch_num'] = 1000
 config_celeba['method'] = 'wae' #vae, wae
 config_celeba['use_trained'] = False #train from pre-trained model
@@ -211,8 +212,9 @@ config_celeba['L'] = 30 #Sinkhorn iteration
 config_celeba['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_celeba['nlatents'] = 4
-config_celeba['zdim'] = [100,64,16,4] #[64,16,8]
+config_celeba['nlatents'] = 2
+config_celeba['multiple_latents']=False
+config_celeba['zdim'] = [100,16] #[64,16,8]
 config_celeba['pz_scale'] = 1.
 config_celeba['prior'] = 'gaussian' # dirichlet or gaussian
 
@@ -230,14 +232,16 @@ config_celeba['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_u
 config_celeba['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
 config_celeba['encoder'] = ['gauss']*config_celeba['nlatents']   #['gauss','gauss','gauss'] # deterministic, gaussian
-config_celeba['e_arch'] = ['new_resnet']*config_celeba['nlatents']  #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
+config_celeba['e_arch'] = ['new_resnet']*config_celeba['nlatents']
+#config_celeba['e_arch'] = ['dcgan']*config_celeba['nlatents']#['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
 config_celeba['e_nlayers'] = [2]*config_celeba['nlatents']
-config_celeba['e_nfilters'] = [512,256,128,32]
+config_celeba['e_nfilters'] = [256,256,128,32]
 config_celeba['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
 
 
 config_celeba['decoder'] = ['det']*config_celeba['nlatents']  #['det','det','det'] # deterministic, gaussian
 config_celeba['d_arch'] = ['new_resnet']*config_celeba['nlatents'] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
+#config_celeba['d_arch'] = ['dcgan']*config_celeba['nlatents']
 config_celeba['d_nlayers'] = [2]*config_celeba['nlatents']
-config_celeba['d_nfilters'] = [512,256,128,32]
+config_celeba['d_nfilters'] = [256,256,128,32]
 config_celeba['d_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh

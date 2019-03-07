@@ -2,10 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8e5fb568-f4f4-4fdd-afc8-6172a352cace" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/configs.py" beforeDir="false" afterPath="$PROJECT_DIR$/configs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datahandler.py" beforeDir="false" afterPath="$PROJECT_DIR$/datahandler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/networks.py" beforeDir="false" afterPath="$PROJECT_DIR$/networks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/wae.py" beforeDir="false" afterPath="$PROJECT_DIR$/wae.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/params.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wae/4l_cifar_batchnorm_10/params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/wae/4l_cifar_batchnorm_10/params.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,7 +24,7 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/ops/_ops.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="194">
+                <state relative-caret-position="135">
                   <caret line="13" selection-start-line="13" selection-end-line="13" />
                   <folding>
                     <element signature="e#219#242#0" expanded="true" />
@@ -41,8 +45,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/wae.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1455">
-                  <caret line="214" column="56" selection-start-line="214" selection-start-column="56" selection-end-line="214" selection-end-column="56" />
+                <state relative-caret-position="412">
+                  <caret line="102" column="65" selection-start-line="102" selection-start-column="65" selection-end-line="102" selection-end-column="65" />
                   <folding>
                     <element signature="e#224#234#0" expanded="true" />
                   </folding>
@@ -50,11 +54,32 @@
               </provider>
             </entry>
           </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/datahandler.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-180">
+                  <caret line="30" column="35" selection-start-line="30" selection-start-column="35" selection-end-line="30" selection-end-column="35" />
+                  <folding>
+                    <element signature="e#228#237#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/utils.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="765">
+                  <caret line="57" column="39" selection-start-line="57" selection-start-column="39" selection-end-line="57" selection-end-column="39" />
+                </state>
+              </provider>
+            </entry>
+          </file>
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/configs.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="763">
-                  <caret line="158" column="33" selection-start-line="158" selection-start-column="33" selection-end-line="158" selection-end-column="33" />
+                <state relative-caret-position="727">
+                  <caret line="215" column="39" selection-start-line="215" selection-start-column="39" selection-end-line="215" selection-end-column="39" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -78,17 +103,13 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/networks.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="630">
-                  <caret line="272" column="11" selection-start-line="272" selection-start-column="11" selection-end-line="272" selection-end-column="11" />
+                <state relative-caret-position="82">
+                  <caret line="269" column="11" selection-start-line="269" selection-start-column="11" selection-end-line="269" selection-end-column="11" />
                   <folding>
                     <element signature="e#0#18#0" expanded="true" />
                     <element signature="e#455#2425#0" />
                     <element signature="e#2714#3460#0" />
                     <element signature="e#3751#4898#0" />
-                    <element signature="e#8838#9572#0" />
-                    <element signature="e#9798#11631#0" />
-                    <element signature="e#11902#12702#0" />
-                    <element signature="e#14814#15700#0" />
                   </folding>
                 </state>
               </provider>
@@ -109,7 +130,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/ops/conv2d.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state>
+                <state relative-caret-position="900">
+                  <caret line="60" selection-start-line="60" selection-end-line="60" />
                   <folding>
                     <element signature="e#0#18#0" expanded="true" />
                   </folding>
@@ -134,9 +156,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>cele</find>
-      <find>cel</find>
-      <find>read_celeba_image</find>
       <find>data_path</find>
       <find>train</find>
       <find>datashapes</find>
@@ -164,6 +183,9 @@
       <find>opts</find>
       <find>opts['</find>
       <find>decoder</find>
+      <find>seek</find>
+      <find>config</find>
+      <find>hwae</find>
     </findStrings>
     <replaceStrings>
       <replace>config_celeba</replace>
@@ -177,12 +199,12 @@
       <list>
         <option value="$PROJECT_DIR$/mnist_run.sub" />
         <option value="$PROJECT_DIR$/run_mult_celeba.py" />
-        <option value="$PROJECT_DIR$/datahandler.py" />
         <option value="$PROJECT_DIR$/celeba_run.sub" />
         <option value="$PROJECT_DIR$/ops/resnet_mingtian.py" />
         <option value="$PROJECT_DIR$/ops/resnet.py" />
         <option value="$PROJECT_DIR$/networks.py" />
         <option value="$PROJECT_DIR$/wae.py" />
+        <option value="$PROJECT_DIR$/datahandler.py" />
         <option value="$PROJECT_DIR$/configs.py" />
       </list>
     </option>
@@ -229,7 +251,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Course" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -246,6 +267,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Course" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -292,7 +314,6 @@
       <window_info active="true" id="Project" order="0" visible="true" weight="0.15023722" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Educational.CheckDetails" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -304,6 +325,7 @@
       <window_info anchor="bottom" id="Terminal" order="8" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
+      <window_info anchor="bottom" id="Educational.CheckDetails" order="11" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -395,14 +417,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="572">
-          <caret line="32" column="43" selection-start-line="32" selection-start-column="43" selection-end-line="32" selection-end-column="43" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../Library/Caches/PyCharm2017.2/python_stubs/-2010535109/math.py" />
     <entry file="file://$PROJECT_DIR$/run_mult_celeba.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -414,16 +428,41 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ops/deconv2d.py">
+    <entry file="file://$PROJECT_DIR$/ops/resnet_mingtian.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
+        <state relative-caret-position="927">
+          <caret line="162" column="36" selection-start-line="162" selection-start-column="36" selection-end-line="162" selection-end-column="36" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ops/conv2d.py">
+    <entry file="file://$PROJECT_DIR$/ops/_ops.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="13" selection-start-line="13" selection-end-line="13" />
+          <folding>
+            <element signature="e#219#242#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mnist_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" selection-start-line="4" selection-end-line="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/celeba_run.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="20" column="331" selection-start-line="20" selection-start-column="331" selection-end-line="20" selection-end-column="331" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ops/deconv2d.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
           <folding>
@@ -442,81 +481,60 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/datahandler.py">
+    <entry file="file://$PROJECT_DIR$/ops/conv2d.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="600">
-          <caret line="43" column="50" selection-start-line="43" selection-start-column="50" selection-end-line="43" selection-end-column="50" />
-          <folding>
-            <element signature="e#228#237#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/celeba_run.sub">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="331" selection-start-line="20" selection-start-column="331" selection-end-line="20" selection-end-column="331" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ops/resnet_mingtian.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="927">
-          <caret line="162" column="36" selection-start-line="162" selection-start-column="36" selection-end-line="162" selection-end-column="36" />
+        <state relative-caret-position="900">
+          <caret line="60" selection-start-line="60" selection-end-line="60" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="765">
+          <caret line="57" column="39" selection-start-line="57" selection-start-column="39" selection-end-line="57" selection-end-column="39" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/networks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="272" column="11" selection-start-line="272" selection-start-column="11" selection-end-line="272" selection-end-column="11" />
+        <state relative-caret-position="82">
+          <caret line="269" column="11" selection-start-line="269" selection-start-column="11" selection-end-line="269" selection-end-column="11" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
             <element signature="e#455#2425#0" />
             <element signature="e#2714#3460#0" />
             <element signature="e#3751#4898#0" />
-            <element signature="e#8838#9572#0" />
-            <element signature="e#9798#11631#0" />
-            <element signature="e#11902#12702#0" />
-            <element signature="e#14814#15700#0" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ops/_ops.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
-          <caret line="13" selection-start-line="13" selection-end-line="13" />
-          <folding>
-            <element signature="e#219#242#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mnist_run.sub">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/wae.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1455">
-          <caret line="214" column="56" selection-start-line="214" selection-start-column="56" selection-end-line="214" selection-end-column="56" />
+        <state relative-caret-position="412">
+          <caret line="102" column="65" selection-start-line="102" selection-start-column="65" selection-end-line="102" selection-end-column="65" />
           <folding>
             <element signature="e#224#234#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/datahandler.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-180">
+          <caret line="30" column="35" selection-start-line="30" selection-start-column="35" selection-end-line="30" selection-end-column="35" />
+          <folding>
+            <element signature="e#228#237#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/configs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="763">
-          <caret line="158" column="33" selection-start-line="158" selection-start-column="33" selection-end-line="158" selection-end-column="33" />
+        <state relative-caret-position="727">
+          <caret line="215" column="39" selection-start-line="215" selection-start-column="39" selection-end-line="215" selection-end-column="39" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
