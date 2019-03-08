@@ -301,9 +301,9 @@ class WAE(object):
                          + self.lmbd[-1] * self.match_penalty
 
         if opts['nlatents']>1:
-            imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
+            self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
             self.imp_objective = self.losses_reconstruct[0] \
-                                + self.lmbd[0] * imp_match_penalty
+                                + self.lmbd[0] * self.imp_match_penalty
         else:
             self.imp_objective = self.objective
 
@@ -494,7 +494,7 @@ class WAE(object):
         # Init all monitoring variables
         Loss, imp_Loss = [], []
         Loss_rec, Losses_rec, Loss_rec_test = [], [], []
-        Loss_match = []
+        Loss_match, imp_Match = [], []
         enc_Sigmas = []
         """
         mean_blurr, fid_scores = [], [],
@@ -525,13 +525,14 @@ class WAE(object):
                            self.lmbd: wae_lambda,
                            self.is_training: True}
                 # Update encoder and decoder
-                [_, loss, imp_loss, loss_rec, losses_rec, loss_match] = self.sess.run([
+                [_, loss, imp_loss, loss_rec, losses_rec, loss_match, imp_match] = self.sess.run([
                                                 self.wae_opt,
                                                 self.objective,
                                                 self.imp_objective,
                                                 self.loss_reconstruct,
                                                 self.losses_reconstruct,
-                                                self.match_penalty],
+                                                self.match_penalty,
+                                                self.imp_match_penalty],
                                                 feed_dict=feed_dict)
                 Loss.append(loss)
                 imp_Loss.append(imp_loss)
@@ -539,6 +540,7 @@ class WAE(object):
                 losses_rec = list(np.array(losses_rec)*np.concatenate((np.ones(1),np.array(wae_lambda[:opts['e_nlatents']-1]))))
                 Losses_rec.append(losses_rec)
                 Loss_match.append(wae_lambda[-1]*loss_match)
+                imp_Match.append(imp_match)
                 if opts['vizu_encSigma']:
                     enc_sigmastats = self.sess.run(self.encSigmas_stats,
                                                 feed_dict=feed_dict)
@@ -661,7 +663,7 @@ class WAE(object):
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
-                                     Loss, imp_Loss, Loss_match,  # losses
+                                     Loss, imp_Loss, Loss_match, imp_Match,  # losses
                                      Loss_rec, Loss_rec_test,   # rec losses
                                      Losses_rec,    # rec losses for each latents
                                      work_dir,  # working directory
@@ -746,6 +748,9 @@ class WAE(object):
                                feed_dict={self.points:data.test_data[data_ids],
                                           self.is_training: False})
         full_reconstructed = [data.test_data[data_ids],] + full_recon
+
+        inter_anchors = None
+        """
         # Encode anchors points and interpolate
         logging.error('Anchors interpolation..')
         encshape = list(np.shape(encoded[-1])[1:])
@@ -773,6 +778,7 @@ class WAE(object):
         data_anchors = np.reshape(data_anchors,[-1,2]+imshape)
         inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
         inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
+        """
 
         # Latent interpolation
         logging.error('Latent interpolation..')

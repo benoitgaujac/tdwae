@@ -17,7 +17,7 @@ def save_train(opts, data_train, data_test,
                      rec_train, rec_test,
                      encoded,
                      samples_prior, samples,
-                     loss, imp_loss, loss_match,
+                     loss, imp_loss, loss_match, imp_match,
                      loss_rec, loss_rec_test,
                      losses_rec,
                      work_dir,
@@ -233,7 +233,8 @@ def save_train(opts, data_train, data_test,
                     encoded = encoded[-1],
                     rec_train=rec_train, rec_test=rec_test,
                     samples_prior=samples_prior, samples=samples,
-                    loss=np.array(loss), imp_loss=np.array(imp_loss),loss_match=np.array(loss_match),
+                    loss=np.array(loss), imp_loss=np.array(imp_loss),
+                    loss_match=np.array(loss_match), imp_match=np.array(imp_match),
                     loss_rec=np.array(loss_rec),
                     loss_rec_test=np.array(loss_rec_test),
                     losses_rec=np.array(losses_rec))
@@ -349,12 +350,13 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     plt.close()
 
 
-def save_latent_interpolation(opts, label_test, # labels
-                    encoded, # encoded points
+def save_latent_interpolation(opts, data_test, label_test, # data, labels
+                    encoded, reconstructed, full_reconstructed,# encoded, reconstructed points
                     inter_anchors, inter_latent, # anchors and latents interpolation
                     samples, # samples
                     MODEL_PATH): # working directory
-    # Create saving directory
+
+    # --- Create saving directory and preprocess
     plots_dir = 'test_plots'
     save_path = os.path.join(opts['work_dir'],plots_dir)
     utils.create_dir(save_path)
@@ -368,7 +370,47 @@ def save_latent_interpolation(opts, label_test, # labels
         samples = samples / 2. + 0.5
     images = []
 
-    ### Sample plots
+
+    # --- Reconstruction plots
+    num_pics = 200
+    num_cols = 20
+    sample = data_test[:num_pics]
+    recon = reconstructed[:num_pics]
+    full_recon = full_reconstructed[:num_pics]
+    pics = []
+    merged = np.vstack([recon, sample])
+    r_ptr = 0
+    w_ptr = 0
+    for _ in range(int(num_pics / 2)):
+        merged[w_ptr] = sample[r_ptr]
+        merged[w_ptr + 1] = recon[r_ptr]
+        r_ptr += 1
+        w_ptr += 2
+    for idx in range(num_pics):
+        if greyscale:
+            pics.append(1. - merged[idx, :, :, :])
+        else:
+            pics.append(merged[idx, :, :, :])
+    # Figuring out a layout
+    pics = np.array(pics)
+    image = np.concatenate(np.split(pics, num_cols), axis=2)
+    image = np.concatenate(image, axis=0)
+    images.append(image)
+
+
+    # --- full reconstruction plots
+    num_cols = len(full_reconstructed)
+    num_rows = np.shape(full_reconstructed[0])[0]
+    pics = np.concatenate(full_reconstructed,axis=2)
+    pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    pics = pics[0]
+    if greyscale:
+        image = 1. - pics
+    else:
+        image = pics
+    images.append(image)
+
+    # --- Sample plots
     num_pics = np.shape(samples)[0]
     num_cols = np.sqrt(num_pics)
     pics = []
@@ -382,7 +424,8 @@ def save_latent_interpolation(opts, label_test, # labels
     image = np.concatenate(image, axis=0)
     images.append(image)
 
-    ### Prior Interpolation plots
+
+    # --- Prior Interpolation plots
     white_pix = 4
     num_rows = np.shape(inter_latent)[0]
     num_cols = np.shape(inter_latent)[1]
@@ -396,8 +439,8 @@ def save_latent_interpolation(opts, label_test, # labels
         image = pics
     images.append(image)
 
-    # if opts['prior']!='implicit':
-    ### Points Interpolation plots
+    """
+    # --- Points Interpolation plots
     white_pix = 4
     num_rows = np.shape(inter_anchors)[0]
     num_cols = np.shape(inter_anchors)[1]
@@ -410,23 +453,39 @@ def save_latent_interpolation(opts, label_test, # labels
     else:
         image = pics
     images.append(image)
+    """
 
-    img1, img2, img3 = images
-    to_plot_list = zip([img1, img2, img3],
-                         ['Samples',
-                         'Latent interpolation',
-                         'Points interpolation'],
-                         ['pior_samples',
-                         'latent_inter',
-                         'point_inter'])
+    # --- Save plots
+    # img1, img2, img3, img4, img5 = images
+    img1, img2, img3, img4 = images
+    # to_plot_list = zip([img1, img2, img3, img4, img5],
+    #                      ['Reconstructions',
+    #                      'Full Reconstructions',
+    #                      'Samples',
+    #                      'Latent interpolation',
+    #                      'Points interpolation'],
+    #                      ['reconstructions',
+    #                      'full_reconstructions',
+    #                      'pior_samples',
+    #                      'latent_inter',
+    #                      'point_inter'])
+    to_plot_list = zip([img1, img2, img3, img4],
+                         ['Reconstructions',
+                         'Full Reconstructions',
+                         'Samples',
+                         'Latent interpolation'],
+                         ['reconstructions',
+                         'full_reconstructions',
+                         'pior_samples',
+                         'latent_inter'])
 
-    ###Settings for pyplot fig
+    #Settings for pyplot fig
     dpi = 100
     for img, title, filename in to_plot_list:
         height_pic = img.shape[0]
         width_pic = img.shape[1]
-        fig_height = height_pic / 10
-        fig_width = width_pic / 10
+        fig_height = height_pic / 20
+        fig_width = width_pic / 20
         fig = plt.figure(figsize=(fig_width, fig_height))
         if greyscale:
             image = img[:, :, 0]
@@ -446,7 +505,8 @@ def save_latent_interpolation(opts, label_test, # labels
                     dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
         plt.close()
 
-    ### Embedings vizu
+
+    # --- Embedings vizu
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
@@ -465,19 +525,19 @@ def save_latent_interpolation(opts, label_test, # labels
         embeds.append(embedding)
     # Creating a pyplot fig
     dpi = 100
-    height_pic = 300
-    width_pic = 300
-    fig_height = 4*height_pic / float(dpi)
-    fig_width = 4*len(embeds) * height_pic  / float(dpi)
+    height_pic = 10
+    width_pic = 10
+    fig_height = height_pic
+    fig_width = len(embeds) * width_pic
+    # fig_width = 4*len(embeds) * width_pic  / 20
     fig = plt.figure(figsize=(fig_width, fig_height))
-    gs = matplotlib.gridspec.GridSpec(1, len(embeds))
+    # gs = matplotlib.gridspec.GridSpec(1, len(embeds))
     for i in range(len(embeds)):
-        ax = plt.subplot(gs[0, i])
+        # ax = plt.subplot(gs[0, i])
+        ax = fig.add_subplot(1, len(embeds), i+1)
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
                     c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
-        if i==len(embeds)-1:
-            plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
@@ -492,18 +552,25 @@ def save_latent_interpolation(opts, label_test, # labels
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
         plt.legend(loc='best')
-        plt.text(0.47, 1., '%s latent %d' % (opts['embedding'],i+1), ha="center", va="bottom",
+        plt.text(0.47, 1., r'Latent %d, $d_z$=%d' % (i+1,opts['zdim'][i]), ha="center", va="bottom",
                                                 size=20, transform=ax.transAxes)
+        # colorbar
+        if i==len(embeds)-1:
+            plt.colorbar()
         # Removing ticks
         ax.axes.get_xaxis().set_ticks([])
         ax.axes.get_yaxis().set_ticks([])
-        ax.axes.set_aspect(1)
+        x0,x1 = ax.get_xlim()
+        y0,y1 = ax.get_ylim()
+        ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+    # adjust space between subplots
+    # plt.tight_layout()
+    # plt.subplots_adjust(left=0., right=0., top=0., bottom=0.)
     # Saving
     filename = 'embeddings.png'
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.01)
     plt.close()
-
 
 def discrete_cmap(N, base_cmap=None):
     """Create an N-bin discrete colormap from the specified input map"""
