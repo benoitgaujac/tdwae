@@ -57,12 +57,12 @@ def main():
         opts['work_dir'] = FLAGS.work_dir
 
     # Experiemnts set up
-    opts['print_every'] = 200000
-    opts['epoch_num'] = 4120
+    opts['epoch_num'] = 8020
+    opts['print_every'] = 375000
+    opts['lr'] = 0.003
     opts['use_trained'] = False
-    opts['lambda_scalar'] = 2.
-    opts['lambda'] = [1/opts['zdim'][n] for i in range(opts['nlatents'])]
-    opts['lambda'].append(0.0001/opts['zdim'][-1])
+    opts['lambda'] = [1/opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(0.001/opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
 
     # Verbose

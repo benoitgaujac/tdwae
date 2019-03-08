@@ -20,15 +20,16 @@ FLAGS = parser.parse_args()
 # Experiment set up
 configs.config_mnist['dataset'] = 'mnist'
 configs.config_mnist['data_dir'] = 'mnist'
-configs.config_mnist['epoch_num'] = 4001
+configs.config_mnist['epoch_num'] = 4008
 configs.config_mnist['print_every'] = 375000
+configs.config_mnist['lr'] = 0.003
 
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]
 configs.config_mnist['lambda_scalar'] = 2.
-configs.config_mnist['lambda'] = [configs.config_mnist['lambda_scalar']**i/configs.config_mnist['zdim'][0] for i in range(configs.config_mnist['nlatents'])]
-configs.config_mnist['lambda'].append(0.0001*configs.config_mnist['lambda_scalar']**5/configs.config_mnist['zdim'][0])
+configs.config_mnist['lambda'] = [1./configs.config_mnist['zdim'][i] for i in range(configs.config_mnist['nlatents']-1)]
+configs.config_mnist['lambda'].append(0.001/configs.config_mnist['zdim'][-1])
 configs.config_mnist['lambda_schedule'] = 'constant'
 # NN set up
 configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
