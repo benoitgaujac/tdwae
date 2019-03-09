@@ -1,27 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8e5fb568-f4f4-4fdd-afc8-6172a352cace" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs.py" beforeDir="false" afterPath="$PROJECT_DIR$/configs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/loss_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/loss_functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/plot_functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae.py" beforeDir="false" afterPath="$PROJECT_DIR$/wae.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/params.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/embedded_e0000_mb03165.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/embedded_e0000_mb06330.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/embedded_e0000_mb09495.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/embedded_e0001_mb00030.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/encSigma_e0000_mb03165.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/encSigma_e0000_mb06330.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/encSigma_e0000_mb09495.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/encSigma_e0001_mb00030.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0000_mb00000.png" beforeDir="false" afterPath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0000_mb00000.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0000_mb03165.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0000_mb06330.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0000_mb09495.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wae/4l_celeba_batchnorm_0.001/train_plots/res_e0001_mb00030.png" beforeDir="false" />
-    </list>
+    <list default="true" id="8e5fb568-f4f4-4fdd-afc8-6172a352cace" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
