@@ -15,7 +15,7 @@ data_dir : CelebA/images
 celebA_crop : closecrop
 input_normalize_sym : False
 train_dataset_size : -1
-batch_size : 16
+batch_size : 64
 epoch_num : 1000
 method : wae
 use_trained : False
@@ -36,26 +36,26 @@ penalty : mmd
 epsilon : 0.1
 L : 30
 mmd_kernel : IMQ
-nlatents : 2
+nlatents : 10
 multiple_latents : False
-zdim : [100, 16]
+zdim : [256, 196, 144, 100, 64, 64, 36, 16, 4, 2]
 pz_scale : 1.0
 prior : gaussian
 lambda_scalar : 0.001
-lambda : [0.03162277660168379, 0.001]
+lambda : [0.5011872336272722, 0.4641588833612779, 0.4216965034285822, 0.37275937203149406, 0.31622776601683794, 0.251188643150958, 0.1778279410038923, 0.10000000000000002, 0.03162277660168379, 0.001]
 lambda_schedule : constant
 filter_size : 3
 init_std : 0.099999
 init_bias : 0.0
 mlp_init : glorot_he
 conv_init : he
-encoder : ['gauss', 'gauss']
-e_arch : ['new_resnet', 'new_resnet']
-e_nlayers : [2, 2]
-e_nfilters : [256, 256, 128, 32]
+encoder : ['gauss', 'gauss', 'gauss', 'gauss', 'gauss', 'gauss', 'gauss', 'gauss', 'gauss', 'gauss']
+e_arch : ['new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet']
+e_nlayers : [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+e_nfilters : [128, 128, 128, 128, 128, 128, 128, 128, 128, 128]
 e_nonlinearity : leaky_relu
-decoder : ['det', 'det']
-d_arch : ['new_resnet', 'new_resnet']
-d_nlayers : [2, 2]
-d_nfilters : [256, 256, 128, 32]
+decoder : ['det', 'det', 'det', 'det', 'det', 'det', 'det', 'det', 'det', 'det']
+d_arch : ['new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet', 'new_resnet']
+d_nlayers : [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+d_nfilters : [128, 128, 128, 128, 128, 128, 128, 128, 128, 128]
 d_nonlinearity : leaky_relu

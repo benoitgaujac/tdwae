@@ -162,7 +162,7 @@ class WAE(object):
                         if opts['multiple_latents']:
                             dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
                         else:
-                            dec_output_dim = 2*opts['zdim'][n]
+                            dec_output_dim = 2*opts['zdim'][n-1]
                     print('decoder_output_dim', dec_output_dim)
                     recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                     archi=opts['d_arch'][n],
@@ -226,7 +226,7 @@ class WAE(object):
                     if opts['multiple_latents']:
                             dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
                     else:
-                        dec_output_dim = 2*opts['zdim'][n]
+                        dec_output_dim = 2*opts['zdim'][n-1]
                 decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],

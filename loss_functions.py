@@ -149,6 +149,8 @@ def kl_penalty(opts,enc_mu,enc_Sigma, prior_mu, prior_Sigma):
     return kl
 
 def reconstruction_loss(opts, x1, x2):
+    print('x1:',x1)
+    print('x2:',x2)
     """
     Compute the WAE's reconstruction losses
     x1: image data             [batch,im_dim]

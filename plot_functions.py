@@ -146,7 +146,7 @@ def save_train(opts, data_train, data_test,
     ### The reconstruction loss curves
     # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, 10))
+    color_list = base(np.linspace(0, 1, 20))
     ax = plt.subplot(gs[1, 1])
     total_num = len(losses_rec)
     x_step = max(int(total_num / 200), 1)

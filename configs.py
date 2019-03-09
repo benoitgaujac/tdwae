@@ -185,7 +185,7 @@ config_celeba['input_normalize_sym'] = False
 
 # Experiment set up
 config_celeba['train_dataset_size'] = -1
-config_celeba['batch_size'] = 16
+config_celeba['batch_size'] = 64
 config_celeba['epoch_num'] = 1000
 config_celeba['method'] = 'wae' #vae, wae
 config_celeba['use_trained'] = False #train from pre-trained model
@@ -212,15 +212,15 @@ config_celeba['L'] = 30 #Sinkhorn iteration
 config_celeba['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
-config_celeba['nlatents'] = 2
+config_celeba['nlatents'] = 10
 config_celeba['multiple_latents']=False
-config_celeba['zdim'] = [100,16] #[64,16,8]
+config_celeba['zdim'] = [256,196,144,100,64,64,36,16,4,2] #[64,16,8]
 config_celeba['pz_scale'] = 1.
 config_celeba['prior'] = 'gaussian' # dirichlet or gaussian
 
 # lambda set up
-config_celeba['lambda_scalar'] = 10.
-config_celeba['lambda'] = [1. for i in range(len(config_celeba['zdim'])-1)]
+config_celeba['lambda_scalar'] = 0.0001/2.0
+config_celeba['lambda'] = [1./config_celeba['zdim'][i] for i in range(config_celeba['nlatents']-1)]
 config_celeba['lambda'].append(config_celeba['lambda_scalar'])
 config_celeba['lambda_schedule'] = 'constant' # adaptive, constant
 
@@ -235,7 +235,7 @@ config_celeba['encoder'] = ['gauss']*config_celeba['nlatents']   #['gauss','gaus
 config_celeba['e_arch'] = ['new_resnet']*config_celeba['nlatents']
 #config_celeba['e_arch'] = ['dcgan']*config_celeba['nlatents']#['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, ali, began
 config_celeba['e_nlayers'] = [2]*config_celeba['nlatents']
-config_celeba['e_nfilters'] = [256,256,128,32]
+config_celeba['e_nfilters'] = [128]*config_celeba['nlatents']
 config_celeba['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
 
 
@@ -243,5 +243,5 @@ config_celeba['decoder'] = ['det']*config_celeba['nlatents']  #['det','det','det
 config_celeba['d_arch'] = ['new_resnet']*config_celeba['nlatents'] #['dcgan','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, ali, began
 #config_celeba['d_arch'] = ['dcgan']*config_celeba['nlatents']
 config_celeba['d_nlayers'] = [2]*config_celeba['nlatents']
-config_celeba['d_nfilters'] = [256,256,128,32]
+config_celeba['d_nfilters'] = [128]*config_celeba['nlatents']
 config_celeba['d_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
