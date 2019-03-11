@@ -21,6 +21,8 @@ parser.add_argument("--exp", default='mnist',
 parser.add_argument("--method",
                     help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
+parser.add_argument("--l", type=float, default=100.,
+                    help='lambda')
 parser.add_argument("--weights_file")
 
 
@@ -59,10 +61,10 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 8020
     opts['print_every'] = 375000
-    opts['lr'] = 0.003
-    opts['use_trained'] = False
+    opts['lr'] = 0.002
     opts['lambda'] = [1/opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(0.001/opts['zdim'][-1])
+    opts['lambda_scalar'] = FLAGS.l
+    opts['lambda'].append(opts['lambda_scalar'] / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
 
     # Verbose
