@@ -164,8 +164,28 @@ class WAE(object):
 
         # --- full reconstructions from latents layers
         self.full_reconstructed = []
-        for m in range(len(self.encoded)):
-            reconstructed=self.encoded[m]
+        encoded_samples = [self.points,]
+        for n in range(opts['e_nlatents']):
+            # - Encoding points
+            # Setting output_dim
+            if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
+                enc_output_dim = 2*opts['zdim'][n]
+            else:
+                enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            enc_mean, enc_Sigma = encoder(self.opts, input=tf.expand_dims(encoded_samples[-1][0],0),
+                                                archi=opts['e_arch'][n],
+                                                num_layers=opts['e_nlayers'][n],
+                                                num_units=opts['e_nfilters'][n],
+                                                output_dim=enc_output_dim,
+                                                scope='encoder/layer_%d' % (n+1),
+                                                reuse=True,
+                                                is_training=self.is_training)
+            qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
+            qz_params = tf.concat([qz_params for i in range(20)],axis=0)
+            enc_samples = sample_gaussian(opts, qz_params, 'tensorflow')
+            encoded_samples.append(enc_samples)
+        for m in range(len(encoded_samples[1:])):
+            reconstructed=encoded_samples[m+1]
             for n in range(m,-1,-1):
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
@@ -671,7 +691,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 1000:
+                if epoch >= 5000:
                     # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
                     if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
@@ -687,13 +707,7 @@ class WAE(object):
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
                     if epoch >= 1000 and len(Loss_rec) > 0:
-                        # if np.mean(Loss[-10:]) < np.mean(Loss[-10 * batches_num:])-1.*np.var(Loss[-10 * batches_num:]):
-                        #     wait_lambda = 0
-                        # else:
-                        #     wait_lambda += 1
                         if wait_lambda > 1002 * batches_num:
-                            # opts['lambda_scalar'] *= 2.
-                            # opts['lambda'] = [opts['lambda_scalar']**(1/i) for i in range(opts['nlatents'],0,-1)]
                             opts['lambda'] = list(2*np.array(opts['lambda']))
                             wae_lambda = opts['lambda']
                             # last_rec = np.array(losses_rec)
@@ -743,14 +757,14 @@ class WAE(object):
         [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.is_training:False})
-        data_ids = np.random.choice(num_pics,20,replace=False)
+        # data_ids = np.random.choice(num_pics,20,replace=False)
+        data_ids = np.arange(28,29)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
                                           self.is_training: False})
-        full_reconstructed = [data.test_data[data_ids],] + full_recon
 
-        inter_anchors = None
-        """
+        full_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(20)]),] + full_recon
+        # inter_anchors = None
         # Encode anchors points and interpolate
         logging.error('Anchors interpolation..')
         encshape = list(np.shape(encoded[-1])[1:])
@@ -769,16 +783,10 @@ class WAE(object):
                                     feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
                                                self.is_training: False})
         inter_anchors = np.reshape(dec_anchors,[-1,num_int]+imshape)
-        # # adding reconstruction
-        # recons_anchors = reconstructed[anchors_ids]
-        # recons_anchors = np.reshape(recons_anchors,[-1,2]+imshape)
-        # inter_anchors = np.concatenate((np.expand_dims(recons_anchors[:,0],axis=1),inter_anchors),axis=1)
-        # inter_anchors = np.concatenate((inter_anchors,np.expand_dims(recons_anchors[:,1],axis=1)),axis=1)
         # adding data
         data_anchors = np.reshape(data_anchors,[-1,2]+imshape)
         inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
         inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
-        """
 
         # Latent interpolation
         logging.error('Latent interpolation..')
