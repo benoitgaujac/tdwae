@@ -61,7 +61,11 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 8020
     opts['print_every'] = 375000
-    opts['lr'] = 0.002
+    opts['lr'] = 0.0008
+    opts['save_every_epoch'] = 4011
+    opts['save_final'] = True
+    opts['save_train_data'] = True
+
     opts['lambda'] = [1/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.l
     opts['lambda'].append(opts['lambda_scalar'] / opts['zdim'][-1])
@@ -73,16 +77,13 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Create directories
-    utils.create_dir(opts['method'])
+    if not tf.gfile.IsDirectory(opts['method']):
+        utils.create_dir(opts['method'])
     work_dir = os.path.join(opts['method'],opts['work_dir'])
     opts['work_dir'] = work_dir
-    utils.create_dir(work_dir)
-    utils.create_dir(os.path.join(work_dir, 'checkpoints'))
-    # Dumping all the configs to the text file
-    with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
-        text.write('Parameters:\n')
-        for key in opts:
-            text.write('%s : %s\n' % (key, opts[key]))
+    if not tf.gfile.IsDirectory(work_dir):
+        utils.create_dir(work_dir)
+        utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
     # Loading the dataset
     data = DataHandler(opts)
@@ -96,6 +97,11 @@ def main():
 
     # Training/testing/vizu
     if FLAGS.mode=="train":
+        # Dumping all the configs to the text file
+        with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
+            text.write('Parameters:\n')
+            for key in opts:
+                text.write('%s : %s\n' % (key, opts[key]))
         wae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
