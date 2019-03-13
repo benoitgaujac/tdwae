@@ -22,13 +22,10 @@ configs.config_mnist['dataset'] = 'mnist'
 configs.config_mnist['data_dir'] = 'mnist'
 configs.config_mnist['epoch_num'] = 5610
 configs.config_mnist['print_every'] = 175000
-configs.config_mnist['lr'] = 0.0008
+configs.config_mnist['lr'] = 0.001
 configs.config_mnist['save_every_epoch'] = 2810
 configs.config_mnist['save_final'] = True
 configs.config_mnist['save_train_data'] = True
-
-
-
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]

@@ -25,14 +25,14 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
         means, covs = tf.split(params,2,axis=-1)
         shape = tf.shape(means)
         eps = tf.random_normal(shape, dtype=tf.float32)
-        noise = means + tf.multiply(eps,tf.sqrt(1e-8+covs))
+        noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
     elif typ =='numpy':
         means, covs = np.split(params,2,axis=-1)
         shape = (batch_size,)+np.shape(means)
         assert shape[-1]==opts['zdim'][-1], \
                     'Prior dimension mismatch'
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
-        noise = means + np.multiply(eps,np.sqrt(1e-8+covs))
+        noise = means + np.multiply(eps,np.sqrt(1e-10+covs))
     return noise
 
 def sample_dirichlet(opts, alpha, batch_size=100):

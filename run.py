@@ -21,7 +21,7 @@ parser.add_argument("--exp", default='mnist',
 parser.add_argument("--method",
                     help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
-parser.add_argument("--l", type=float, default=100.,
+parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
 parser.add_argument("--weights_file")
 
@@ -61,15 +61,29 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 8020
     opts['print_every'] = 375000
-    opts['lr'] = 0.0008
+    opts['lr'] = 0.001
     opts['save_every_epoch'] = 4011
     opts['save_final'] = True
     opts['save_train_data'] = True
-
-    opts['lambda'] = [1/opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    opts['lambda_scalar'] = FLAGS.l
-    opts['lambda'].append(opts['lambda_scalar'] / opts['zdim'][-1])
+    # Model set up
+    opts['nlatents'] = 5
+    opts['zdim'] = [32,16,8,4,2]
+    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda_scalar'] = FLAGS.lmba
+    opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
+    # NN set up
+    opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+    opts['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
+    opts['e_nlayers'] = [2,2,2,2,2,2,2]
+    opts['e_nfilters'] = [512,256,128,64,32,16]
+    opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+    opts['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
+    opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+    opts['d_nlayers'] = [2,2,2,2,2,2,2]
+    opts['d_nfilters'] = [512,256,128,64,32,16]
+    opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
     # Verbose
     if opts['verbose']:

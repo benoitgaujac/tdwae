@@ -140,6 +140,7 @@ def square_dist_v2(opts, sample_x, sample_y):
     squared_dist = tf.reduce_sum(tf.square(x - y),axis=-1)
     return squared_dist
 
+
 def kl_penalty(opts,enc_mu,enc_Sigma, prior_mu, prior_Sigma):
     sigma_ratio = tf.divide(enc_Sigma,prior_Sigma)
     kl = 1. + tf.log(sigma_ratio) - sigma_ratio \
@@ -147,6 +148,7 @@ def kl_penalty(opts,enc_mu,enc_Sigma, prior_mu, prior_Sigma):
     kl = tf.reduce_sum(kl,axis=-1) / 2.
     kl = tf.reduce_mean(kl)
     return kl
+
 
 def reconstruction_loss(opts, x1, x2):
     """
@@ -165,10 +167,10 @@ def reconstruction_loss(opts, x1, x2):
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
         cost = tf.sqrt(1e-10 + cost)
     elif opts['cost'] == 'l2sq':
-        # c(x,y) = ||x - y||_2^2
+        # c(x,y) = sum_i(||x - y||_2^2[:,i])
         cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     elif opts['cost'] == 'l2sq_norm':
-        # c(x,y) = ||x - y||_2^2
+        # c(x,y) = mean_i(||x - y||_2^2[:,i])
         cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
     elif opts['cost'] == 'l1':
         # c(x,y) = ||x - y||_1
