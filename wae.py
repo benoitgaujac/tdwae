@@ -161,6 +161,95 @@ class WAE(object):
             self.losses_reconstruct.append(loss_reconstruct)
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
 
+        # --- Sampling from model (only for generation)
+        decoded = self.samples
+        for n in range(opts['nlatents']-1,-1,-1):
+            if n==0:
+                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=self.is_training)
+                if opts['decoder'][n] == 'det':
+                    decoded = decoded_mean
+                elif opts['decoder'][n] == 'gauss':
+                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                if opts['input_normalize_sym']:
+                    decoded=tf.nn.tanh(decoded)
+                else:
+                    decoded=tf.nn.sigmoid(decoded)
+                decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+            else:
+                # Setting output_dim
+                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                else:
+                    dec_output_dim = 2*opts['zdim'][n-1]
+                # Reuse params
+                if n>=opts['e_nlatents']:
+                    reuse=False
+                else:
+                    reuse=True
+                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=dec_output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=reuse,
+                                                is_training=self.is_training)
+                if opts['decoder'][n] == 'det':
+                    decoded = decoded_mean
+                elif opts['decoder'][n] == 'gauss':
+                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
+            self.decoded.append(decoded)
+
+
+        # --- Objectives, penalties, pretraining, FID
+        # Compute matching penalty cost
+        if opts['e_nlatents']==opts['nlatents']:
+            self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+            self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
+        else:
+            self.match_penalty = matching_penalty(opts, self.decoded[opts['nlatents']-opts['e_nlatents']-1],
+                                                self.encoded[-1])
+            self.C = square_dist_v2(self.opts,self.decoded[opts['nlatents']-opts['e_nlatents']-1],
+                                                self.encoded[-1])
+        # Compute objs
+        self.objective = self.loss_reconstruct \
+                         + self.lmbd[-1] * self.match_penalty
+
+        if opts['nlatents']>1:
+            self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
+            self.imp_objective = self.losses_reconstruct[0] \
+                                + self.lmbd[0] * self.imp_match_penalty
+        else:
+            self.imp_objective = self.objective
+
+        # Logging info
+        self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
+        # Pre Training
+        self.pretrain_loss()
+        """
+        # FID score
+        self.blurriness = self.compute_blurriness()
+        self.inception_graph = tf.Graph()
+        self.inception_sess = tf.Session(graph=self.inception_graph)
+        with self.inception_graph.as_default():
+            self.create_inception_graph()
+        self.inception_layer = self._get_inception_layer()
+        """
+
+
         # --- full reconstructions latents layers
         self.full_reconstructed = []
         for m in range(len(self.encoded)):
@@ -209,6 +298,7 @@ class WAE(object):
                     else:
                         assert False, 'Unknown encoder %s' % opts['decoder'][n]
             self.full_reconstructed.append(reconstructed)
+
 
         # --- full reconstructions from sampled encodings
         self.sampled_reconstructed = []
@@ -280,58 +370,6 @@ class WAE(object):
             self.sampled_reconstructed.append(reconstructed)
 
 
-        # --- Sampling from model (only for generation)
-        decoded = self.samples
-        for n in range(opts['nlatents']-1,-1,-1):
-            if n==0:
-                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
-                                                archi=opts['d_arch'][n],
-                                                num_layers=opts['d_nlayers'][n],
-                                                num_units=opts['d_nfilters'][n],
-                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                                scope='decoder/layer_%d' % n,
-                                                reuse=True,
-                                                is_training=self.is_training)
-                if opts['decoder'][n] == 'det':
-                    decoded = decoded_mean
-                elif opts['decoder'][n] == 'gauss':
-                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
-                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
-                else:
-                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
-                if opts['input_normalize_sym']:
-                    decoded=tf.nn.tanh(decoded)
-                else:
-                    decoded=tf.nn.sigmoid(decoded)
-                decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
-            else:
-                # Setting output_dim
-                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                else:
-                    dec_output_dim = 2*opts['zdim'][n-1]
-                # Reuse params
-                if n>=opts['e_nlatents']:
-                    reuse=False
-                else:
-                    reuse=True
-                decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
-                                                archi=opts['d_arch'][n],
-                                                num_layers=opts['d_nlayers'][n],
-                                                num_units=opts['d_nfilters'][n],
-                                                output_dim=dec_output_dim,
-                                                scope='decoder/layer_%d' % n,
-                                                reuse=reuse,
-                                                is_training=self.is_training)
-                if opts['decoder'][n] == 'det':
-                    decoded = decoded_mean
-                elif opts['decoder'][n] == 'gauss':
-                    p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
-                    decoded = sample_gaussian(opts, p_params, 'tensorflow')
-                else:
-                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
-            self.decoded.append(decoded)
-
         # --- Point interpolation for implicit-prior WAE (only for generation)
         anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
                                         archi=opts['d_arch'][0],
@@ -354,40 +392,6 @@ class WAE(object):
             anchors_decoded=tf.nn.sigmoid(anchors_decoded)
         self.anchors_decoded = tf.reshape(anchors_decoded,[-1]+datashapes[opts['dataset']])
 
-        # --- Objectives, penalties, pretraining, FID
-        # Compute matching penalty cost
-        if opts['e_nlatents']==opts['nlatents']:
-            self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
-            self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
-        else:
-            self.match_penalty = matching_penalty(opts, self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                self.encoded[-1])
-            self.C = square_dist_v2(self.opts,self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                self.encoded[-1])
-        # Compute objs
-        self.objective = self.loss_reconstruct \
-                         + self.lmbd[-1] * self.match_penalty
-
-        if opts['nlatents']>1:
-            self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
-            self.imp_objective = self.losses_reconstruct[0] \
-                                + self.lmbd[0] * self.imp_match_penalty
-        else:
-            self.imp_objective = self.objective
-
-        # Logging info
-        self.sinkhorn = sinkhorn_it_v2(self.opts, self.C)
-        # Pre Training
-        self.pretrain_loss()
-        """
-        # FID score
-        self.blurriness = self.compute_blurriness()
-        self.inception_graph = tf.Graph()
-        self.inception_sess = tf.Session(graph=self.inception_graph)
-        with self.inception_graph.as_default():
-            self.create_inception_graph()
-        self.inception_layer = self._get_inception_layer()
-        """
 
         # --- Optimizers, savers, etc
         self.add_optimizers()
