@@ -161,9 +161,57 @@ class WAE(object):
             self.losses_reconstruct.append(loss_reconstruct)
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
 
-
-        # --- full reconstructions from latents layers
+        # --- full reconstructions latents layers
         self.full_reconstructed = []
+        for m in range(len(self.encoded)):
+            reconstructed=self.encoded[m]
+            for n in range(m,-1,-1):
+                if n==0:
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=self.is_training)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                    if opts['input_normalize_sym']:
+                        reconstructed=tf.nn.tanh(reconstructed)
+                    else:
+                        reconstructed=tf.nn.sigmoid(reconstructed)
+                    reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                else:
+                    # Setting output_dim
+                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    else:
+                        dec_output_dim = 2*opts['zdim'][n-1]
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=dec_output_dim,
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=self.is_training)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+            self.full_reconstructed.append(reconstructed)
+
+        # --- full reconstructions from sampled encodings
+        self.sampled_reconstructed = []
         encoded_samples = [self.points,]
         for n in range(opts['e_nlatents']):
             # - Encoding points
@@ -229,7 +277,7 @@ class WAE(object):
                         reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
                     else:
                         assert False, 'Unknown encoder %s' % opts['decoder'][n]
-            self.full_reconstructed.append(reconstructed)
+            self.sampled_reconstructed.append(reconstructed)
 
 
         # --- Sampling from model (only for generation)
@@ -356,7 +404,6 @@ class WAE(object):
         self.anchors_points = tf.placeholder(tf.float32,
                                     [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
                                     name='anchors_ph')
-
 
     def add_training_placeholders(self):
         opts = self.opts
@@ -691,7 +738,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
-                if epoch >= 5000:
+                if epoch >= 10000:
                     # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
                     if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
@@ -738,7 +785,8 @@ class WAE(object):
         """
 
         opts = self.opts
-        # Load trained weights
+
+        # --- Load trained weights
         if not tf.gfile.IsDirectory(MODEL_PATH):
             raise Exception("model doesn't exist")
         WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
@@ -751,25 +799,36 @@ class WAE(object):
         num_anchors = 20
         imshape = datashapes[opts['dataset']]
 
-        # Reconstructions
+        # --- Reconstructions
         logging.error('Encoding test images..')
         num_pics = 5000
-        [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
+        # [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
+        encoded = self.sess.run(self.encoded,
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.is_training:False})
         # data_ids = np.random.choice(num_pics,20,replace=False)
-        data_ids = np.arange(28,29)
+        data_ids = np.arange(50,62)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
                                           self.is_training: False})
 
-        full_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(20)]),] + full_recon
+        full_reconstructed = [data.test_data[data_ids],] + full_recon
+        if opts['encoder'][0]=='gauss':
+            data_ids = np.arange(50,51)
+            sampled_recon = self.sess.run(self.sampled_reconstructed,
+                                   feed_dict={self.points:data.test_data[data_ids],
+                                              self.is_training: False})
+
+            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(20)]),] + sampled_recon
+        else:
+            sampled_reconstructed = None
+
+        # --- Encode anchors points and interpolate
         # inter_anchors = None
-        # Encode anchors points and interpolate
         logging.error('Anchors interpolation..')
         encshape = list(np.shape(encoded[-1])[1:])
         #anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
-        anchors_ids = np.arange(num_anchors,3*num_anchors)
+        anchors_ids = np.arange(2*num_anchors,3*num_anchors)
         data_anchors = data.test_data[anchors_ids]
         enc_anchors = np.reshape(encoded[-1][anchors_ids],[-1,2]+encshape)
         enc_interpolation = linespace(opts, num_steps, anchors=enc_anchors)
@@ -788,7 +847,7 @@ class WAE(object):
         inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
         inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
 
-        # Latent interpolation
+        # --- Latent interpolation
         logging.error('Latent interpolation..')
         # if opts['prior']!='implicit':
         if False:
@@ -808,7 +867,8 @@ class WAE(object):
                                 feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
                                            self.is_training: False})
         inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
-        # Samples generation
+
+        # --- Samples generation
         logging.error('Samples generation..')
         num_cols = 15
         npics = num_cols**2
@@ -816,10 +876,11 @@ class WAE(object):
         samples = self.sess.run(self.decoded[-1],
                                feed_dict={self.samples: prior_noise,
                                           self.is_training: False})
-        # Making plots
+        # --- Making & saving plots
         logging.error('Saving images..')
         save_latent_interpolation(opts, data.test_data[:num_pics],data.test_labels[:num_pics], # data,labels
-                        encoded, reconstructed, full_reconstructed, # encoded, reconstructed points
+                        encoded, #reconstructed, # encoded, reconstructed points
+                        full_reconstructed, sampled_reconstructed, # full & sampled recons
                         inter_anchors, inter_latent, # anchors and latents interpolation
                         samples, # samples
                         MODEL_PATH) # working directory
