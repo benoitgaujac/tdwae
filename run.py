@@ -23,6 +23,8 @@ parser.add_argument("--method",
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
+parser.add_argument("--etype", default='gauss',
+                    help='encoder type')
 parser.add_argument("--weights_file")
 
 
@@ -74,7 +76,7 @@ def main():
     opts['lambda_schedule'] = 'constant'
     # NN set up
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
     opts['e_nlayers'] = [2,2,2,2,2,2,2]
     opts['e_nfilters'] = [512,256,128,64,32,16]

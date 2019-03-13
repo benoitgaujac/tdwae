@@ -29,7 +29,6 @@ configs.config_mnist['save_train_data'] = True
 # Model set up
 configs.config_mnist['nlatents'] = 5
 configs.config_mnist['zdim'] = [32,16,8,4,2]
-configs.config_mnist['lambda_scalar'] = 2.
 configs.config_mnist['lambda'] = [1./configs.config_mnist['zdim'][i] for i in range(configs.config_mnist['nlatents']-1)]
 configs.config_mnist['lambda'].append(0.0002/configs.config_mnist['zdim'][-1])
 configs.config_mnist['lambda_schedule'] = 'constant'
