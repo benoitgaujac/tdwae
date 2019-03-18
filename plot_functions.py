@@ -21,7 +21,8 @@ def save_train(opts, data_train, data_test,
                      loss_rec, loss_rec_test,
                      losses_rec,
                      work_dir,
-                     filename):
+                     filename,
+                     save_train_data):
 
     """ Generates and saves the plot of the following layout:
         img1 | img2 | img3
@@ -222,7 +223,7 @@ def save_train(opts, data_train, data_test,
     plt.close()
 
     # data
-    if opts['save_train_data']:
+    if save_train_data:
         data_dir = 'train_data'
         save_path = os.path.join(work_dir,data_dir)
         utils.create_dir(save_path)
@@ -351,7 +352,8 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
 
 
 def save_latent_interpolation(opts, data_test, label_test, # data, labels
-                    encoded, reconstructed, full_reconstructed,# encoded, reconstructed points
+                    encoded, #reconstructed,# encoded, reconstructed points
+                    full_reconstructed, sampled_reconstructed,
                     inter_anchors, inter_latent, # anchors and latents interpolation
                     samples, # samples
                     MODEL_PATH): # working directory
@@ -371,12 +373,12 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     images = []
 
 
+    """
     # --- Reconstruction plots
     num_pics = 200
     num_cols = 20
     sample = data_test[:num_pics]
     recon = reconstructed[:num_pics]
-    full_recon = full_reconstructed[:num_pics]
     pics = []
     merged = np.vstack([recon, sample])
     r_ptr = 0
@@ -396,14 +398,20 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     image = np.concatenate(image, axis=0)
     images.append(image)
+    """
 
 
     # --- full reconstruction plots
-    num_cols = len(full_reconstructed)
-    num_rows = np.shape(full_reconstructed[0])[0]
-    pics = np.concatenate(full_reconstructed,axis=2)
-    pics = np.concatenate(np.split(pics,num_rows),axis=1)
-    pics = pics[0]
+    # num_cols = len(full_reconstructed)
+    # num_rows = np.shape(full_reconstructed[0])[0]
+    # pics = np.concatenate(full_reconstructed,axis=2)
+    # pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    num_rows = len(full_reconstructed)
+    num_cols = np.shape(full_reconstructed[0])[0]
+    full_reconstructed = np.split(np.array(full_reconstructed),num_cols,axis=1)
+    pics = np.concatenate(full_reconstructed,axis=-2)
+    pics = np.concatenate(np.split(pics,num_rows),axis=-3)
+    pics = pics[0,0]
     if greyscale:
         image = 1. - pics
     else:
@@ -439,7 +447,6 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         image = pics
     images.append(image)
 
-    """
     # --- Points Interpolation plots
     white_pix = 4
     num_rows = np.shape(inter_anchors)[0]
@@ -453,31 +460,30 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     else:
         image = pics
     images.append(image)
-    """
 
     # --- Save plots
     # img1, img2, img3, img4, img5 = images
     img1, img2, img3, img4 = images
+    to_plot_list = zip([img1, img2, img3, img4],
+                         ['Full Reconstructions',
+                         'Samples',
+                         'Latent interpolation',
+                         'Points interpolation'],
+                         ['full_recon',
+                         'pior_samples',
+                         'latent_inter',
+                         'point_inter'])
     # to_plot_list = zip([img1, img2, img3, img4, img5],
     #                      ['Reconstructions',
     #                      'Full Reconstructions',
     #                      'Samples',
     #                      'Latent interpolation',
     #                      'Points interpolation'],
-    #                      ['reconstructions',
-    #                      'full_reconstructions',
+    #                      ['recon',
+    #                      'full_recon',
     #                      'pior_samples',
     #                      'latent_inter',
     #                      'point_inter'])
-    to_plot_list = zip([img1, img2, img3, img4],
-                         ['Reconstructions',
-                         'Full Reconstructions',
-                         'Samples',
-                         'Latent interpolation'],
-                         ['reconstructions',
-                         'full_reconstructions',
-                         'pior_samples',
-                         'latent_inter'])
 
     #Settings for pyplot fig
     dpi = 100
@@ -505,7 +511,44 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
                     dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
         plt.close()
 
+    # --- sampled reconstruction plots
+    if opts['encoder'][0]=='gauss':
+        num_cols = len(sampled_reconstructed)
+        num_rows = np.shape(sampled_reconstructed[0])[0]
+        pics = np.concatenate(sampled_reconstructed,axis=2)
+        pics = np.concatenate(np.split(pics,num_rows),axis=1)
+        pics = pics[0]
+        if greyscale:
+            image = 1. - pics
+        else:
+            image = pics
+        # Plotting
+        height_pic = image.shape[0]
+        width_pic = image.shape[1]
+        fig_height = height_pic / 20
+        fig_width = width_pic / 20
+        fig = plt.figure(figsize=(fig_width, fig_height))
+        if greyscale:
+            image = image[:, :, 0]
+            # in Greys higher values correspond to darker colors
+            plt.imshow(image, cmap='Greys',
+                            interpolation='none', vmin=0., vmax=1.)
+        else:
+            plt.imshow(image, interpolation='none', vmin=0., vmax=1.)
+        # Removing axes, ticks, labels
+        plt.axis('off')
+        # # placing subplot
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+                hspace = 0, wspace = 0)
+        # Saving
+        filename = 'sampled_recons.png'
+        plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                    dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+        plt.close()
 
+
+
+    """
     # --- Embedings vizu
     num_pics = np.shape(encoded[0])[0]
     embeds = []
@@ -536,8 +579,8 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         # ax = plt.subplot(gs[0, i])
         ax = fig.add_subplot(1, len(embeds), i+1)
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
-                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
@@ -571,6 +614,8 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
                 dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.01)
     plt.close()
+    """
+
 
 def discrete_cmap(N, base_cmap=None):
     """Create an N-bin discrete colormap from the specified input map"""

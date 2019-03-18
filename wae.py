@@ -232,6 +232,7 @@ class WAE(object):
             self.imp_objective = self.losses_reconstruct[0] \
                                 + self.lmbd[0] * self.imp_match_penalty
         else:
+            self.imp_match_penalty = self.match_penalty
             self.imp_objective = self.objective
 
         # Logging info
@@ -737,10 +738,16 @@ class WAE(object):
 
                     print('')
                     # Making plots
+                    if opts['save_train_data'] and epoch>=opts['epoch_num']-1:
+                        save_train_data = True
+                    else:
+                        save_train_data = False
+
                     if opts['e_nlatents']==opts['nlatents']:
                         samples_prior = fixed_noise
                     else:
                         samples_prior = samples[opts['nlatents']-opts['e_nlatents']-1]
+
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
                                      data.test_labels[:30*npics],    # labels
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
@@ -750,7 +757,8 @@ class WAE(object):
                                      Loss_rec, Loss_rec_test,   # rec losses
                                      Losses_rec,    # rec losses for each latents
                                      work_dir,  # working directory
-                                     'res_e%04d_mb%05d.png' % (epoch, it))  # filename
+                                     'res_e%04d_mb%05d.png' % (epoch, it),  # filename
+                                     save_train_data) # save training data
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
@@ -823,14 +831,14 @@ class WAE(object):
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.is_training:False})
         # data_ids = np.random.choice(num_pics,20,replace=False)
-        data_ids = np.arange(50,62)
+        data_ids = np.arange(30,72)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
                                           self.is_training: False})
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
         if opts['encoder'][0]=='gauss':
-            data_ids = np.arange(50,51)
+            data_ids = np.arange(53,54)
             sampled_recon = self.sess.run(self.sampled_reconstructed,
                                    feed_dict={self.points:data.test_data[data_ids],
                                               self.is_training: False})
