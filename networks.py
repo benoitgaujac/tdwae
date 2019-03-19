@@ -60,7 +60,7 @@ def vae_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
                     opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
             if i>0:
                 layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                            opts['zdim'][i], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
+                            opts['zdim'][i-1], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
         outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                     output_dim, init=opts['mlp_init'], scope='hid_final')
 

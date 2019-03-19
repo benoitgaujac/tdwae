@@ -88,6 +88,14 @@ class VAE(object):
         loss_reconstruct = vae_reconstruction_loss(self.points,
                                         self.mean_reconstructed)
         self.loss_reconstruct += loss_reconstruct
+        # # Debuging
+        # enc_scopes, dec_scopes = [], []
+        # for i in range(len(opts['zdim'])):
+        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='encoder/layer_1/hid{}'.format(i))
+        #     enc_scopes.append(scope)
+        # for i in range(len(opts['zdim'])-1,-1,-1):
+        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='decoder/layer_1/hid{}'.format(i))
+        #     dec_scopes.append(scope)
 
         # --- Sampling from model (only for generation)
         decoded_mean = vae_decoder(self.opts, input=self.samples,
