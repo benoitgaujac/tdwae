@@ -54,10 +54,10 @@ def main():
         opts['work_dir'] = FLAGS.work_dir
 
     # Experiemnts set up
-    opts['epoch_num'] = 501
-    opts['print_every'] = 2*468 #375000
+    opts['epoch_num'] = 4009
+    opts['print_every'] = 187500
     opts['lr'] = 0.001
-    opts['save_every_epoch'] = 100 #4011
+    opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     # Model set up
