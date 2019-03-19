@@ -133,41 +133,43 @@ def save_train(opts, data_train, data_test,
     x = np.arange(1, len(loss) + 1, x_step)
     y = np.log(loss[::x_step])
     plt.plot(x, y, linewidth=3, color='black', label='loss')
-    if opts['prior']!='implicit':
-        y = np.log(imp_loss[::x_step])
-        plt.plot(x, y, linewidth=2, linestyle = '--',color='black', label='non-hierarchical loss')
-    # l = np.array(loss_rec)
-    # y = np.log(l[::x_step])
-    # plt.plot(x, y, linewidth=2, color='red', label='rec')
-    # l = np.array(loss_match)
-    # y = np.log(opts['lambda'][-1]*np.abs(l[::x_step]))
-    # plt.plot(x, y, linewidth=2, color='blue', label=r'$\lambda$|match|')
+    # if opts['nlatents']>1:
+    #     y = np.log(imp_loss[::x_step])
+    #     plt.plot(x, y, linewidth=2, linestyle = '--',color='black', label='non-hierarchical loss')
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     ax = plt.subplot(gs[1, 1])
-    total_num = len(losses_rec)
-    x_step = max(int(total_num / 500), 1)
-    x = np.arange(1, len(losses_rec) + 1, x_step)
-    losses = np.array(losses_rec)
-    for i in range(np.shape(losses)[-1]):
-        l = losses[:,i]
-        if i==0:
-            y = np.log(l[::x_step])
-            plt.plot(x, y, linewidth=2, color=color_list[i], label=r'rec$_%d$' % i)
-        else:
-            # y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
-            y = np.log(np.array(l[::x_step]))
-            plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
-    l = np.array(loss_match)
-    y = np.log(np.abs(l[::x_step]))
-    plt.plot(x, y, linewidth=2, color=color_list[i+1], label=r'|$\lambda_%d$match|' % (i+1))
+    # total_num = len(losses_rec)
+    # x_step = max(int(total_num / 500), 1)
+    # x = np.arange(1, len(losses_rec) + 1, x_step)
+    if losses_rec:
+        losses = np.array(losses_rec)
+        for i in range(np.shape(losses)[-1]):
+            l = losses[:,i]
+            if i==0:
+                y = np.log(l[::x_step])
+                plt.plot(x, y, linewidth=2, color=color_list[i], label=r'rec$_%d$' % i)
+            else:
+                # y = np.log(opts['lambda'][i-1]*np.array(l[::x_step]))
+                y = np.log(np.array(l[::x_step]))
+                plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\lambda_%d$rec$_%d$' % (i,i))
+        l = np.array(loss_match)
+        y = np.log(np.abs(l[::x_step]))
+        plt.plot(x, y, linewidth=2, color=color_list[i+1], label=r'|$\lambda_%d$match|' % (i+1))
+    else:
+        l = np.array(loss_rec)
+        y = np.log(l[::x_step])
+        plt.plot(x, y, linewidth=2, color=color_list[0], label='rec')
+        l = np.array(loss_match)
+        y = np.log(np.abs(l[::x_step]))
+        plt.plot(x, y, linewidth=2, color=color_list[-1], label='|match|')
     plt.grid(axis='y')
     plt.legend(loc='lower left')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",

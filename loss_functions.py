@@ -12,6 +12,17 @@ from ops._ops import logsumexp, logsumexp_v2
 import pdb
 
 
+def vae_matching_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
+    """
+    Compute KL divergence between prior and variational distribution
+    """
+    kl = encoded_sigma / pz_sigma \
+        + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
+        + tf.log(pz_sigma) - tf.log(encoded_sigma)
+    kl = 0.5 * tf.reduce_sum(kl,axis=-1)
+    return tf.reduce_mean(kl)
+
+
 def matching_penalty(opts, samples_pz, samples_qz):
     """
     Compute the WAE's matching penalty
@@ -141,7 +152,7 @@ def square_dist_v2(opts, sample_x, sample_y):
     return squared_dist
 
 
-def kl_penalty(opts,enc_mu,enc_Sigma, prior_mu, prior_Sigma):
+def kl_penalty(enc_mu,enc_Sigma, prior_mu, prior_Sigma):
     sigma_ratio = tf.divide(enc_Sigma,prior_Sigma)
     kl = 1. + tf.log(sigma_ratio) - sigma_ratio \
         - tf.divide(tf.square(prior_mu-enc_mu),prior_Sigma)
@@ -186,6 +197,15 @@ def reconstruction_loss(opts, x1, x2):
     loss = opts['coef_rec'] * tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr,
     return loss
 
+def vae_reconstruction_loss(x1, x2):
+    """
+    Compute the VAE's reconstruction losses
+    x1: image data             [batch,im_dim]
+    x2: image reconstruction   [batch,im_dim]
+    """
+    eps = 1e-10
+    l = x1*tf.log(eps+x2) + (1-x1)*tf.log(eps+1-x2)
+    return -tf.reduce_mean(l)
 
 def contrast_norm(pics):
     # pics is a [N, H, W, C] tensor

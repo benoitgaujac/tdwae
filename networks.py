@@ -12,6 +12,60 @@ from datahandler import datashapes
 
 import pdb
 
+def vae_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+                                                        is_training=False):
+    with tf.variable_scope(scope, reuse=reuse):
+        layer_x = input
+        for i in range(len(opts['zdim'])):
+            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
+            if batch_norm:
+                layer_x = ops.batchnorm.Batchnorm_layers(
+                    opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
+            layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
+            if batch_norm:
+                layer_x = ops.batchnorm.Batchnorm_layers(
+                    opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
+            layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+            if i<len(opts['zdim'])-1:
+                layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                            opts['zdim'][i], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
+        outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                    output_dim, init=opts['mlp_init'], scope='hid_final')
+
+    mean, logSigma = tf.split(outputs,2,axis=-1)
+    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    Sigma = tf.nn.softplus(logSigma)
+    return mean, Sigma
+
+def vae_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+                                                        is_training=False):
+    # Architecture with only fully connected layers and ReLUs
+    with tf.variable_scope(scope, reuse=reuse):
+        layer_x = input
+        for i in range(len(opts['zdim'])-1,-1,-1):
+            layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
+            layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
+            if batch_norm:
+                layer_x = ops.batchnorm.Batchnorm_layers(
+                    opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
+            layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
+            layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
+            if batch_norm:
+                layer_x = ops.batchnorm.Batchnorm_layers(
+                    opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
+            if i>0:
+                layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                            opts['zdim'][i], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
+        outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                    output_dim, init=opts['mlp_init'], scope='hid_final')
+
+    return tf.nn.sigmoid(outputs)
+
 
 def encoder(opts, input, archi, num_layers, num_units, output_dim, scope,
                                                         reuse=False,
