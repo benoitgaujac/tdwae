@@ -197,6 +197,7 @@ def reconstruction_loss(opts, x1, x2):
     loss = opts['coef_rec'] * tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr,
     return loss
 
+
 def vae_reconstruction_loss(x1, x2):
     """
     Compute the VAE's reconstruction losses
@@ -205,7 +206,9 @@ def vae_reconstruction_loss(x1, x2):
     """
     eps = 1e-10
     l = x1*tf.log(eps+x2) + (1-x1)*tf.log(eps+1-x2)
-    return -tf.reduce_mean(l)
+    l = -tf.reduce_sum(l,axis=[1,2,3])
+    return tf.reduce_mean(l)
+
 
 def contrast_norm(pics):
     # pics is a [N, H, W, C] tensor

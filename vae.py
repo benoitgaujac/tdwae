@@ -61,9 +61,6 @@ class VAE(object):
         Sigma = np.ones(opts['zdim'][-1], dtype='float32')
         self.pz_params = np.concatenate([mean,Sigma],axis=0)
 
-        # --- Initialize list container
-        self.loss_reconstruct = 0.
-
         # --- Encoding & decoding Loop
         encoded = self.points
         # - Encoding points
@@ -85,9 +82,8 @@ class VAE(object):
         reconstructed = sample_bernoulli(recon_mean)
         self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
         self.mean_reconstructed=tf.reshape(recon_mean,[-1]+datashapes[opts['dataset']])
-        loss_reconstruct = vae_reconstruction_loss(self.points,
+        self.loss_reconstruct = vae_reconstruction_loss(self.points,
                                         self.mean_reconstructed)
-        self.loss_reconstruct += loss_reconstruct
         # # Debuging
         # enc_scopes, dec_scopes = [], []
         # for i in range(len(opts['zdim'])):
