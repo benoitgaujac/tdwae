@@ -142,8 +142,8 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    base = plt.cm.get_cmap('Vega10')
-    # base = plt.cm.get_cmap('tab10')
+    # base = plt.cm.get_cmap('Vega10')
+    base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     ax = plt.subplot(gs[1, 1])
     # total_num = len(losses_rec)
