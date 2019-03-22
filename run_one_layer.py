@@ -3,7 +3,7 @@ import sys
 import logging
 import argparse
 import configs
-from vae import VAE
+from one_layer_ae import one_layer_AE
 from datahandler import DataHandler
 import utils
 
@@ -13,11 +13,17 @@ import pdb
 
 parser = argparse.ArgumentParser()
 # Args for experiment
-parser.add_argument("--mode", default='test',
-                    help='mode to run [train/test/vizu]')
 parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
+parser.add_argument("--mode", default='test',
+                    help='mode to run [train/test/vizu]')
+parser.add_argument("--method", default='vae',
+                    help='algo to train [wae/vae]')
+parser.add_argument("--etype", default='gauss',
+                    help='encoder type')
+parser.add_argument("--lmba", type=float, default=0.0002,
+                    help='lambda')
 parser.add_argument("--work_dir")
 parser.add_argument("--weights_file")
 
@@ -47,7 +53,7 @@ def main():
         assert False, 'Unknown experiment dataset'
 
     # Select training method
-    opts['method'] = 'vae'
+    opts['method'] = FLAGS.method
 
     # Working directory
     if FLAGS.work_dir:
@@ -55,24 +61,22 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4009
-    opts['print_every'] = 187500
-    opts['lr'] = 0.001
+    opts['print_every'] = 4680 #187500
+    opts['lr'] = 0.0001
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     # Model set up
     opts['nlatents'] = 1
     opts['zdim'] = [32,16,8,4,2]
+    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda_scalar'] = FLAGS.lmba
+    opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
     # NN set up
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['encoder'] = ['gauss',]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-    opts['e_nlayers'] = [2,2,2,2,2,2,2]
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_nfilters'] = [512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['bernoulli','gauss','gauss','gauss','gauss','gauss','det'] # deterministic, gaussian
-    opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-    opts['d_nlayers'] = [2,2,2,2,2,2,2]
     opts['d_nfilters'] = [512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
@@ -98,7 +102,7 @@ def main():
     tf.reset_default_graph()
 
     # build VAE
-    vae = VAE(opts)
+    ae = one_layer_AE(opts)
 
     # Training/testing/vizu
     if FLAGS.mode=="train":
@@ -107,11 +111,12 @@ def main():
             text.write('Parameters:\n')
             for key in opts:
                 text.write('%s : %s\n' % (key, opts[key]))
-        vae.train(data, FLAGS.weights_file)
+        ae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
-        vae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
+        raise ValueError('To implement')
+        ae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     else:
         raise ValueError('To implement')
-        vae.test(data, opts['work_dir'], FLAGS.weights_file)
+        ae.test(data, opts['work_dir'], FLAGS.weights_file)
 
 main()

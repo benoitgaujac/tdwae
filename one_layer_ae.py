@@ -18,9 +18,9 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
-from loss_functions import vae_matching_penalty, vae_reconstruction_loss, moments_loss
-from plot_functions import save_train, plot_embedded, save_latent_interpolation
-from networks import vae_encoder, vae_decoder
+from loss_functions import vae_matching_penalty, matching_penalty, vae_reconstruction_loss, reconstruction_loss, moments_loss
+from plot_functions import save_train, save_latent_interpolation
+from networks import one_layer_encoder, one_layer_decoder
 from datahandler import datashapes
 
 """
@@ -35,7 +35,7 @@ layername = 'FID_Inception_Net/pool_3:0'
 
 import pdb
 
-class VAE(object):
+class one_layer_AE(object):
 
     def __init__(self, opts):
 
@@ -62,28 +62,45 @@ class VAE(object):
         self.pz_params = np.concatenate([mean,Sigma],axis=0)
 
         # --- Encoding & decoding Loop
-        encoded = self.points
         # - Encoding points
-        enc_mean, enc_Sigma = vae_encoder(self.opts, input=encoded,
+        enc_mean, enc_Sigma = one_layer_encoder(self.opts, input=self.points,
                                             output_dim=2*opts['zdim'][-1],
                                             batch_norm = opts['batch_norm'],
                                             scope='encoder/layer_1',
                                             reuse=False,
                                             is_training=self.is_training)
-        qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-        self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+        if opts['method']=='vae':
+            qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
+            self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+        elif opts['method']=='wae':
+            if opts['encoder'][0] == 'det':
+                self.encoded = enc_mean
+            elif opts['encoder'][0] == 'gauss':
+                qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
+                self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+            else:
+                assert False, 'Unknown encoder %s for wae' % opts['encoder']
+        else:
+            assert False, 'Unknown training method %s' % opts['method']
+
         # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
-        recon_mean = vae_decoder(self.opts, input=self.encoded,
+        recon_mean = one_layer_decoder(self.opts, input=self.encoded,
                                             output_dim=np.prod(datashapes[opts['dataset']]),
                                             batch_norm = opts['batch_norm'],
                                             scope='decoder/layer_1',
                                             reuse=False,
                                             is_training=self.is_training)
-        reconstructed = sample_bernoulli(recon_mean)
-        self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-        self.mean_reconstructed=tf.reshape(recon_mean,[-1]+datashapes[opts['dataset']])
-        self.loss_reconstruct = vae_reconstruction_loss(self.points,
-                                        self.mean_reconstructed)
+        if opts['method']=='vae':
+            reconstructed = sample_bernoulli(recon_mean)
+            self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+            self.mean_reconstructed=tf.reshape(recon_mean,[-1]+datashapes[opts['dataset']])
+        elif opts['method']=='wae':
+            reconstructed = recon_mean
+            self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+            self.mean_reconstructed = self.reconstructed
+        else:
+            assert False, 'Unknown training method %s' % opts['method']
+
         # # Debuging
         # enc_scopes, dec_scopes = [], []
         # for i in range(len(opts['zdim'])):
@@ -94,19 +111,39 @@ class VAE(object):
         #     dec_scopes.append(scope)
 
         # --- Sampling from model (only for generation)
-        decoded_mean = vae_decoder(self.opts, input=self.samples,
+        decoded_mean = one_layer_decoder(self.opts, input=self.samples,
                                             output_dim=np.prod(datashapes[opts['dataset']]),
                                             batch_norm = opts['batch_norm'],
                                             scope='decoder/layer_1',
                                             reuse=True,
                                             is_training=self.is_training)
-        decoded = sample_bernoulli(decoded_mean)
+        if opts['method']=='vae':
+            decoded = sample_bernoulli(decoded_mean)
+        elif opts['method']=='wae':
+            decoded = decoded_mean
+        else:
+            assert False, 'Unknown training method %s' % opts['method']
         self.decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
 
+
         # --- Objectives, penalties, pretraining, FID
-        # Compute matching penalty cost
-        self.match_penalty = vae_matching_penalty(mean, Sigma,
-                                        enc_mean, enc_Sigma)
+        if opts['method']=='vae':
+            # Compute reconstruction loss
+            self.loss_reconstruct = vae_reconstruction_loss(self.points,
+                                            self.mean_reconstructed)
+            # Compute matching penalty cost
+            self.match_penalty = vae_matching_penalty(mean, Sigma,
+                                            enc_mean, enc_Sigma)
+        elif opts['method']=='wae':
+            # Compute reconstruction loss
+            self.loss_reconstruct = reconstruction_loss(opts, self.points,
+                                            self.reconstructed)
+            # Compute matching penalty cost
+            self.match_penalty = matching_penalty(opts, self.samples, self.encoded)
+            self.match_penalty *= opts['lambda'][-1]
+        else:
+            assert False, 'Unknown training method %s' % opts['method']
+
         # Compute objs
         self.objective = self.loss_reconstruct + self.match_penalty
 

@@ -18,8 +18,6 @@ parser.add_argument("--mode", default='test',
 parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
-parser.add_argument("--method",
-                    help='algo to train [wae/vae]')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -53,18 +51,17 @@ def main():
         assert False, 'Unknown experiment dataset'
 
     # Select training method
-    if FLAGS.method:
-        opts['method'] = FLAGS.method
+    opts['method'] = 'wae'
 
     # Working directory
     if FLAGS.work_dir:
         opts['work_dir'] = FLAGS.work_dir
 
     # Experiemnts set up
-    opts['epoch_num'] = 8020
-    opts['print_every'] = 375000
-    opts['lr'] = 0.001
-    opts['save_every_epoch'] = 4011
+    opts['epoch_num'] = 4009
+    opts['print_every'] = 187500
+    opts['lr'] = 0.0005
+    opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     # Model set up
@@ -76,12 +73,13 @@ def main():
     opts['lambda_schedule'] = 'constant'
     # NN set up
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+    opts['e_nlatents'] = 5
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
     opts['e_nlayers'] = [2,2,2,2,2,2,2]
     opts['e_nfilters'] = [512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','det'] # deterministic, gaussian
     opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2]
     opts['d_nfilters'] = [512,256,128,64,32,16]

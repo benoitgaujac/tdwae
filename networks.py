@@ -12,7 +12,7 @@ from datahandler import datashapes
 
 import pdb
 
-def vae_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+def one_layer_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
         layer_x = input
@@ -40,7 +40,7 @@ def vae_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
-def vae_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+def one_layer_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
                                                         is_training=False):
     # Architecture with only fully connected layers and ReLUs
     with tf.variable_scope(scope, reuse=reuse):
