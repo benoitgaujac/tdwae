@@ -13,46 +13,57 @@ import pdb
 
 parser = argparse.ArgumentParser()
 # Args for experiment
+parser.add_argument("--mode", default='test',
+                    help='mode to run [train/test/vizu]')
+parser.add_argument("--exp", default='mnist',
+                    help='dataset [mnist/cifar10/].'\
+                    ' celebA/dsprites Not implemented yet')
 parser.add_argument("--work_dir")
-parser.add_argument("--base_lambda", type=int, default=100,
-                    help='base lambda')
+parser.add_argument("--etype", default='gauss',
+                    help='encoder type')
 parser.add_argument("--weights_file")
+
 
 FLAGS = parser.parse_args()
 
 
-# Experiment set up
-configs.config_mnist['dataset'] = 'mnist'
-configs.config_mnist['data_dir'] = 'mnist'
-# Model set up
-configs.config_mnist['nlatents'] = 5
-configs.config_mnist['zdim'] = [32,16,8,4,2]
-configs.config_mnist['prior'] = 'gaussian' # dirichlet, gaussian or implicit
-# NN set up
-configs.config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-configs.config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-configs.config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-configs.config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-configs.config_mnist['e_nlayers'] = [2,2,2,2,2,2,2]
-configs.config_mnist['e_nfilters'] = [512,256,128,64,32,16]
-configs.config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-configs.config_mnist['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
-configs.config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-configs.config_mnist['d_nlayers'] = [2,2,2,2,2,2,2]
-configs.config_mnist['d_nfilters'] = [512,256,128,64,32,16]
-configs.config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-
-
 def main():
-
-
     opts = configs.config_mnist
 
 
     # Select training method and create dir
     opts['method'] = 'wae'
-    if not tf.gfile.Exists(opts['method']):
-        utils.create_dir(opts['method'])
+    # Working directory
+    if FLAGS.work_dir:
+        opts['work_dir'] = FLAGS.work_dir
+
+    # Experiemnts set up
+    opts['epoch_num'] = 4009
+    opts['print_every'] = 187500
+    opts['lr'] = 0.0005
+    opts['save_every_epoch'] = 2005 #4011
+    opts['save_final'] = True
+    opts['save_train_data'] = True
+    opts['use_trained'] = False
+    # Model set up
+    opts['nlatents'] = 5
+    opts['zdim'] = [32,16,8,4,2]
+    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda_schedule'] = 'constant'
+    # NN set up
+    opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+    opts['e_nlatents'] = 5
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
+    opts['e_nlayers'] = [2,2,2,2,2,2,2]
+    opts['e_nfilters'] = [512,256,128,64,32,16]
+    opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','det'] # deterministic, gaussian
+    opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+    opts['d_nlayers'] = [2,2,2,2,2,2,2]
+    opts['d_nfilters'] = [512,256,128,64,32,16]
+    opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
 
     # Verbose
     if opts['verbose']:
@@ -63,17 +74,13 @@ def main():
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
+
     # Experiments
-    lambda_values = [FLAGS.base_lambda**i for i in range(2)]
+    lambda_values = [0.00001,0.00005,0.0001,0.0005,0.001]
     for lambda_scalar in lambda_values:
         logging.error('Experiment lambda %d' % lambda_scalar)
         # lambda Value
-        opts['lambda_scalar'] = lambda_scalar
-        # opts['lambda'] = [opts['lambda_scalar']/0.1**i for i in range(opts['nlatents']-1,1,-1)]
-        # opts['lambda'] = [1. for i in range(opts['nlatents']-1)]
-        # opts['lambda'].append(opts['lambda_scalar'])
-        opts['lambda'] = [lambda_scalar*opts['zdim'][i]/784. for i in range(opts['nlatents'])]
-        # opts['lambda'] = [lambda_scalar for i in range(opts['nlatents'])]
+        opts['lambda'].append(lambda_scalar / opts['zdim'][-1])
 
         # Create working directories
         work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
