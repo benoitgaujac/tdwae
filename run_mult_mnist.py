@@ -76,7 +76,7 @@ def main():
 
     # Experiments
     lambda_values = [0.00002,0.0001,0.0002,0.001,0.002]
-    lambda_scalar = lambda_values[FLAGS.idx_lmba]
+    lambda_scalar = lambda_values[FLAGS.idx_lmba-1]
     # for lambda_scalar in lambda_values:
     # lambda Value
     opts['lambda'].append(lambda_scalar / opts['zdim'][-1])
