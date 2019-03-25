@@ -37,7 +37,7 @@ def main():
         opts['work_dir'] = FLAGS.work_dir
 
     # Experiemnts set up
-    opts['epoch_num'] = 4009
+    opts['epoch_num'] = 4015
     opts['print_every'] = 187500
     opts['lr'] = 0.0005
     opts['save_every_epoch'] = 2005 #4011
@@ -75,15 +75,14 @@ def main():
 
 
     # Experiments
-    lambda_values = [0.00001,0.00005,0.0001,0.0005,0.001]
+    lambda_values = [0.00002,0.0001,0.0002,0.001,0.002]
     lambda_scalar = lambda_values[FLAGS.idx_lmba]
     # for lambda_scalar in lambda_values:
-    logging.error('Experiment lambda %d' % lambda_scalar)
     # lambda Value
     opts['lambda'].append(lambda_scalar / opts['zdim'][-1])
-
+    logging.error('Experiment lambda %d' % opts['lambda'][-1])
     # Create working directories
-    work_dir = FLAGS.work_dir + '_' + str(lambda_scalar)
+    work_dir = FLAGS.work_dir + '_' + str(opts['lambda'][-1])
     work_dir = os.path.join(opts['method'],work_dir)
     opts['work_dir'] = work_dir
     utils.create_dir(work_dir)
