@@ -61,8 +61,8 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4009
-    opts['print_every'] = 4680 #187500
-    opts['lr'] = 0.0001
+    opts['print_every'] = 187500
+    opts['lr'] = 0.001
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
