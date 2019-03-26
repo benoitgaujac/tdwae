@@ -18,9 +18,9 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
-from loss_functions import kl_penalty, matching_penalty, vae_reconstruction_loss, reconstruction_loss, moments_loss
-from plot_functions import save_train, save_latent_interpolation
-from networks import one_layer_encoder, one_layer_decoder
+from loss_functions import log_penalty, kl_penalty, vae_sigmoid_reconstruction_loss, moments_loss
+from plot_functions import save_train, plot_sinkhorn, plot_embedded, save_latent_interpolation
+from networks import encoder, decoder
 from datahandler import datashapes
 
 """
@@ -35,19 +35,22 @@ layername = 'FID_Inception_Net/pool_3:0'
 
 import pdb
 
-class one_layer_AE(object):
+class VAE(object):
 
     def __init__(self, opts):
 
         logging.error('Building the Tensorflow Graph')
 
         # --- model warning
-        if opts['prior']!='gaussian':
-            logging.error('Warning, training a VAE with non gaussian prior')
+        if opts['prior']=='dirichlet' and opts['encoder']=='gauss':
+            logging.error('Warning, training a gaussian encoder with dirichlet prior')
 
         # --- Create session
         self.sess = tf.Session()
         self.opts = opts
+        # Check len hyperparams
+        assert len(opts['zdim'])==opts['nlatents'], \
+                'Num zdim does match number of latents'
 
         # --- Data shape
         assert opts['dataset'] in datashapes, 'Unknown dataset.'
@@ -57,99 +60,82 @@ class one_layer_AE(object):
         self.add_model_placeholders()
         self.add_training_placeholders()
         # --- Initialize prior parameters
-        mean = np.zeros(opts['zdim'][-1], dtype='float32')
-        Sigma = np.ones(opts['zdim'][-1], dtype='float32')
-        self.pz_params = np.concatenate([mean,Sigma],axis=0)
+        if opts['prior']=='gaussian':
+            mean = np.zeros(opts['zdim'][-1], dtype='float32')
+            Sigma = np.ones(opts['zdim'][-1], dtype='float32')
+            self.prior_params = np.concatenate([mean,Sigma],axis=0)
+        elif opts['prior']=='dirichlet':
+            self.prior_params = 0.5 * np.ones(opts['zdim'][-1],dtype='float32')
+        else:
+            assert False, 'Unknown prior %s' % opts['prior']
+
+        # --- Initialize list container
+        self.encoded, self.decoded = [], []
+        self.samples = []
+        self.match_penalties, self.match_penalty = [], 0.
+        self.qz_params, self.pz_params = [], []
 
         # --- Encoding & decoding Loop
-        # - Encoding points
-        enc_mean, enc_Sigma = one_layer_encoder(self.opts, input=self.points,
-                                            output_dim=2*opts['zdim'][-1],
-                                            batch_norm = opts['batch_norm'],
-                                            scope='encoder/layer_1',
-                                            reuse=False,
-                                            is_training=self.is_training)
-        if opts['method']=='vae':
+        encoded = self.points
+        for n in range(opts['e_nlatents']):
+            # - Encoding points
+            # Setting output_dim
+            enc_output_dim = 2*opts['zdim'][n]
+            enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
+                                                archi=opts['e_arch'][n],
+                                                num_layers=opts['e_nlayers'][n],
+                                                num_units=opts['e_nfilters'][n],
+                                                output_dim=enc_output_dim,
+                                                scope='encoder/layer_%d' % (n+1),
+                                                reuse=False,
+                                                is_training=self.is_training)
             qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-            self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
-        elif opts['method']=='wae':
-            if opts['encoder'][0] == 'det':
-                self.encoded = enc_mean
-            elif opts['encoder'][0] == 'gauss':
-                qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-                self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+            self.qz_params.append(qz_params)
+            encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+            self.encoded.append(encoded)
+            if n<opts['e_nlatents']-1:
+                self.match_penalty += log_penalty(encoded, enc_mean, enc_Sigma)
             else:
-                assert False, 'Unknown encoder %s for wae' % opts['encoder']
-        else:
-            assert False, 'Unknown training method %s' % opts['method']
-
-        # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
-        recon_mean = one_layer_decoder(self.opts, input=self.encoded,
-                                            output_dim=np.prod(datashapes[opts['dataset']]),
-                                            batch_norm = opts['batch_norm'],
-                                            scope='decoder/layer_1',
-                                            reuse=False,
-                                            is_training=self.is_training)
-        if opts['method']=='vae':
-            reconstructed = sample_bernoulli(recon_mean)
-            self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-            self.mean_reconstructed=tf.reshape(recon_mean,[-1]+datashapes[opts['dataset']])
-        elif opts['method']=='wae':
-            reconstructed = recon_mean
-            self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-            self.mean_reconstructed = self.reconstructed
-        else:
-            assert False, 'Unknown training method %s' % opts['method']
-
-        # # Debuging
-        # enc_scopes, dec_scopes = [], []
-        # for i in range(len(opts['zdim'])):
-        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='encoder/layer_1/hid{}'.format(i))
-        #     enc_scopes.append(scope)
-        # for i in range(len(opts['zdim'])-1,-1,-1):
-        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='decoder/layer_1/hid{}'.format(i))
-        #     dec_scopes.append(scope)
-
-        # --- Sampling from model (only for generation)
-        decoded_mean = one_layer_decoder(self.opts, input=self.samples,
-                                            output_dim=np.prod(datashapes[opts['dataset']]),
-                                            batch_norm = opts['batch_norm'],
-                                            scope='decoder/layer_1',
-                                            reuse=True,
-                                            is_training=self.is_training)
-        if opts['method']=='vae':
-            decoded = sample_bernoulli(decoded_mean)
-        elif opts['method']=='wae':
-            decoded = decoded_mean
-        else:
-            assert False, 'Unknown training method %s' % opts['method']
-        self.decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
-
+                self.match_penalty += kl_penalty(mean, Sigma, enc_mean, enc_Sigma)
+            # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
+            if n==0:
+                dec_mean, _ = decoder(self.opts, input=encoded,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=False,
+                                                is_training=self.is_training)
+                decoded = sample_bernoulli(dec_mean)
+                decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+                self.mean_decoded=tf.reshape(dec_mean,[-1]+datashapes[opts['dataset']])
+                # Reconstruction loss
+                self.loss_reconstruct = vae_sigmoid_reconstruction_loss(self.points,
+                                                self.mean_decoded)
+            else:
+                # Setting output_dim
+                dec_output_dim = 2*opts['zdim'][n-1]
+                dec_mean, dec_Sigma = decoder(self.opts, input=encoded,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=dec_output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=False,
+                                                is_training=self.is_training)
+                pz_params = tf.concat((dec_mean,dec_Sigma),axis=-1)
+                self.pz_params.append(pz_params)
+                decoded = sample_gaussian(opts, pz_params, 'tensorflow')
+                # matching penalty (KL)
+                self.match_penalty -= log_penalty(decoded,dec_mean,dec_Sigma)
+            self.decoded.append(decoded)
 
         # --- Objectives, penalties, pretraining, FID
-        if opts['method']=='vae':
-            # Compute reconstruction loss
-            self.loss_reconstruct = vae_reconstruction_loss(self.points,
-                                            self.mean_reconstructed)
-            # Compute matching penalty cost
-            self.match_penalty = kl_penalty(mean, Sigma,
-                                            enc_mean, enc_Sigma)
-        elif opts['method']=='wae':
-            # Compute reconstruction loss
-            self.loss_reconstruct = reconstruction_loss(opts, self.points,
-                                            self.reconstructed)
-            # Compute matching penalty cost
-            self.match_penalty = matching_penalty(opts, self.samples, self.encoded)
-            self.match_penalty *= opts['lambda'][-1]
-        else:
-            assert False, 'Unknown training method %s' % opts['method']
-
         # Compute objs
         self.objective = self.loss_reconstruct + self.match_penalty
-
         # Pre Training
         self.pretrain_loss()
-
         """
         # FID score
         self.blurriness = self.compute_blurriness()
@@ -159,6 +145,49 @@ class one_layer_AE(object):
             self.create_inception_graph()
         self.inception_layer = self._get_inception_layer()
         """
+
+        # --- Sampling from model (only for generation)
+        samples = self.pz_samples
+        for n in range(opts['nlatents']-1,-1,-1):
+            if n==0:
+                samples_mean, samples_Sigma = decoder(self.opts, input=samples,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=self.is_training)
+                samples = sample_bernoulli(samples_mean)
+                samples = tf.reshape(samples,[-1]+datashapes[opts['dataset']])
+            else:
+                # Setting output_dim
+                dec_output_dim = 2*opts['zdim'][n-1]
+                # Reuse params
+                if n>=opts['e_nlatents']:
+                    reuse=False
+                else:
+                    reuse=True
+                samples_mean, samples_Sigma = decoder(self.opts, input=samples,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                output_dim=dec_output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=reuse,
+                                                is_training=self.is_training)
+                p_params = tf.concat((samples_mean,samples_Sigma),axis=-1)
+                samples = sample_gaussian(opts, p_params, 'tensorflow')
+            self.samples.append(samples)
+
+        # # --- full reconstructions latents layers
+        # self.full_reconstruction()
+        #
+        # # --- full reconstructions from sampled encodings
+        # self.multi_reconstruction()
+        #
+        # # --- Point interpolation for implicit-prior WAE (only for generation)
+        # self.anchor_interpolation()
 
         # --- Optimizers, savers, etc
         self.add_optimizers()
@@ -170,7 +199,7 @@ class one_layer_AE(object):
         shape = self.data_shape
         self.points = tf.placeholder(tf.float32, [None] + shape,
                                                 name='points_ph')
-        self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
+        self.pz_samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
         self.anchors_points = tf.placeholder(tf.float32,
                                     [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
@@ -180,9 +209,163 @@ class one_layer_AE(object):
         opts = self.opts
         decay = tf.placeholder(tf.float32, name='rate_decay_ph')
         is_training = tf.placeholder(tf.bool, name='is_training_ph')
-        lmbda = tf.placeholder(tf.float32, name='lambda')
         self.lr_decay = decay
         self.is_training = is_training
+
+    def full_reconstruction(self):
+        # Reconstruct for each encoding layer
+        opts = self.opts
+        self.full_reconstructed = []
+        for m in range(len(self.encoded)):
+            reconstructed=self.encoded[m]
+            for n in range(m,-1,-1):
+                if n==0:
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=False)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    elif opts['decoder'][n] == 'bernoulli':
+                        reconstructed = sample_bernoulli(recon_mean)
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                    if opts['decoder'][n] != 'bernoulli':
+                        if opts['input_normalize_sym']:
+                            reconstructed=tf.nn.tanh(reconstructed)
+                        else:
+                            reconstructed=tf.nn.sigmoid(reconstructed)
+                    reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                else:
+                    # Setting output_dim
+                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    else:
+                        dec_output_dim = 2*opts['zdim'][n-1]
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=dec_output_dim,
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=False)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+            self.full_reconstructed.append(reconstructed)
+
+    def multi_reconstruction(self):
+        # Reconstruc multi encodings sampled from q
+        opts = self.opts
+        self.sampled_reconstructed = []
+        encoded_samples = [self.points,]
+        for n in range(opts['e_nlatents']):
+            # - Encoding points
+            # Setting output_dim
+            if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
+                enc_output_dim = 2*opts['zdim'][n]
+            else:
+                enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            enc_mean, enc_Sigma = encoder(self.opts, input=tf.expand_dims(encoded_samples[-1][0],0),
+                                                archi=opts['e_arch'][n],
+                                                num_layers=opts['e_nlayers'][n],
+                                                num_units=opts['e_nfilters'][n],
+                                                output_dim=enc_output_dim,
+                                                scope='encoder/layer_%d' % (n+1),
+                                                reuse=True,
+                                                is_training=False)
+            qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
+            qz_params = tf.concat([qz_params for i in range(20)],axis=0)
+            enc_samples = sample_gaussian(opts, qz_params, 'tensorflow')
+            encoded_samples.append(enc_samples)
+        for m in range(len(encoded_samples[1:])):
+            reconstructed=encoded_samples[m+1]
+            for n in range(m,-1,-1):
+                if n==0:
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=False)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    elif opts['decoder'][n] == 'bernoulli':
+                        reconstructed = sample_bernoulli(recon_mean)
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                    if opts['decoder'][n] != 'bernoulli':
+                        if opts['input_normalize_sym']:
+                            reconstructed=tf.nn.tanh(reconstructed)
+                        else:
+                            reconstructed=tf.nn.sigmoid(reconstructed)
+                    reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                else:
+                    # Setting output_dim
+                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    else:
+                        dec_output_dim = 2*opts['zdim'][n-1]
+                    recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
+                                                    archi=opts['d_arch'][n],
+                                                    num_layers=opts['d_nlayers'][n],
+                                                    num_units=opts['d_nfilters'][n],
+                                                    output_dim=dec_output_dim,
+                                                    scope='decoder/layer_%d' % n,
+                                                    reuse=True,
+                                                    is_training=False)
+                    if opts['decoder'][n] == 'det':
+                        reconstructed = recon_mean
+                    elif opts['decoder'][n] == 'gauss':
+                        p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                        reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        assert False, 'Unknown encoder %s' % opts['decoder'][n]
+            self.sampled_reconstructed.append(reconstructed)
+
+    def anchor_interpolation(self):
+        # Anchor interpolation for 1-layer encoder
+        opts = self.opts
+        anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
+                                        archi=opts['d_arch'][0],
+                                        num_layers=opts['d_nlayers'][0],
+                                        num_units=opts['d_nfilters'][0],
+                                        output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                        scope='decoder/layer_0',
+                                        reuse=True,
+                                        is_training=False)
+        if opts['decoder'][0] == 'det':
+            anchors_decoded = anc_mean
+        elif opts['decoder'][0] == 'gauss':
+            p_params = tf.concat((anc_mean,anc_Sigma),axis=-1)
+            anchors_decoded = sample_gaussian(opts, p_params, 'tensorflow')
+        elif opts['decoder'][0] == 'bernoulli':
+            anchors_decoded = sample_bernoulli(anc_mean)
+        else:
+            assert False, 'Unknown encoder %s' % opts['decoder'][0]
+        if opts['decoder'][0] != 'bernoulli':
+            if opts['input_normalize_sym']:
+                anchors_decoded=tf.nn.tanh(anchors_decoded)
+            else:
+                anchors_decoded=tf.nn.sigmoid(anchors_decoded)
+        self.anchors_decoded = tf.reshape(anchors_decoded,[-1]+datashapes[opts['dataset']])
 
     def add_savers(self):
         opts = self.opts
@@ -235,7 +418,7 @@ class one_layer_AE(object):
             data_ids = np.random.choice(train_size, batch_size,
                                                replace=False)
             batch_images = data.data[data_ids].astype(np.float32)
-            batch_samples = sample_pz(opts, self.pz_params,
+            batch_samples = sample_pz(opts, self.prior_params,
                                                 batch_size)
             [_, pre_loss] = self.sess.run([self.pre_opt, self.pre_loss],
                                                 feed_dict={
@@ -287,7 +470,7 @@ class one_layer_AE(object):
 
     def train(self, data, WEIGHTS_FILE):
         """
-        Train top-down VAE model
+        Train top-down model with chosen method
         """
 
         opts = self.opts
@@ -311,7 +494,7 @@ class one_layer_AE(object):
         train_size = data.num_points
         batches_num = int(train_size/opts['batch_size'])
         npics = opts['plot_num_pics']
-        fixed_noise = sample_pz(opts, self.pz_params, npics)
+        fixed_noise = sample_pz(opts, self.prior_params, npics)
 
         """
         # Load inception mean samples for train set
@@ -328,13 +511,13 @@ class one_layer_AE(object):
         """
 
         # Init all monitoring variables
-        Loss = []
-        Loss_rec, Loss_rec_test = [], []
+        Loss, Loss_rec, Loss_rec_test = [], [], []
         Loss_match = []
         """
         mean_blurr, fid_scores = [], [],
         """
         decay, counter = 1., 0
+        wait, wait_lambda = 0, 0
         self.start_time = time.time()
         for epoch in range(opts['epoch_num']):
             # Saver
@@ -349,11 +532,11 @@ class one_layer_AE(object):
                 data_ids = np.random.choice(train_size, opts['batch_size'],
                                                 replace=True)
                 batch_images = data.data[data_ids].astype(np.float32)
-                batch_samples = sample_pz(opts, self.pz_params,
+                batch_samples = sample_pz(opts, self.prior_params,
                                                 opts['batch_size'])
                 # Feeding dictionary
                 feed_dict={self.points: batch_images,
-                           self.samples: batch_samples,
+                           self.pz_samples: batch_samples,
                            self.lr_decay: decay,
                            self.is_training: True}
                 # Update encoder and decoder
@@ -363,9 +546,9 @@ class one_layer_AE(object):
                                                 self.loss_reconstruct,
                                                 self.match_penalty],
                                                 feed_dict=feed_dict)
-                Loss.append(loss)
-                Loss_rec.append(loss_rec)
-                Loss_match.append(loss_match)
+                Loss.append(-loss)
+                Loss_rec.append(-loss_rec)
+                Loss_match.append(-loss_match)
 
                 ##### TESTING LOOP #####
                 if counter % opts['print_every']==0 or counter==100:
@@ -384,19 +567,27 @@ class one_layer_AE(object):
                                             feed_dict={self.points:batch_images,
                                                        self.is_training:False})
                         loss_rec_test += l / batches_num_te
-                    Loss_rec_test.append(loss_rec_test)
+                    Loss_rec_test.append(-loss_rec_test)
 
                     # Auto-encoding test images & samples generated by the model
                     [reconstructed_test, encoded, samples] = self.sess.run(
-                                                [self.reconstructed,
+                                                [self.decoded,
                                                  self.encoded,
-                                                 self.decoded],
+                                                 self.samples],
                                                 feed_dict={self.points:data.test_data[:30*npics],
-                                                           self.samples: fixed_noise,
+                                                           self.pz_samples: fixed_noise,
                                                            self.is_training:False})
 
+                    if opts['vizu_embedded'] and counter>1:
+                        decoded = samples[:-1]
+                        decoded = decoded[::-1]
+                        decoded.append(fixed_noise)
+                        plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
+                                                data.test_labels[:30*npics],
+                                                work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
+
                     # Auto-encoding training images
-                    reconstructed_train = self.sess.run(self.reconstructed,
+                    reconstructed_train = self.sess.run(self.decoded,
                                                 feed_dict={self.points:data.data[200:200+npics],
                                                            self.is_training:False})
 
@@ -441,20 +632,27 @@ class one_layer_AE(object):
                                                 mean_blurr[-1])
                     logging.error(debug_str)
                     """
+
                     print('')
                     # Making plots
                     if opts['save_train_data'] and epoch>=opts['epoch_num']-1:
                         save_train_data = True
                     else:
                         save_train_data = False
+
+                    if opts['e_nlatents']==opts['nlatents']:
+                        samples_prior = fixed_noise
+                    else:
+                        samples_prior = samples[opts['nlatents']-opts['e_nlatents']-1]
+
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
                                      data.test_labels[:30*npics],    # labels
-                                     reconstructed_train, reconstructed_test[:npics], # reconstructions
-                                     encoded,   # encoded points (bottom)
-                                     fixed_noise, samples,  # prior samples, model samples
+                                     reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
+                                     encoded[-1],   # encoded points (bottom)
+                                     samples_prior, samples[-1],  # prior samples, model samples
                                      Loss, None, Loss_match, None,  # losses
                                      Loss_rec, Loss_rec_test,   # rec losses
-                                     None, # rec losses BU WAE
+                                     None,    # rec losses for each latents
                                      work_dir,  # working directory
                                      'res_e%04d_mb%05d.png' % (epoch, it),  # filename
                                      save_train_data) # save training data
@@ -473,6 +671,24 @@ class one_layer_AE(object):
                         logging.error('Reduction in lr: %f\n' % decay)
                         print('')
                         wait = 0
+
+                # Update regularizer if necessary
+                if opts['lambda_schedule'] == 'adaptive':
+                    if epoch >= 1000 and len(Loss_rec) > 0:
+                        if wait_lambda > 1002 * batches_num:
+                            opts['lambda'] = list(2*np.array(opts['lambda']))
+                            wae_lambda = opts['lambda']
+                            # last_rec = np.array(losses_rec)
+                            # last_match = np.concatenate((last_rec[1:],abs(loss_match)*np.ones(1)),axis=0)
+                            # new_lambda = 0.98 * np.array(wae_lambda) + \
+                            #              0.02 * last_rec / last_match
+                            # wae_lambda = list(new_lambda)
+                            # opts['lambda'] = wae_lambda
+                            logging.error('Lambda updated to %s\n' % wae_lambda)
+                            print('')
+                            wait_lambda = 0
+                        else:
+                            wait_lambda+=1
 
                 counter += 1
 
@@ -577,7 +793,7 @@ class one_layer_AE(object):
         logging.error('Samples generation..')
         num_cols = 15
         npics = num_cols**2
-        prior_noise = sample_pz(opts, self.pz_params, npics)
+        prior_noise = sample_pz(opts, self.prior_params, npics)
         samples = self.sess.run(self.decoded[-1],
                                feed_dict={self.samples: prior_noise,
                                           self.is_training: False})

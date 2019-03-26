@@ -4,6 +4,7 @@ import logging
 import argparse
 import configs
 from wae import WAE
+from vae import VAE
 from datahandler import DataHandler
 import utils
 
@@ -18,6 +19,7 @@ parser.add_argument("--mode", default='test',
 parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
+parser.add_argument("--method", default='wae')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -51,26 +53,28 @@ def main():
         assert False, 'Unknown experiment dataset'
 
     # Select training method
-    opts['method'] = 'wae'
+    if FLAGS.method:
+        opts['method'] = FLAGS.method
 
     # Working directory
     if FLAGS.work_dir:
         opts['work_dir'] = FLAGS.work_dir
 
     # Experiemnts set up
-    opts['epoch_num'] = 4009
-    opts['print_every'] = 187500
-    opts['lr'] = 0.0005
+    opts['epoch_num'] = 5009
+    opts['print_every'] = 3 * 468
+    opts['lr'] = 0.0001
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
+    opts['use_trained'] = False
     # Model set up
     opts['nlatents'] = 5
     opts['zdim'] = [32,16,8,4,2]
     opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
     opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
-    opts['lambda_schedule'] = 'constant'
+    opts['lambda_schedule'] = 'adaptive'
     # NN set up
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = 5
@@ -79,7 +83,7 @@ def main():
     opts['e_nlayers'] = [2,2,2,2,2,2,2]
     opts['e_nfilters'] = [512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','det'] # deterministic, gaussian
+    opts['decoder'] = ['bernoulli','gauss','gauss','gauss','gauss','gauss','det'] # deterministic, gaussian
     opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2]
     opts['d_nfilters'] = [512,256,128,64,32,16]
@@ -99,6 +103,7 @@ def main():
         utils.create_dir(work_dir)
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
+
     # Loading the dataset
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
@@ -106,8 +111,13 @@ def main():
     #Reset tf graph
     tf.reset_default_graph()
 
-    # build WAE
-    wae = WAE(opts)
+    # build WAE/VAE
+    if opts['method']=='wae':
+        wae = WAE(opts)
+    elif opts['method']=='vae':
+        wae = VAE(opts)
+    else:
+        assert False, 'Unknown methdo %s' % opts['method']
 
     # Training/testing/vizu
     if FLAGS.mode=="train":

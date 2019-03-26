@@ -12,7 +12,7 @@ from ops._ops import logsumexp, logsumexp_v2
 import pdb
 
 
-def vae_matching_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
+def kl_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
     """
     Compute KL divergence between prior and variational distribution
     """
@@ -22,6 +22,13 @@ def vae_matching_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
+def log_penalty(samples, mean, sigma):
+    """
+    Compute log_likelihood for gaussian
+    """
+    loglikelihood = tf.log(sigma) + tf.square(samples-mean) / sigma
+    loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
+    return tf.reduce_mean(loglikelihood)
 
 def matching_penalty(opts, samples_pz, samples_qz):
     """
@@ -152,15 +159,6 @@ def square_dist_v2(opts, sample_x, sample_y):
     return squared_dist
 
 
-def kl_penalty(enc_mu,enc_Sigma, prior_mu, prior_Sigma):
-    sigma_ratio = tf.divide(enc_Sigma,prior_Sigma)
-    kl = 1. + tf.log(sigma_ratio) - sigma_ratio \
-        - tf.divide(tf.square(prior_mu-enc_mu),prior_Sigma)
-    kl = tf.reduce_sum(kl,axis=-1) / 2.
-    kl = tf.reduce_mean(kl)
-    return kl
-
-
 def reconstruction_loss(opts, x1, x2):
     """
     Compute the WAE's reconstruction losses
@@ -206,6 +204,17 @@ def vae_reconstruction_loss(x1, x2):
     """
     eps = 1e-8
     l = x1*tf.log(eps+x2) + (1-x1)*tf.log(eps+1-x2)
+    l = -tf.reduce_sum(l,axis=[1,2,3])
+    return tf.reduce_mean(l)
+
+
+def vae_sigmoid_reconstruction_loss(x1, logits):
+    """
+    Compute the VAE's reconstruction losses
+    x1: image data              [batch,im_dim]
+    x2: mean reconstruction     [batch,im_dim]
+    """
+    l = tf.nn.sigmoid_cross_entropy_with_logits(labels=x1,logits=logits)
     l = -tf.reduce_sum(l,axis=[1,2,3])
     return tf.reduce_mean(l)
 
