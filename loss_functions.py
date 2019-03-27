@@ -1,7 +1,7 @@
 import sys
 import time
 import os
-from math import sqrt, cos, sin, pow
+from math import sqrt, cos, sin, pow, pi
 import numpy as np
 import tensorflow as tf
 
@@ -22,13 +22,22 @@ def kl_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
-def log_penalty(samples, mean, sigma):
+def Xentropy_penalty(samples, mean, sigma):
     """
-    Compute log_likelihood for gaussian
+    Compute Xentropy for gaussian using MC
     """
-    loglikelihood = tf.log(sigma) + tf.square(samples-mean) / sigma
+    loglikelihood = tf.log(2*pi) + tf.log(sigma) + tf.square(samples-mean) / sigma
     loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
     return tf.reduce_mean(loglikelihood)
+
+def entropy_penalty(samples, mean, sigma):
+    """
+    Compute entropy for gaussian
+    """
+    entropy = tf.log(sigma) + 1. + tf.log(2*pi)
+    entropy = -0.5 * tf.reduce_sum(entropy,axis=-1)
+    return tf.reduce_mean(entropy)
+
 
 def matching_penalty(opts, samples_pz, samples_qz):
     """
@@ -215,7 +224,7 @@ def vae_sigmoid_reconstruction_loss(x1, logits):
     x2: mean reconstruction     [batch,im_dim]
     """
     l = tf.nn.sigmoid_cross_entropy_with_logits(labels=x1,logits=logits)
-    l = -tf.reduce_sum(l,axis=[1,2,3])
+    l = tf.reduce_sum(l,axis=[1,2,3])
     return tf.reduce_mean(l)
 
 
