@@ -49,7 +49,7 @@ def sample_bernoulli(params):
     params
     """
     shape = tf.shape(params)
-    bernoulli_dist = tfp.distributions.Bernoulli(probs=params, dtype=tf.float32)
+    bernoulli_dist = tfp.distributions.Bernoulli(logits=params, dtype=tf.float32)
     return bernoulli_dist.sample()
 
     # eps = tf.random_uniform(shape)
