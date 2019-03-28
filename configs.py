@@ -8,7 +8,7 @@ config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 10000
 config_mnist['save_final'] = True
 config_mnist['save_train_data'] = True
-config_mnist['print_every'] = 375000
+config_mnist['print_every'] = 100
 config_mnist['vizu_sinkhorn'] = False
 config_mnist['vizu_embedded'] = True
 config_mnist['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
@@ -53,7 +53,7 @@ config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
 
 # Model set up
 config_mnist['nlatents'] = 5
-config_mnist['zdim'] = [32,16,8,4,2]
+config_mnist['zdim'] = [32,16,8,4,2] #[32,8]
 config_mnist['pz_scale'] = 1.
 config_mnist['prior'] = 'gaussian' # dirichlet, gaussian
 
@@ -65,12 +65,12 @@ config_mnist['lambda_schedule'] = 'adaptive' # adaptive, constant
 
 # NN set up
 config_mnist['filter_size'] = 3
-config_mnist['init_std'] = 0.0099999
+config_mnist['init_std'] = 0.099999
 config_mnist['init_bias'] = 0.0
 config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 
-config_mnist['e_nlatents'] = config_mnist['nlatents'] #config_mnist['nlatents']
+config_mnist['e_nlatents'] = 5
 config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
 config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
 config_mnist['e_nlayers'] = [2,2,2,2,2,2,2]
@@ -141,7 +141,7 @@ config_cifar10['prior'] = 'gaussian' # dirichlet or gaussian
 
 # lambda set up
 config_cifar10['lambda_scalar'] = 10.
-config_cifar10['lambda'] = [1/config_cifar10['zdim'][n] for i in range(config_cifar10['nlatents'])]
+config_cifar10['lambda'] = [1/config_cifar10['zdim'][i] for i in range(config_cifar10['nlatents'])]
 config_cifar10['lambda'].append(0.0001/config_cifar10['zdim'][-1])
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 
