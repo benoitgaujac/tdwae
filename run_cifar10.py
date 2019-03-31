@@ -16,9 +16,6 @@ parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
                     help='mode to run [train/vizu/fid]')
-parser.add_argument("--exp", default='mnist',
-                    help='dataset [mnist/cifar10/].'\
-                    ' celebA/dsprites Not implemented yet')
 parser.add_argument("--method", default='wae')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
@@ -33,24 +30,7 @@ FLAGS = parser.parse_args()
 def main():
 
     # Select dataset to use
-    if FLAGS.exp == 'celebA':
-        opts = configs.config_celebA
-    elif FLAGS.exp == 'celebA_small':
-        opts = configs.config_celebA_small
-    elif FLAGS.exp == 'mnist':
-        opts = configs.config_mnist
-    elif FLAGS.exp == 'mnist_small':
-        opts = configs.config_mnist_small
-    elif FLAGS.exp == 'cifar10':
-        opts = configs.config_cifar10
-    elif FLAGS.exp == 'dsprites':
-        opts = configs.config_dsprites
-    elif FLAGS.exp == 'grassli':
-        opts = configs.config_grassli
-    elif FLAGS.exp == 'grassli_small':
-        opts = configs.config_grassli_small
-    else:
-        assert False, 'Unknown experiment dataset'
+    opts = configs.config_cifar10
 
     # Select training method
     if FLAGS.method:
@@ -67,16 +47,16 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 4011
-    opts['print_every'] = 187500
+    opts['epoch_num'] = 2*4011
+    opts['print_every'] = 2*87500
     opts['lr'] = 0.0001
-    opts['save_every_epoch'] = 2005 #4011
+    opts['save_every_epoch'] = 2*2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     # Model set up
-    opts['nlatents'] = 5
-    opts['zdim'] = [32,16,8,4,2]
+    opts['nlatents'] = 8
+    opts['zdim'] = [64,49,36,25,16,9,4,2] #[32,16,8,4,2]
     opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
     opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
@@ -85,14 +65,14 @@ def main():
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
+    opts['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] #['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['e_nfilters'] =  [512,256,128,64,32,16]
+    opts['e_nfilters'] =  [96,96,64,64,32,32,32,32] #[512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['bernoulli','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] #['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['d_nfilters'] = [512,256,128,64,32,16]
+    opts['d_nfilters'] = [96,96,64,64,32,32,32,32] #[512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
     # Verbose

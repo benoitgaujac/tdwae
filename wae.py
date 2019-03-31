@@ -80,10 +80,11 @@ class WAE(object):
         for n in range(opts['e_nlatents']):
             # - Encoding points
             # Setting output_dim
-            if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
-                enc_output_dim = 2*opts['zdim'][n]
-            else:
-                enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            # if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
+            #     enc_output_dim = 2*opts['zdim'][n]
+            # else:
+            #     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            enc_output_dim = 2*opts['zdim'][n]
             enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
@@ -136,10 +137,11 @@ class WAE(object):
                 self.loss_reconstruct += loss_reconstruct
             else:
                 # Setting output_dim
-                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                else:
-                    dec_output_dim = 2*opts['zdim'][n-1]
+                # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                # else:
+                #     dec_output_dim = 2*opts['zdim'][n-1]
+                dec_output_dim = 2*opts['zdim'][n-1]
                 recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
@@ -191,10 +193,11 @@ class WAE(object):
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
             else:
                 # Setting output_dim
-                if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                else:
-                    dec_output_dim = 2*opts['zdim'][n-1]
+                # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                # else:
+                #     dec_output_dim = 2*opts['zdim'][n-1]
+                dec_output_dim = 2*opts['zdim'][n-1]
                 # Reuse params
                 if n>=opts['e_nlatents']:
                     reuse=False
@@ -274,8 +277,11 @@ class WAE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
+        # self.anchors_points = tf.placeholder(tf.float32,
+        #                             [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
+        #                             name='anchors_ph')
         self.anchors_points = tf.placeholder(tf.float32,
-                                    [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
+                                    [None] + [opts['zdim'][0],],
                                     name='anchors_ph')
 
     def add_training_placeholders(self):
@@ -320,10 +326,11 @@ class WAE(object):
                     reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                 else:
                     # Setting output_dim
-                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    else:
-                        dec_output_dim = 2*opts['zdim'][n-1]
+                    # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                    #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    # else:
+                    #     dec_output_dim = 2*opts['zdim'][n-1]
+                    dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
@@ -349,10 +356,11 @@ class WAE(object):
         for n in range(opts['e_nlatents']):
             # - Encoding points
             # Setting output_dim
-            if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
-                enc_output_dim = 2*opts['zdim'][n]
-            else:
-                enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            # if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
+            #     enc_output_dim = 2*opts['zdim'][n]
+            # else:
+            #     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
+            enc_output_dim = 2*opts['zdim'][n]
             enc_mean, enc_Sigma = encoder(self.opts, input=tf.expand_dims(encoded_samples[-1][0],0),
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
@@ -391,13 +399,14 @@ class WAE(object):
                             reconstructed=tf.nn.tanh(reconstructed)
                         else:
                             reconstructed=tf.nn.sigmoid(reconstructed)
-                    reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                    reconstructed = tf.reshape(reconstructed,[-1,]+datashapes[opts['dataset']])
                 else:
                     # Setting output_dim
-                    if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                        dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    else:
-                        dec_output_dim = 2*opts['zdim'][n-1]
+                    # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
+                    #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
+                    # else:
+                    #     dec_output_dim = 2*opts['zdim'][n-1]
+                    dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                     archi=opts['d_arch'][n],
                                                     num_layers=opts['d_nlayers'][n],
@@ -920,9 +929,8 @@ class WAE(object):
         self.saver.restore(self.sess, WEIGHTS_PATH)
 
         # Setup
-        batch_size_te = 1000
-        test_size = np.shape(data.test_data)[0]
-        batches_num_te = int(test_size/batch_size_te)
+        batch_size = 1000
+        batches_num = 1
 
         # Load inception mean samples for train set
         trained_stats = os.path.join(inception_path, 'fid_stats.npz')
@@ -932,7 +940,7 @@ class WAE(object):
         f.close()
         # Compute bluriness of real data
         real_blurr = self.sess.run(self.blurriness, feed_dict={
-                                                self.points: data.test_data[:batch_size_te]})
+                                                self.points: data.test_data[:batch_size]})
         real_blurr = np.mean(real_blurr)
         # logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
         # print('')
@@ -940,9 +948,9 @@ class WAE(object):
         # Test loop
         now = time.time()
         mean_blurr, fid_scores = 0., 0.
-        for it_ in range(batches_num_te):
+        for it_ in range(batches_num):
             # Samples
-            noise = sample_pz(opts, self.pz_params, batch_size_te)
+            noise = sample_pz(opts, self.pz_params, batch_size)
             # Sampling
             samples = self.sess.run(self.decoded[-1],
                                         feed_dict={self.samples: noise,
@@ -950,7 +958,7 @@ class WAE(object):
             # compute blur
             gen_blurr = self.sess.run(self.blurriness,
                                         feed_dict={self.points: samples})
-            mean_blurr+=np.mean(gen_blurr) / batches_num_te
+            mean_blurr+= (np.mean(gen_blurr) / batches_num)
             # Compute FID score
             # First convert to RGB
             if np.shape(samples)[-1] == 1:
@@ -958,7 +966,7 @@ class WAE(object):
                 samples = self.sess.run(tf.image.grayscale_to_rgb(samples))
             preds_incep = self.inception_sess.run(self.inception_layer,
                           feed_dict={'FID_Inception_Net/ExpandDims:0': samples})
-            preds_incep = preds_incep.reshape((batch_size_te,-1))
+            preds_incep = preds_incep.reshape((batch_size,-1))
             mu_gen = np.mean(preds_incep, axis=0)
             sigma_gen = np.cov(preds_incep, rowvar=False)
             fid_score = fid.calculate_frechet_distance(mu_gen,
@@ -966,7 +974,7 @@ class WAE(object):
                                         self.mu_train,
                                         self.sigma_train,
                                         eps=1e-6)
-            fid_scores+=fid_score / batches_num_te
+            fid_scores+= (fid_score / batches_num)
 
             # Logging
             debug_str = 'FID=%.3f, BLUR=%10.3e, REAL BLUR=%10.3e' % (
@@ -975,6 +983,6 @@ class WAE(object):
                                     real_blurr)
             logging.error(debug_str)
         name = 'fid'
-        np.savez(os.path.join(workfir,name),
+        np.savez(os.path.join(work_dir,name),
                     fid=np.array(fid_scores),
                     blur=np.array(mean_blurr))
