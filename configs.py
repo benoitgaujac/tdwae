@@ -110,7 +110,7 @@ config_cifar10['cifar10_data_source_url'] = 'https://www.cs.toronto.edu/~kriz/'
 
 # Experiment set up
 config_cifar10['train_dataset_size'] = -1
-config_cifar10['batch_size'] = 64
+config_cifar10['batch_size'] = 128
 config_cifar10['epoch_num'] = 4120
 config_cifar10['method'] = 'wae' #vae, wae
 config_cifar10['use_trained'] = False #train from pre-trained model
