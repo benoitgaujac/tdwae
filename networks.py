@@ -127,9 +127,11 @@ def dcgan_encoder(opts, input, num_layers, num_units, output_dim,
     shape = input.get_shape().as_list()
     if len(shape)<4:
         assert len(shape)==2, 'Wrong shape for inputs'
-        h_sqr = shape[-1]/datashapes[opts['dataset']][-1]
+        # h_sqr = shape[-1]/datashapes[opts['dataset']][-1]
+        h_sqr = shape[-1]
         w_sqr = h_sqr
-        reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),datashapes[opts['dataset']][-1])
+        # reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),datashapes[opts['dataset']][-1])
+        reshape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),1)
         input = tf.reshape(input,(-1,)+reshape)
     layer_x = input
     for i in range(num_layers):
@@ -219,9 +221,14 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
                                                         reuse,
                                                         is_training):
 
-    h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
-    w_sqr = h_sqr
-    output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
+    if output_dim==2*np.prod(datashapes[opts['dataset']]):
+        h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
+        w_sqr = h_sqr
+        output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
+    else:
+        h_sqr = output_dim / 2
+        w_sqr = h_sqr
+        output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2)
     batch_size = tf.shape(input)[0]
     if archi == 'dcgan':
         height = output_shape[0] / 2**num_layers
