@@ -28,7 +28,7 @@ def main():
     # Experiment set up
     opts['dataset'] = 'mnist'
     opts['data_dir'] = 'mnist'
-    opts['epoch_num'] = 4009
+    opts['epoch_num'] = 4015
     opts['print_every'] = 187500
     opts['lr'] = 0.0005
     opts['save_every_epoch'] = 2005
@@ -76,7 +76,9 @@ def main():
         logging.error('Experiment encoder %d layers' % n)
         opts['e_nlatents'] = n
         # Create working directories
-        work_dir = FLAGS.work_dir + '_' + str(n) + 'elayers'
+        root_dir = FLAGS.work_dir
+        utils.create_dir(root_dir)
+        work_dir = os.path.join(FLAGS.work_dir, '5l_mnist_%delayers' % n)
         work_dir = os.path.join(opts['method'],work_dir)
         opts['work_dir'] = work_dir
         utils.create_dir(work_dir)
