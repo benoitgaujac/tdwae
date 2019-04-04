@@ -164,6 +164,7 @@ class WAE(object):
                                                 reconstructed)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
+            # pdb.set_trace()
             self.losses_reconstruct.append(loss_reconstruct)
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
 
@@ -441,7 +442,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][0],
                                                 num_layers=opts['d_nlayers'][0],
                                                 num_units=opts['d_nfilters'][0],
-                                                filter_size=opts['filter_size'][n],
+                                                filter_size=opts['filter_size'][0],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_0',
                                                 reuse=True,

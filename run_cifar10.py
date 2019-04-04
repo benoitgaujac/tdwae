@@ -48,31 +48,32 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 2*4011
-    opts['print_every'] = 2*87500
+    opts['print_every'] = 468 #2*87500
     opts['lr'] = 0.0001
     opts['save_every_epoch'] = 2*2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     # Model set up
-    opts['nlatents'] = 8
-    opts['zdim'] = [64,49,36,25,16,9,4,2] #[32,16,8,4,2]
+    opts['nlatents'] = 10
+    opts['zdim'] = [36,16,16,16,16,9,9,9,9,4] #[32,16,8,4,2]
     opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
     opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
     # NN set up
+    opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents']
-    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] #['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-    opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['e_nfilters'] =  [96,96,64,64,32,32,32,32] #[512,256,128,64,32,16]
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
+    opts['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan
+    opts['e_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
+    opts['e_nfilters'] =  [128,96,96,96,96,64,64,64,64,64,32] #[512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] #['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
-    opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['d_nfilters'] = [96,96,64,64,32,32,32,32] #[512,256,128,64,32,16]
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod
+    opts['d_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
+    opts['d_nfilters'] = [128,96,96,96,96,64,64,64,64,64,32] #[512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
     # Verbose
