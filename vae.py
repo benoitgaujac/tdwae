@@ -60,14 +60,9 @@ class VAE(object):
         self.add_model_placeholders()
         self.add_training_placeholders()
         # --- Initialize prior parameters
-        if opts['prior']=='gaussian':
-            mean = np.zeros(opts['zdim'][-1], dtype='float32')
-            Sigma = np.ones(opts['zdim'][-1], dtype='float32')
-            self.prior_params = np.concatenate([mean,Sigma],axis=0)
-        elif opts['prior']=='dirichlet':
-            self.prior_params = 0.5 * np.ones(opts['zdim'][-1],dtype='float32')
-        else:
-            assert False, 'Unknown prior %s' % opts['prior']
+        mean = np.zeros(opts['zdim'][-1], dtype='float32')
+        Sigma = np.ones(opts['zdim'][-1], dtype='float32')
+        self.prior_params = np.concatenate([mean,Sigma],axis=0)
 
         # --- Initialize list container
         self.encoded, self.decoded = [], []
@@ -79,12 +74,11 @@ class VAE(object):
         for n in range(opts['e_nlatents']):
             # - Encoding points
             # Setting output_dim
-            enc_output_dim = 2*opts['zdim'][n]
             enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
-                                                output_dim=enc_output_dim,
+                                                output_dim=2*opts['zdim'][n],
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
                                                 is_training=self.is_training)
@@ -107,18 +101,16 @@ class VAE(object):
                                                 is_training=self.is_training)
                 decoded = sample_bernoulli(dec_mean)
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
-                self.mean_decoded=tf.reshape(dec_mean,[-1]+datashapes[opts['dataset']])
+                self.log_mean_decoded=tf.reshape(dec_mean,[-1]+datashapes[opts['dataset']])
                 # Reconstruction loss
                 self.loss_reconstruct = vae_sigmoid_reconstruction_loss(self.points,
-                                                self.mean_decoded)
+                                                self.log_mean_decoded)
             else:
-                # Setting output_dim
-                dec_output_dim = 2*opts['zdim'][n-1]
                 dec_mean, dec_Sigma = decoder(self.opts, input=encoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
-                                                output_dim=dec_output_dim,
+                                                output_dim=2*opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training)
@@ -148,14 +140,14 @@ class VAE(object):
         samples = self.pz_samples
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
-                samples_mean, samples_Sigma = decoder(self.opts, input=samples,
+                samples_mean, _ = decoder(self.opts, input=samples,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
-                                                is_training=self.is_training)
+                                                is_training=False)
                 samples = sample_bernoulli(samples_mean)
                 samples = tf.reshape(samples,[-1]+datashapes[opts['dataset']])
             else:
@@ -173,7 +165,7 @@ class VAE(object):
                                                 output_dim=dec_output_dim,
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
-                                                is_training=self.is_training)
+                                                is_training=False)
                 p_params = tf.concat((samples_mean,samples_Sigma),axis=-1)
                 samples = sample_gaussian(opts, p_params, 'tensorflow')
             self.samples.append(samples)

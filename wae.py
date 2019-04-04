@@ -748,7 +748,7 @@ class WAE(object):
 
                     print('')
                     # Making plots
-                    if opts['save_train_data'] and epoch>=opts['epoch_num']-1:
+                    if opts['save_train_data'] and epoch>=opts['epoch_num']-2:
                         save_train_data = True
                     else:
                         save_train_data = False
@@ -787,9 +787,10 @@ class WAE(object):
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
-                    if epoch >= 1000 and len(Loss_rec) > 0:
-                        if wait_lambda > 1002 * batches_num:
-                            opts['lambda'] = list(2*np.array(opts['lambda']))
+                    if epoch >= .0 and len(Loss_rec) > 0:
+                        if wait_lambda > 200 * batches_num + 1:
+                            # opts['lambda'] = list(2*np.array(opts['lambda']))
+                            opts['lambda'][-1] = 2*opts['lambda'][-1]
                             wae_lambda = opts['lambda']
                             logging.error('Lambda updated to %s\n' % wae_lambda)
                             print('')
@@ -805,7 +806,6 @@ class WAE(object):
                                                 'checkpoints',
                                                 'trained-wae-final'),
                                                 global_step=counter)
-
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
@@ -986,3 +986,91 @@ class WAE(object):
         np.savez(os.path.join(work_dir,name),
                     fid=np.array(fid_scores),
                     blur=np.array(mean_blurr))
+
+    def test_losses(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Compute losses
+        """
+
+        opts = self.opts
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+        work_dir = opts['work_dir']
+
+        # Setup
+        now = time.time()
+        batch_size_te = 200
+        test_size = np.shape(data.test_data)[0]
+        batches_num_te = int(test_size/batch_size_te)
+        train_size = data.num_points
+        # Logging stat
+        debug_str = 'TEST SIZE=%d, BATCH NUM=%d' % (
+                                test_size,
+                                batches_num_te)
+        logging.error(debug_str)
+
+        # Test loss
+        wae_lambda = opts['lambda']
+        loss, loss_test = 0., 0.
+        loss_rec, loss_rec_test = 0., 0.
+        loss_match, loss_match_test = 0., 0.
+        for it_ in range(batches_num_te):
+            # Sample batches of test data points
+            data_ids =  np.random.choice(test_size, batch_size_te,
+                                    replace=True)
+            batch_images = data.test_data[data_ids].astype(np.float32)
+            batch_samples = sample_pz(opts, self.pz_params,
+                                            batch_size_te)
+            l, lrec, lmatch = self.sess.run([self.objective,
+                                                self.loss_reconstruct,
+                                                self.match_penalty],
+                                feed_dict={self.points:batch_images,
+                                                self.samples: batch_samples,
+                                                self.lmbd: wae_lambda,
+                                                self.is_training:False})
+            loss_test += l / batches_num_te
+            loss_rec_test += lrec / batches_num_te
+            loss_match_test += lmatch / batches_num_te
+            # Sample batches of train data points
+            data_ids =  np.random.choice(train_size, batch_size_te,
+                                    replace=True)
+            batch_images = data.data[data_ids].astype(np.float32)
+            batch_samples = sample_pz(opts, self.pz_params,
+                                            batch_size_te)
+            l, lrec, lmatch = self.sess.run([self.objective,
+                                                self.loss_reconstruct,
+                                                self.match_penalty],
+                                feed_dict={self.points:batch_images,
+                                                self.samples: batch_samples,
+                                                self.lmbd: wae_lambda,
+                                                self.is_training:False})
+            loss += l / batches_num_te
+            loss_rec += lrec / batches_num_te
+            loss_match += lmatch / batches_num_te
+
+        # Logging
+        debug_str = 'TRAIN: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
+                                loss,
+                                loss_rec,
+                                loss_match)
+        logging.error(debug_str)
+        debug_str = 'TEST: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
+                                loss_test,
+                                loss_rec_test,
+                                loss_match_test)
+        logging.error(debug_str)
+
+        name = 'losses'
+        np.savez(os.path.join(work_dir,name),
+                    loss_train=np.array(loss),
+                    loss_rec_train=np.array(loss_rec),
+                    loss_match_train=np.array(loss_match),
+                    loss_test=np.array(loss_test),
+                    loss_rec_test=np.array(loss_rec_test),
+                    loss_match_test=np.array(loss_match_test))

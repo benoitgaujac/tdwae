@@ -15,7 +15,7 @@ import pdb
 parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
-                    help='mode to run [train/vizu/fid]')
+                    help='mode to run [train/vizu/fid/test]')
 parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
@@ -68,7 +68,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4011
-    opts['print_every'] = 187500
+    opts['print_every'] = 187500/4.
     opts['lr'] = 0.0001
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
@@ -89,7 +89,7 @@ def main():
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['e_nfilters'] =  [512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['decoder'] = ['bernoulli','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['d_nfilters'] = [512,256,128,64,32,16]
@@ -137,6 +137,8 @@ def main():
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="fid":
         wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
+    elif FLAGS.mode=="test":
+        wae.test_losses(data, opts['work_dir'], FLAGS.weights_file)
     else:
         assert False, 'Unknown mode %s' % FLAGS.mode
 
