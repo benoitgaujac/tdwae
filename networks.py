@@ -36,7 +36,7 @@ def one_layer_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
                     output_dim, init=opts['mlp_init'], scope='hid_final')
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    logSigma = tf.clip_by_value(logSigma, -100, 100)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
@@ -67,7 +67,9 @@ def one_layer_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
     return tf.nn.sigmoid(outputs)
 
 
-def encoder(opts, input, archi, num_layers, num_units, output_dim, scope,
+def encoder(opts, input, archi, num_layers, num_units, filter_size,
+                                                        output_dim,
+                                                        scope,
                                                         reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
@@ -83,6 +85,7 @@ def encoder(opts, input, archi, num_layers, num_units, output_dim, scope,
             # Fully convolutional architecture similar to DCGAN
             outputs = dcgan_encoder(opts, input, num_layers,
                                                         num_units,
+                                                        filter_size,
                                                         output_dim,
                                                         opts['batch_norm'],
                                                         reuse,
@@ -96,7 +99,7 @@ def encoder(opts, input, archi, num_layers, num_units, output_dim, scope,
             raise ValueError('%s Unknown encoder architecture for mixtures' % archi)
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    logSigma = tf.clip_by_value(logSigma, -100, 100)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
@@ -119,7 +122,8 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
 
     return outputs
 
-def dcgan_encoder(opts, input, num_layers, num_units, output_dim,
+def dcgan_encoder(opts, input, num_layers, num_units, filter_size,
+                                                        output_dim,
                                                         batch_norm=False,
                                                         reuse=False,
                                                         is_training=False):
@@ -137,7 +141,7 @@ def dcgan_encoder(opts, input, num_layers, num_units, output_dim,
     for i in range(num_layers):
         scale = 2**(num_layers - i - 1)
         layer_x = ops.conv2d.Conv2d(opts, layer_x, layer_x.get_shape().as_list()[-1], int(num_units / scale),
-                opts['filter_size'],stride=2,scope='hid{}/conv'.format(i),init=opts['conv_init'])
+                filter_size, stride=2,scope='hid{}/conv'.format(i),init=opts['conv_init'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
@@ -161,7 +165,9 @@ def resnet_encoder(opts, input, output_dim, reuse=False, is_training=False):
     return output
 
 
-def decoder(opts, input, archi, num_layers, num_units, output_dim, scope,
+def decoder(opts, input, archi, num_layers, num_units, filter_size,
+                                                        output_dim,
+                                                        scope,
                                                         reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
@@ -175,9 +181,9 @@ def decoder(opts, input, archi, num_layers, num_units, output_dim, scope,
                                                         is_training)
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
-            outputs = dcgan_decoder(opts, input, archi,
-                                                        num_layers,
+            outputs = dcgan_decoder(opts, input, archi, num_layers,
                                                         num_units,
+                                                        filter_size,
                                                         output_dim,
                                                         opts['batch_norm'],
                                                         reuse,
@@ -190,7 +196,7 @@ def decoder(opts, input, archi, num_layers, num_units, output_dim, scope,
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 50)
+    logSigma = tf.clip_by_value(logSigma, -100, 100)
     Sigma = tf.nn.softplus(logSigma)
 
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
@@ -216,6 +222,7 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
     return outputs
 
 def  dcgan_decoder(opts, input, archi, num_layers, num_units,
+                                                        filter_size,
                                                         output_dim,
                                                         batch_norm,
                                                         reuse,
@@ -249,7 +256,7 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
         _out_shape = [batch_size, ceil(height * scale),
                       ceil(width * scale), int(num_units / scale)]
         layer_x = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
-                   scope='hid%d/deconv' % i, init= opts['conv_init'])
+                   filter_size, scope='hid%d/deconv' % i, init= opts['conv_init'])
         if batch_norm:
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
@@ -259,10 +266,10 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
     _out_shape = [batch_size] + list(output_shape)
     if archi == 'dcgan':
         outputs = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
-                    scope='hid_final/deconv', init= opts['conv_init'])
+                    filter_size, scope='hid_final/deconv', init= opts['conv_init'])
     elif archi == 'dcgan_mod':
         outputs = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
-                    stride = [1,1,1,1], scope='hid_final/deconv', init= opts['conv_init'])
+                    filter_size, stride = [1,1,1,1], scope='hid_final/deconv', init= opts['conv_init'])
 
     return outputs
 

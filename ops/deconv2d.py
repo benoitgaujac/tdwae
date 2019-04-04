@@ -11,7 +11,7 @@ def custom_uniform(stdev, size):
     ).astype('float32')
 
 
-def Deconv2D(opts, input, input_dim, output_shape, stride=2, scope=None, filter_size=3, init='he', padding='SAME', biases=True):
+def Deconv2D(opts, input, input_dim, output_shape, filter_size=3, stride=2, scope=None, init='he', padding='SAME', biases=True):
     """2D Transposed convolution (fractional stride convolution) layer.
     input: tensor of shape (batch size, height, width, input_dim)
     returns: tensor of shape (batch size, height, width, output_dim)

@@ -89,6 +89,7 @@ class WAE(object):
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=enc_output_dim,
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
@@ -113,6 +114,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
@@ -146,6 +148,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=dec_output_dim,
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
@@ -172,6 +175,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
@@ -207,6 +211,7 @@ class WAE(object):
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=dec_output_dim,
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
@@ -302,13 +307,14 @@ class WAE(object):
             for n in range(m,-1,-1):
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
-                                                    archi=opts['d_arch'][n],
-                                                    num_layers=opts['d_nlayers'][n],
-                                                    num_units=opts['d_nfilters'][n],
-                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                                    scope='decoder/layer_%d' % n,
-                                                    reuse=True,
-                                                    is_training=False)
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
                     if opts['decoder'][n] == 'det':
                         reconstructed = recon_mean
                     elif opts['decoder'][n] == 'gauss':
@@ -332,13 +338,14 @@ class WAE(object):
                     #     dec_output_dim = 2*opts['zdim'][n-1]
                     dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
-                                                    archi=opts['d_arch'][n],
-                                                    num_layers=opts['d_nlayers'][n],
-                                                    num_units=opts['d_nfilters'][n],
-                                                    output_dim=dec_output_dim,
-                                                    scope='decoder/layer_%d' % n,
-                                                    reuse=True,
-                                                    is_training=False)
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=dec_output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
                     if opts['decoder'][n] == 'det':
                         reconstructed = recon_mean
                     elif opts['decoder'][n] == 'gauss':
@@ -365,6 +372,7 @@ class WAE(object):
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
                                                 output_dim=enc_output_dim,
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=True,
@@ -378,13 +386,14 @@ class WAE(object):
             for n in range(m,-1,-1):
                 if n==0:
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
-                                                    archi=opts['d_arch'][n],
-                                                    num_layers=opts['d_nlayers'][n],
-                                                    num_units=opts['d_nfilters'][n],
-                                                    output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                                    scope='decoder/layer_%d' % n,
-                                                    reuse=True,
-                                                    is_training=False)
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
                     if opts['decoder'][n] == 'det':
                         reconstructed = recon_mean
                     elif opts['decoder'][n] == 'gauss':
@@ -408,13 +417,14 @@ class WAE(object):
                     #     dec_output_dim = 2*opts['zdim'][n-1]
                     dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
-                                                    archi=opts['d_arch'][n],
-                                                    num_layers=opts['d_nlayers'][n],
-                                                    num_units=opts['d_nfilters'][n],
-                                                    output_dim=dec_output_dim,
-                                                    scope='decoder/layer_%d' % n,
-                                                    reuse=True,
-                                                    is_training=False)
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=dec_output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
                     if opts['decoder'][n] == 'det':
                         reconstructed = recon_mean
                     elif opts['decoder'][n] == 'gauss':
@@ -428,13 +438,14 @@ class WAE(object):
         # Anchor interpolation for 1-layer encoder
         opts = self.opts
         anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
-                                        archi=opts['d_arch'][0],
-                                        num_layers=opts['d_nlayers'][0],
-                                        num_units=opts['d_nfilters'][0],
-                                        output_dim=2*np.prod(datashapes[opts['dataset']]),
-                                        scope='decoder/layer_0',
-                                        reuse=True,
-                                        is_training=False)
+                                                archi=opts['d_arch'][0],
+                                                num_layers=opts['d_nlayers'][0],
+                                                num_units=opts['d_nfilters'][0],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                scope='decoder/layer_0',
+                                                reuse=True,
+                                                is_training=False)
         if opts['decoder'][0] == 'det':
             anchors_decoded = anc_mean
         elif opts['decoder'][0] == 'gauss':

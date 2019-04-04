@@ -68,7 +68,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4011
-    opts['print_every'] = 187500/4.
+    opts['print_every'] = 187500/8.
     opts['lr'] = 0.0001
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
@@ -82,6 +82,7 @@ def main():
     opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
     # NN set up
+    opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]    
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian

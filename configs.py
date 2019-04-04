@@ -65,11 +65,11 @@ config_mnist['lambda'].append(0.0001*config_mnist['lambda_scalar']**5/config_mni
 config_mnist['lambda_schedule'] = 'adaptive' # adaptive, constant
 
 # NN set up
-config_mnist['filter_size'] = 3
 config_mnist['init_std'] = 0.099999
 config_mnist['init_bias'] = 0.0
 config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+config_mnist['filter_size'] = [5,3,3,3,3,3,3,3]
 
 config_mnist['e_nlatents'] = 5
 config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -148,11 +148,11 @@ config_cifar10['lambda'].append(0.0001/config_cifar10['zdim'][-1])
 config_cifar10['lambda_schedule'] = 'constant' # adaptive, constant
 
 # NN set up
-config_cifar10['filter_size'] = 3
 config_cifar10['init_std'] = 0.099999
 config_cifar10['init_bias'] = 0.0
 config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+config_cifar10['filter_size'] = [5,3,3,3,3,3,3,3]
 
 config_cifar10['e_nlatents'] = config_cifar10['nlatents'] #config_mnist['nlatents']
 config_cifar10['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
