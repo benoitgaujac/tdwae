@@ -75,6 +75,8 @@ def main():
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
+    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
     # Model set up
     opts['nlatents'] = 5
     opts['zdim'] = [32,16,8,4,2]
