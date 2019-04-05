@@ -22,6 +22,16 @@ def kl_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
+def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
+    """
+    Compute MC log density ratio
+    """
+    kl = tf.log(q_Sigma) - tf.log(p_Sigma) \
+        + tf.square(samples - q_mean) / q_Sigma \
+        - tf.square(samples - p_mean) / p_Sigma
+    kl = -0.5 * tf.reduce_sum(kl,axis=-1)
+    return tf.reduce_mean(kl)
+
 def Xentropy_penalty(samples, mean, sigma):
     """
     Compute Xentropy for gaussian using MC

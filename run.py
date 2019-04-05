@@ -4,7 +4,8 @@ import logging
 import argparse
 import configs
 from wae import WAE
-from vae import VAE
+# from vae import VAE
+from vae_v2 import VAE
 from datahandler import DataHandler
 import utils
 
@@ -82,7 +83,7 @@ def main():
     opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
     # NN set up
-    opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]    
+    opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
