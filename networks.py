@@ -6,28 +6,35 @@ import ops.linear
 import ops.conv2d
 import ops.deconv2d
 import ops.batchnorm
+import ops.layernorm
 import ops._ops
 import ops.resnet
 from datahandler import datashapes
 
 import pdb
 
-def one_layer_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+def one_layer_encoder(opts, input, output_dim, norm, scope, reuse=False,
                                                         is_training=False):
     with tf.variable_scope(scope, reuse=reuse):
         layer_x = input
         for i in range(len(opts['zdim'])):
             layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                         opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
-            if batch_norm:
+            if norm == 'batchnorm':
                 layer_x = ops.batchnorm.Batchnorm_layers(
                     opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
+            elif norm == 'layernorm':
+                layer_x = ops.layernorm.Layernorm(
+                    opts, layer_x, 'hid{}/bn_0'.format(i), reuse)
             layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
             layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                         opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
-            if batch_norm:
+            if norm == 'batchnorm':
                 layer_x = ops.batchnorm.Batchnorm_layers(
                     opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
+            elif norm == 'layernorm':
+                layer_x = ops.layernorm.Layernorm(
+                    opts, layer_x, 'hid{}/bn_1'.format(i), reuse)
             layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
             if i<len(opts['zdim'])-1:
                 layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
@@ -40,7 +47,7 @@ def one_layer_encoder(opts, input, output_dim, batch_norm, scope, reuse=False,
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
-def one_layer_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
+def one_layer_decoder(opts, input, output_dim, norm, scope, reuse=False,
                                                         is_training=False):
     # Architecture with only fully connected layers and ReLUs
     with tf.variable_scope(scope, reuse=reuse):
@@ -49,15 +56,21 @@ def one_layer_decoder(opts, input, output_dim, batch_norm, scope, reuse=False,
             layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                         opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
             layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-            if batch_norm:
+            if norm == 'batchnorm':
                 layer_x = ops.batchnorm.Batchnorm_layers(
                     opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
+            elif norm == 'layernorm':
+                layer_x = ops.layernorm.Layernorm(
+                    opts, layer_x, 'hid{}/bn_0'.format(i), reuse)
             layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                         opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
             layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-            if batch_norm:
+            if norm == 'batchnorm':
                 layer_x = ops.batchnorm.Batchnorm_layers(
                     opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
+            elif norm == 'layernorm':
+                layer_x = ops.layernorm.Layernorm(
+                    opts, layer_x, 'hid{}/bn_1'.format(i), reuse)
             if i>0:
                 layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                             opts['zdim'][i-1], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
@@ -78,7 +91,6 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
             outputs = mlp_encoder(opts, input, num_layers,
                                                         num_units,
                                                         output_dim,
-                                                        opts['batch_norm'],
                                                         reuse,
                                                         is_training)
         elif archi == 'dcgan':
@@ -87,7 +99,6 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         num_units,
                                                         filter_size,
                                                         output_dim,
-                                                        opts['batch_norm'],
                                                         reuse,
                                                         is_training)
         elif archi == 'resnet':
@@ -104,16 +115,18 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
     return mean, Sigma
 
 def mlp_encoder(opts, input, num_layers, num_units, output_dim,
-                                                        batch_norm=False,
                                                         reuse=False,
                                                         is_training=False):
     layer_x = input
     for i in range(num_layers):
         layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                     num_units, init=opts['mlp_init'], scope='hid{}/lin'.format(i))
-        if batch_norm:
+        if opts['e_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
-                opts, layer_x, 'hid%d/bn' % i, is_training, reuse,)
+                opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+        elif opts['e_norm']=='layernorm':
+            layer_x = ops.layernorm.Layernorm(
+                opts, layer_x, 'hid%d/bn' % i, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #    opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
@@ -124,7 +137,6 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
 
 def dcgan_encoder(opts, input, num_layers, num_units, filter_size,
                                                         output_dim,
-                                                        batch_norm=False,
                                                         reuse=False,
                                                         is_training=False):
     # Reshaping if needed
@@ -142,9 +154,12 @@ def dcgan_encoder(opts, input, num_layers, num_units, filter_size,
         scale = 2**(num_layers - i - 1)
         layer_x = ops.conv2d.Conv2d(opts, layer_x, layer_x.get_shape().as_list()[-1], int(num_units / scale),
                 filter_size, stride=2,scope='hid{}/conv'.format(i),init=opts['conv_init'])
-        if batch_norm:
+        if opts['e_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+        elif opts['e_norm']=='layernorm':
+            layer_x = ops.layernorm.Layernorm(
+                opts, layer_x, 'hid%d/bn' % i, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
@@ -176,7 +191,6 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
             outputs = mlp_decoder(opts, input, num_layers,
                                                         num_units,
                                                         output_dim,
-                                                        opts['batch_norm'],
                                                         reuse,
                                                         is_training)
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
@@ -185,7 +199,6 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         num_units,
                                                         filter_size,
                                                         output_dim,
-                                                        opts['batch_norm'],
                                                         reuse,
                                                         is_training)
         elif archi == 'resnet':
@@ -202,7 +215,6 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
 
 def mlp_decoder(opts, input, num_layers, num_units, output_dim,
-                                                        batch_norm,
                                                         reuse,
                                                         is_training):
     # Architecture with only fully connected layers and ReLUs
@@ -211,9 +223,12 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
         layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                     num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-        if batch_norm:
+        if opts['d_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+        elif opts['d_norm']=='layernorm':
+            layer_x = ops.layernorm.Layernorm(
+                opts, layer_x, 'hid%d/bn' % i, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
     outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
@@ -224,7 +239,6 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
 def  dcgan_decoder(opts, input, archi, num_layers, num_units,
                                                         filter_size,
                                                         output_dim,
-                                                        batch_norm,
                                                         reuse,
                                                         is_training):
 
@@ -245,9 +259,12 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
         width = output_shape[1] / 2**(num_layers - 1)
     h0 = ops.linear.Linear(opts,input,np.prod(input.get_shape().as_list()[1:]),
             num_units * ceil(height) * ceil(width), scope='hid0/lin')
-    if batch_norm:
+    if opts['d_norm']=='batchnorm':
         h0 = ops.batchnorm.Batchnorm_layers(
-            opts, h0, 'hid0/bn_lin', is_training, reuse)
+            opts, layer_x, 'hid0/bn_lin', is_training, reuse)
+    elif opts['d_norm']=='layernorm':
+        layer_x = ops.layernorm.Layernorm(
+            opts, layer_x, 'hid0/bn_lin', reuse)
     h0 = tf.reshape(h0, [-1, ceil(height), ceil(width), num_units])
     h0 = ops._ops.non_linear(h0,opts['d_nonlinearity'])
     layer_x = h0
@@ -257,9 +274,12 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
                       ceil(width * scale), int(num_units / scale)]
         layer_x = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
                    filter_size, scope='hid%d/deconv' % i, init= opts['conv_init'])
-        if batch_norm:
+        if opts['d_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+        elif opts['d_norm']=='layernorm':
+            layer_x = ops.layernorm.Layernorm(
+                opts, layer_x, 'hid%d/bn' % i, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])

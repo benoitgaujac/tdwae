@@ -78,10 +78,11 @@ def main():
     # Model set up
     opts['nlatents'] = 5
     opts['zdim'] = [32,16,8,4,2]
-    # opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
-    opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
+    opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
+    # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]

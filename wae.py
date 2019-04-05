@@ -563,7 +563,6 @@ class WAE(object):
                   o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
         return pool3
 
-
     def train(self, data, WEIGHTS_FILE):
         """
         Train top-down model with chosen method
@@ -760,7 +759,7 @@ class WAE(object):
 
                     print('')
                     # Making plots
-                    if opts['save_train_data'] and epoch>=opts['epoch_num']-2:
+                    if opts['save_train_data'] and epoch>=opts['epoch_num']/2:
                         save_train_data = True
                     else:
                         save_train_data = False

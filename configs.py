@@ -40,7 +40,8 @@ config_mnist['optimizer'] = 'adam' # adam, sgd
 config_mnist['adam_beta1'] = 0.5
 config_mnist['lr'] = 0.001
 config_mnist['lr_adv'] = 0.0008
-config_mnist['batch_norm'] = True
+config_mnist['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+config_mnist['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 config_mnist['batch_norm_eps'] = 1e-05
 config_mnist['batch_norm_momentum'] = 0.99
 
@@ -123,7 +124,8 @@ config_cifar10['optimizer'] = 'adam' # adam, sgd
 config_cifar10['adam_beta1'] = 0.5
 config_cifar10['lr'] = 0.0001
 config_cifar10['lr_adv'] = 0.0008
-config_cifar10['batch_norm'] = True
+config_cifar10['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+config_cifar10['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 config_cifar10['batch_norm_eps'] = 1e-05
 config_cifar10['batch_norm_momentum'] = 0.99
 
