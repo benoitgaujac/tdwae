@@ -759,11 +759,6 @@ class WAE(object):
 
                     print('')
                     # Making plots
-                    if opts['save_train_data'] and epoch>=opts['epoch_num']/2:
-                        save_train_data = True
-                    else:
-                        save_train_data = False
-
                     if opts['e_nlatents']==opts['nlatents']:
                         samples_prior = fixed_noise
                     else:
@@ -774,12 +769,10 @@ class WAE(object):
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
-                                     Loss, imp_Loss, Loss_match, imp_Match,  # losses
-                                     Loss_rec, Loss_rec_test,   # rec losses
-                                     Losses_rec,    # rec losses for each latents
+                                     Loss, Loss_match,  # losses
+                                     Loss_rec, Losses_rec,   # rec losses
                                      work_dir,  # working directory
-                                     'res_e%04d_mb%05d.png' % (epoch, it),  # filename
-                                     save_train_data) # save training data
+                                     'res_e%04d_mb%05d.png' % (epoch, it))  # filename
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
@@ -817,6 +810,24 @@ class WAE(object):
                                                 'checkpoints',
                                                 'trained-wae-final'),
                                                 global_step=counter)
+        # save training data
+        if opts['save_train_data']:
+            data_dir = 'train_data'
+            save_path = os.path.join(work_dir,data_dir)
+            utils.create_dir(save_path)
+            name = 'res_train_final'
+            np.savez(os.path.join(save_path,name),
+                        data_test=data.data[200:200+npics], data_train=data.test_data[:npics],
+                        label_test=data.test_labels[:30*npics],
+                        encoded = encoded[-1],
+                        rec_train=reconstructed_train[0], rec_test=reconstructed_test[0][:npics],
+                        samples_prior=samples_prior, samples=samples[-1],
+                        loss=np.array(Loss), imp_loss=np.array(imp_Loss),
+                        loss_match=np.array(Loss_match), imp_match=np.array(imp_Match),
+                        loss_rec=np.array(loss_rec),
+                        loss_rec_test=np.array(loss_rec_test),
+                        losses_rec=np.array(losses_rec))
+
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
