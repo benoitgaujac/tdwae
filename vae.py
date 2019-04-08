@@ -656,12 +656,10 @@ class VAE(object):
                                      reconstructed_train[0], reconstructed_test[0][:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
-                                     Loss, None, Loss_match, None,  # losses
+                                     Loss, Loss_match,  # losses
                                      Loss_rec, Loss_rec_test,   # rec losses
-                                     None,    # rec losses for each latents
                                      work_dir,  # working directory
-                                     'res_e%04d_mb%05d.png' % (epoch, it),  # filename
-                                     save_train_data) # save training data
+                                     'res_e%04d_mb%05d.png' % (epoch, it))  # filename
 
                 # Update learning rate if necessary and counter
                 # First 20 epochs do nothing
