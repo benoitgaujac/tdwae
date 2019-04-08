@@ -86,10 +86,10 @@ class VAE(object):
             qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
             encoded = sample_gaussian(opts, qz_params, 'tensorflow')
             self.encoded.append(encoded)
-            if n<opts['e_nlatents']-1:
-                self.match_penalty += entropy_penalty(encoded, enc_mean, enc_Sigma)
-            else:
+            if n==opts['e_nlatents']-1:
                 self.kl_reg = kl_penalty(mean, Sigma, enc_mean, enc_Sigma)
+            else:
+                self.match_penalty -= entropy_penalty(encoded, enc_mean, enc_Sigma)
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 dec_mean, _ = decoder(self.opts, input=encoded,

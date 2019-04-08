@@ -45,7 +45,7 @@ def entropy_penalty(samples, mean, sigma):
     Compute entropy for gaussian
     """
     entropy = tf.log(sigma) + 1. + tf.log(2*pi)
-    entropy = -0.5 * tf.reduce_sum(entropy,axis=-1)
+    entropy = 0.5 * tf.reduce_sum(entropy,axis=-1)
     return tf.reduce_mean(entropy)
 
 
