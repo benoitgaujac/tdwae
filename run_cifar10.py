@@ -47,19 +47,22 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 2*4011
-    opts['print_every'] = 2*87500
-    opts['lr'] = 0.0001
+    opts['epoch_num'] = 4011
+    opts['print_every'] = 20 * 390
+    opts['lr'] = 0.0005
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
+    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
     # Model set up
     opts['nlatents'] = 10
     opts['zdim'] = [36,16,16,16,16,9,9,9,9,4] #[32,16,8,4,2]
-    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [1./opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
-    opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
+    #opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
+    opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
