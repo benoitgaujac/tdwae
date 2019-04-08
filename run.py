@@ -24,6 +24,8 @@ parser.add_argument("--method", default='wae')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
+parser.add_argument("--base_lmba", type=float, default=1.,
+                    help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
 parser.add_argument("--weights_file")
@@ -69,27 +71,29 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4011
-    opts['print_every'] = 187500/8.
-    opts['lr'] = 0.0001
+    opts['print_every'] = 10*468 #187500/8.
+    opts['lr'] = 0.0005
     opts['save_every_epoch'] = 2005 #4011
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
+    opts['dropout'] = False
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
     # Model set up
     opts['nlatents'] = 5
     opts['zdim'] = [32,16,8,4,2]
-    opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    # opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda_scalar'] = FLAGS.lmba
-    opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
+    opts['lambda'].append(FLAGS.lmba)
     # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['e_nlatents'] = opts['nlatents']
+    opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
