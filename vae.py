@@ -657,7 +657,7 @@ class VAE(object):
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
                                      Loss, Loss_match,  # losses
-                                     Loss_rec, Loss_rec_test,   # rec losses
+                                     Loss_rec, None,   # rec losses
                                      work_dir,  # working directory
                                      'res_e%04d_mb%05d.png' % (epoch, it))  # filename
 
