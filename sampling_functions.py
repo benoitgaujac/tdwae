@@ -4,7 +4,7 @@ import os
 from math import sqrt, cos, sin, pi, ceil
 import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
+#import tensorflow_probability as tfp
 
 import pdb
 
@@ -46,9 +46,12 @@ def sample_bernoulli(params):
     Sample noise from Bernoulli distribution with mean parameters
     params
     """
+    assert False, 'tfp not available on cluster gpu yet'
+    """
     shape = tf.shape(params)
     bernoulli_dist = tfp.distributions.Bernoulli(logits=params, dtype=tf.float32)
     return bernoulli_dist.sample()
+    """
 
     # eps = tf.random_uniform(shape)
     # return tf.where(tf.random_uniform(shape) - params < 0,
