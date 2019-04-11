@@ -124,16 +124,17 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
     for i in range(num_layers):
         layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                     num_units, init=opts['mlp_init'], scope='hid{}/lin'.format(i))
+        # Note for mlp, batchnorm and layernorm are equivalent
         if opts['e_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         elif opts['e_norm']=='layernorm':
             layer_x = ops.layernorm.Layernorm(
                 opts, layer_x, 'hid%d/bn' % i, reuse)
-            # layer_x = ops.batchnorm.Batchnorm_contrib(
-            #    opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+        """
         layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        """
     outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, init=opts['mlp_init'], scope='hid_final')
 
@@ -230,7 +231,10 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
         layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                     num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
+        """
         layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        """
+        # Note for mlp, batchnorm and layernorm are equivalent
         if opts['d_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
