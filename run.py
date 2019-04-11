@@ -71,10 +71,10 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 4011
-    opts['print_every'] = 10*468 #187500/8.
+    opts['epoch_num'] = 4011+int(187500/8)
+    opts['print_every'] = 4*187500/8. #10*468
     opts['lr'] = 0.0005
-    opts['save_every_epoch'] = 2005 #4011
+    opts['save_every_epoch'] = 2005
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
