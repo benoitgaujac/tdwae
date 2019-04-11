@@ -21,6 +21,7 @@ parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
 parser.add_argument("--method", default='wae')
+parser.add_argument("--penalty", default='wae')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -77,19 +78,20 @@ def main():
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
-    opts['dropout'] = False
+    opts['pen'] = FLAGS.penalty
+    opts['pen_enc_sigma'] = True
+    opts['lambda_pen_enc_sigma'] = 0.01
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
-    # Model set up
-    opts['nlatents'] = 5
-    opts['zdim'] = [32,16,8,4,2]
-    # opts['lambda'] = [1./opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    # Penalty
     opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
-    # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    opts['lambda_scalar'] = FLAGS.lmba
     opts['lambda'].append(FLAGS.lmba)
+    # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
+    # Model set up
+    opts['nlatents'] = 5
+    opts['zdim'] = [32,16,8,4,2] #[64,32,16,8,4,2]
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
@@ -97,12 +99,12 @@ def main():
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['e_nfilters'] =  [512,256,128,64,32,16]
+    opts['e_nfilters'] =  [1024,512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['d_nfilters'] = [512,256,128,64,32,16]
+    opts['d_nfilters'] = [1024,512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
     # Verbose
@@ -149,6 +151,8 @@ def main():
         wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="test":
         wae.test_losses(data, opts['work_dir'], FLAGS.weights_file)
+    elif FLAGS.mode=="vlae_exp":
+        wae.vlae_experiment(data, opts['work_dir'], FLAGS.weights_file)
     else:
         assert False, 'Unknown mode %s' % FLAGS.mode
 

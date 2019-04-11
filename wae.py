@@ -20,7 +20,7 @@ import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
 from loss_functions import matching_penalty, reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
-from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation
+from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation, save_vlae_experiment
 from networks import encoder, decoder
 from datahandler import datashapes
 
@@ -70,11 +70,11 @@ class WAE(object):
 
         # --- Initialize list container
         encSigmas_stats = []
+        pen_enc_sigma = 0.
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
         self.loss_reconstruct = 0
-
         # --- Encoding & decoding Loop
         encoded = self.points
         for n in range(opts['e_nlatents']):
@@ -93,7 +93,8 @@ class WAE(object):
                                                 output_dim=enc_output_dim,
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
-                                                is_training=self.is_training)
+                                                is_training=self.is_training,
+                                                dropout_rate=self.dropout_rate)
             if opts['encoder'][n] == 'det':
                 encoded = enc_mean
                 if n==opts['nlatents']-1 and opts['prior']=='dirichlet':
@@ -104,10 +105,14 @@ class WAE(object):
             else:
                 assert False, 'Unknown encoder %s' % opts['encoder']
             self.encoded.append(encoded)
+            # Enc Sigma stats
             Sigma_det = tf.reduce_prod(enc_Sigma,axis=-1)
             Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
             Sstats = tf.stack([Smean,Svar],axis=-1)
             encSigmas_stats.append(Sstats)
+            # Enc Sigma penalty
+            if opts['pen_enc_sigma']:
+                pen_enc_sigma += tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -118,7 +123,8 @@ class WAE(object):
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
-                                                is_training=self.is_training)
+                                                is_training=self.is_training,
+                                                dropout_rate=self.dropout_rate)
                 if opts['decoder'][n] == 'det':
                     reconstructed = recon_mean
                 elif opts['decoder'][n] == 'gauss':
@@ -152,7 +158,8 @@ class WAE(object):
                                                 output_dim=dec_output_dim,
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
-                                                is_training=self.is_training)
+                                                is_training=self.is_training,
+                                                dropout_rate=self.dropout_rate)
                 if opts['decoder'][n] == 'det':
                     reconstructed = recon_mean
                 elif opts['decoder'][n] == 'gauss':
@@ -164,8 +171,8 @@ class WAE(object):
                                                 reconstructed)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
-            # pdb.set_trace()
             self.losses_reconstruct.append(loss_reconstruct)
+        # Enc Sigma stats
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
 
         # --- Sampling from model (only for generation)
@@ -227,19 +234,35 @@ class WAE(object):
             self.decoded.append(decoded)
 
         # --- Objectives, penalties, pretraining, FID
-        # Compute matching penalty cost
-        if opts['e_nlatents']==opts['nlatents']:
-            self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+        if opts['pen']=='wae':
+            # Compute matching penalty cost for last layer
+            if opts['e_nlatents']==opts['nlatents']:
+                self.match_penalty = matching_penalty(opts, self.samples, self.encoded[-1])
+                self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
+            else:
+                self.match_penalty = matching_penalty(opts, self.decoded[opts['nlatents']-opts['e_nlatents']-1],
+                                                    self.encoded[-1])
+                self.C = square_dist_v2(self.opts,self.decoded[opts['nlatents']-opts['e_nlatents']-1],
+                                                    self.encoded[-1])
+            # Compute objs
+            self.objective = self.loss_reconstruct \
+                             + self.lmbd[-1] * self.match_penalty
+        elif opts['pen']=='wae_mmd':
+            # Compute matching penalty cost for all layer
             self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
+            self.match_penalty = 0
+            for n in range(opts['nlatents']-1):
+                self.match_penalty += self.lmbd[-1]* 0.1 * matching_penalty(opts, self.decoded[opts['nlatents']-(n+2)],
+                                                    self.encoded[n])
+            self.match_penalty += self.lmbd[-1] * matching_penalty(opts, self.samples, self.encoded[-1])
+            # Compute objs
+            self.objective = self.loss_reconstruct + self.match_penalty
         else:
-            self.match_penalty = matching_penalty(opts, self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                self.encoded[-1])
-            self.C = square_dist_v2(self.opts,self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                self.encoded[-1])
-        # Compute objs
-        self.objective = self.loss_reconstruct \
-                         + self.lmbd[-1] * self.match_penalty
-
+            assert False, 'Unknown penalty %s' % opts['pen']
+        # Enc Sigma penalty
+        if opts['pen_enc_sigma']:
+            self.objective += opts['lambda_pen_enc_sigma']*pen_enc_sigma
+        # Implicit losses
         if opts['nlatents']>1:
             self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
             self.imp_objective = self.losses_reconstruct[0] \
@@ -294,10 +317,12 @@ class WAE(object):
         opts = self.opts
         decay = tf.placeholder(tf.float32, name='rate_decay_ph')
         is_training = tf.placeholder(tf.bool, name='is_training_ph')
-        lmbda = tf.placeholder(tf.float32, name='lambda')
+        lmbda = tf.placeholder(tf.float32, name='lambda_ph')
+        dropout = tf.placeholder(tf.float32, name='dropout_rate_ph')
         self.lr_decay = decay
         self.is_training = is_training
         self.lmbd = lmbda
+        self.dropout_rate = dropout
 
     def full_reconstruction(self):
         # Reconstruct for each encoding layer
@@ -563,6 +588,7 @@ class WAE(object):
                   o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
         return pool3
 
+
     def train(self, data, WEIGHTS_FILE):
         """
         Train top-down model with chosen method
@@ -634,6 +660,7 @@ class WAE(object):
                            self.samples: batch_samples,
                            self.lr_decay: decay,
                            self.lmbd: wae_lambda,
+                           self.dropout_rate: 0.,
                            self.is_training: True}
                 # Update encoder and decoder
                 [_, loss, imp_loss, loss_rec, losses_rec, loss_match, imp_match] = self.sess.run([
@@ -673,6 +700,7 @@ class WAE(object):
                         l = self.sess.run(self.loss_reconstruct,
                                             feed_dict={self.points:batch_images,
                                                        self.lmbd: wae_lambda,
+                                                       self.dropout_rate: 0.,
                                                        self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
@@ -685,6 +713,7 @@ class WAE(object):
                                                  self.decoded],
                                                 feed_dict={self.points:data.test_data[:30*npics],
                                                            self.samples: fixed_noise,
+                                                           self.dropout_rate: 0.,
                                                            self.is_training:False})
 
                     if opts['vizu_embedded'] and counter>1:
@@ -699,6 +728,7 @@ class WAE(object):
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
                                                 feed_dict={self.points:data.test_data[:npics],
                                                            self.samples: fixed_noise,
+                                                           self.dropout_rate: 0.,
                                                            self.is_training:False})
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                 'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
@@ -710,6 +740,7 @@ class WAE(object):
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.full_reconstructed[-1],
                                                 feed_dict={self.points:data.data[200:200+npics],
+                                                           self.dropout_rate: 0.,
                                                            self.is_training:False})
 
                     if opts['fid']:
@@ -828,7 +859,6 @@ class WAE(object):
                         loss_rec_test=np.array(loss_rec_test),
                         losses_rec=np.array(losses_rec))
 
-
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
         Plot and save different latent interpolation
@@ -855,11 +885,13 @@ class WAE(object):
         # [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
         encoded = self.sess.run(self.encoded,
                                 feed_dict={self.points:data.test_data[:num_pics],
+                                           self.dropout_rate: 0.,
                                            self.is_training:False})
         # data_ids = np.random.choice(num_pics,20,replace=False)
         data_ids = np.arange(30,72)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
+                                          self.dropout_rate: 0.,
                                           self.is_training: False})
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
@@ -867,6 +899,7 @@ class WAE(object):
             data_ids = np.arange(53,54)
             sampled_recon = self.sess.run(self.sampled_reconstructed,
                                    feed_dict={self.points:data.test_data[data_ids],
+                                              self.dropout_rate: 0.,
                                               self.is_training: False})
 
             sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(20)]),] + sampled_recon
@@ -886,10 +919,12 @@ class WAE(object):
         if opts['e_nlatents']!=opts['nlatents']:
             dec_anchors = self.sess.run(self.anchors_decoded,
                                     feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.dropout_rate: 0.,
                                                self.is_training: False})
         else:
             dec_anchors = self.sess.run(self.decoded[-1],
                                     feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.dropout_rate: 0.,
                                                self.is_training: False})
         inter_anchors = np.reshape(dec_anchors,[-1,num_int]+imshape)
         # adding data
@@ -915,6 +950,7 @@ class WAE(object):
                                 anchors=latent_anchors)
         dec_latent = self.sess.run(self.decoded[-1],
                                 feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
+                                           self.dropout_rate: 0.,
                                            self.is_training: False})
         inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
 
@@ -925,6 +961,7 @@ class WAE(object):
         prior_noise = sample_pz(opts, self.pz_params, npics)
         samples = self.sess.run(self.decoded[-1],
                                feed_dict={self.samples: prior_noise,
+                                          self.dropout_rate: 0.,
                                           self.is_training: False})
         # --- Making & saving plots
         logging.error('Saving images..')
@@ -934,6 +971,80 @@ class WAE(object):
                         inter_anchors, inter_latent, # anchors and latents interpolation
                         samples, # samples
                         MODEL_PATH) # working directory
+
+    def vlae_experiment(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Plot and save different latent interpolation
+        """
+
+        opts = self.opts
+
+        # --- Sampling fixed noise
+        fixed_noise = []
+        for n in range(opts['nlatents']):
+            mean = np.zeros(opts['zdim'][opts['nlatents']-1-n], dtype='float32')
+            Sigma = np.ones(opts['zdim'][opts['nlatents']-1-n], dtype='float32')
+            params = np.concatenate([mean,Sigma],axis=0)
+            fixed_noise.append(sample_gaussian(opts, params, batch_size=1))
+
+        # --- Decoding loop
+        self.vlae_decoded = []
+        for m in range(opts['nlatents']):
+            if m==0:
+                decoded = tf.convert_to_tensor(sample_pz(opts,self.pz_params,opts['plot_num_pics']),
+                                                dtype=tf.float32)
+            else:
+                decoded = tf.concat([fixed_noise[0] for i in range(opts['plot_num_pics'])],axis=0)
+            for n in range(opts['nlatents']-1,-1,-1):
+                # Output dim
+                if n==0:
+                    output_dim = 2*np.prod(datashapes[opts['dataset']])
+                else:
+                    output_dim = 2*opts['zdim'][n-1]
+                # Decoding
+                decoded_mean, decoded_Sigma = decoder(opts, input=decoded,
+                                                archi=opts['d_arch'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=output_dim,
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
+                if opts['decoder'][n] == 'det':
+                    decoded = decoded_mean
+                elif opts['decoder'][n] == 'gauss':
+                    if n==opts['nlatents']-m:
+                        p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                        decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                    else:
+                        decoded =  decoded_mean \
+                                + tf.multiply(fixed_noise[opts['nlatents']-n],tf.sqrt(1e-10+decoded_Sigma))
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                # reshape and normalize for last decoding
+                if n==0:
+                    if opts['input_normalize_sym']:
+                        decoded=tf.nn.tanh(decoded)
+                    else:
+                        decoded=tf.nn.sigmoid(decoded)
+                    decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+            self.vlae_decoded.append(decoded)
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+
+        # --- vlae decoding
+        decoded = self.sess.run(self.vlae_decoded,feed_dict={})
+
+        # --- Making & saving plots
+        logging.error('Saving images..')
+        save_vlae_experiment(opts, decoded, MODEL_PATH)
 
     def fid_score(self, data, MODEL_PATH, WEIGHTS_FILE):
         """

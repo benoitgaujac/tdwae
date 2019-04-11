@@ -30,8 +30,6 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
     elif typ =='numpy':
         means, covs = np.split(params,2,axis=-1)
         shape = (batch_size,)+np.shape(means)
-        assert shape[-1]==opts['zdim'][-1], \
-                    'Prior dimension mismatch'
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
         noise = means + np.multiply(eps,np.sqrt(1e-10+covs))
     return noise

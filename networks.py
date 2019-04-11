@@ -84,7 +84,8 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         output_dim,
                                                         scope,
                                                         reuse=False,
-                                                        is_training=False):
+                                                        is_training=False,
+                                                        dropout_rate=0):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
@@ -92,7 +93,8 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         num_units,
                                                         output_dim,
                                                         reuse,
-                                                        is_training)
+                                                        is_training,
+                                                        dropout_rate)
         elif archi == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
             outputs = dcgan_encoder(opts, input, num_layers,
@@ -110,13 +112,14 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
             raise ValueError('%s Unknown encoder architecture for mixtures' % archi)
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -100, 100)
+    logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
 def mlp_encoder(opts, input, num_layers, num_units, output_dim,
                                                         reuse=False,
-                                                        is_training=False):
+                                                        is_training=False,
+                                                        dropout_rate=0):
     layer_x = input
     for i in range(num_layers):
         layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
@@ -130,8 +133,7 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #    opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-        if opts['dropout'] and is_training:
-            layer_x = tf.nn.dropout(layer_x, rate=0.8)
+        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, init=opts['mlp_init'], scope='hid_final')
 
@@ -186,7 +188,8 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         output_dim,
                                                         scope,
                                                         reuse=False,
-                                                        is_training=False):
+                                                        is_training=False,
+                                                        dropout_rate=0.):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
@@ -194,7 +197,8 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         num_units,
                                                         output_dim,
                                                         reuse,
-                                                        is_training)
+                                                        is_training,
+                                                        dropout_rate)
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
             outputs = dcgan_decoder(opts, input, archi, num_layers,
@@ -211,22 +215,22 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -100, 100)
+    logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
 
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
 
 def mlp_decoder(opts, input, num_layers, num_units, output_dim,
                                                         reuse,
-                                                        is_training):
+                                                        is_training,
+                                                        dropout_rate=0.):
     # Architecture with only fully connected layers and ReLUs
     layer_x = input
     for i in range(num_layers):
         layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                     num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-        if opts['dropout'] and is_training:
-            layer_x = tf.nn.dropout(layer_x, rate=0.8)
+        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
         if opts['d_norm']=='batchnorm':
             layer_x = ops.batchnorm.Batchnorm_layers(
                 opts, layer_x, 'hid%d/bn' % i, is_training, reuse)

@@ -455,17 +455,6 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
                          'pior_samples',
                          'latent_inter',
                          'point_inter'])
-    # to_plot_list = zip([img1, img2, img3, img4, img5],
-    #                      ['Reconstructions',
-    #                      'Full Reconstructions',
-    #                      'Samples',
-    #                      'Latent interpolation',
-    #                      'Points interpolation'],
-    #                      ['recon',
-    #                      'full_recon',
-    #                      'pior_samples',
-    #                      'latent_inter',
-    #                      'point_inter'])
 
     #Settings for pyplot fig
     dpi = 100
@@ -527,7 +516,6 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
                     dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
         plt.close()
-
 
 
     """
@@ -597,6 +585,73 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
                 dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.01)
     plt.close()
     """
+
+def save_vlae_experiment(opts, decoded, work_dir):
+    num_pics = opts['plot_num_pics']
+    num_cols = 10
+    greyscale = decoded[0].shape[-1] == 1
+
+    if opts['input_normalize_sym']:
+        for i in range(len(decoded)):
+            decoded[i] = decoded[i] / 2. + 0.5
+
+    images = []
+
+    for n in range(len(decoded)):
+        samples = decoded[n]
+        assert len(samples) == num_pics
+        pics = []
+        for idx in range(num_pics):
+            if greyscale:
+                pics.append(1. - samples[idx, :, :, :])
+            else:
+                pics.append(samples[idx, :, :, :])
+        # Figuring out a layout
+        pics = np.array(pics)
+        image = np.concatenate(np.split(pics, num_cols), axis=2)
+        image = np.concatenate(image, axis=0)
+        images.append(image)
+
+    # Creating a pyplot fig
+    dpi = 100
+    height_pic = images[0].shape[0]
+    width_pic = images[0].shape[1]
+    fig_height = 1 * 2*height_pic / float(dpi)
+    fig_width = opts['nlatents'] * 2*width_pic / float(dpi)
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    gs = matplotlib.gridspec.GridSpec(1, opts['nlatents'])
+
+    # Filling in separate parts of the plot
+    for n in range(len(decoded)):
+        image = images[n]
+        plt.subplot(gs[0, n])
+        if greyscale:
+            image = image[:, :, 0]
+            # in Greys higher values correspond to darker colors
+            ax = plt.imshow(image, cmap='Greys',
+                            interpolation='none', vmin=0., vmax=1.)
+        else:
+            ax = plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+        ax = plt.subplot(gs[0, n])
+        title = 'sampling %d layer' % n
+        plt.text(0.47, 1., title,
+                 ha="center", va="bottom", size=20, transform=ax.transAxes)
+        # Removing ticks
+        ax.axes.get_xaxis().set_ticks([])
+        ax.axes.get_yaxis().set_ticks([])
+        ax.axes.set_xlim([0, width_pic])
+        ax.axes.set_ylim([height_pic, 0])
+        ax.axes.set_aspect(1)
+
+    ### Saving plots and data
+    # Plot
+    plots_dir = 'test_plots'
+    save_path = os.path.join(work_dir,plots_dir)
+    utils.create_dir(save_path)
+    filename = 'vlae_exp.png'
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=dpi, format='png')
+    plt.close()
 
 
 def discrete_cmap(N, base_cmap=None):
