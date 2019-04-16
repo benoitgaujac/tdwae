@@ -140,8 +140,12 @@ class WAE(object):
                     else:
                         reconstructed=tf.nn.sigmoid(reconstructed)
                 reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-                loss_reconstruct = reconstruction_loss(opts, self.points,
-                                                reconstructed)
+                if opts['decoder'][n] == 'gauss':
+                    loss_reconstruct = reconstruction_loss(opts, self.points,
+                                                reconstructed, recon_Sigma)
+                else:
+                    loss_reconstruct = 2.*reconstruction_loss(opts, self.points,
+                                                reconstructed, tf.ones_like(recon_mean,dtype=tf.float32))
                 self.loss_reconstruct += loss_reconstruct
             else:
                 # Setting output_dim
@@ -162,13 +166,15 @@ class WAE(object):
                                                 dropout_rate=self.dropout_rate)
                 if opts['decoder'][n] == 'det':
                     reconstructed = recon_mean
+                    loss_reconstruct = 2.*reconstruction_loss(opts, self.encoded[-2],
+                                                reconstructed, tf.ones_like(recon_mean,dtype=tf.float32))
                 elif opts['decoder'][n] == 'gauss':
                     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
                     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
+                                                reconstructed, recon_Sigma)
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
-                loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
-                                                reconstructed)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
             self.losses_reconstruct.append(loss_reconstruct)
@@ -252,7 +258,7 @@ class WAE(object):
             self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
             self.match_penalty = 0
             for n in range(opts['nlatents']-1):
-                self.match_penalty += self.lmbd[-1]* 0.1 * matching_penalty(opts, self.decoded[opts['nlatents']-(n+2)],
+                self.match_penalty += self.lmbd[-1]* 0.01 * matching_penalty(opts, self.decoded[opts['nlatents']-(n+2)],
                                                     self.encoded[n])
             self.match_penalty += self.lmbd[-1] * matching_penalty(opts, self.samples, self.encoded[-1])
             # Compute objs

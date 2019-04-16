@@ -22,6 +22,7 @@ def kl_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
+
 def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
     """
     Compute MC log density ratio
@@ -32,6 +33,7 @@ def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
     kl = -0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
+
 def Xentropy_penalty(samples, mean, sigma):
     """
     Compute Xentropy for gaussian using MC
@@ -39,6 +41,7 @@ def Xentropy_penalty(samples, mean, sigma):
     loglikelihood = tf.log(2*pi) + tf.log(sigma) + tf.square(samples-mean) / sigma
     loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
     return tf.reduce_mean(loglikelihood)
+
 
 def entropy_penalty(samples, mean, sigma):
     """
@@ -178,7 +181,7 @@ def square_dist_v2(opts, sample_x, sample_y):
     return squared_dist
 
 
-def reconstruction_loss(opts, x1, x2):
+def reconstruction_loss(opts, x1, x2, dec_Sigma=None):
     """
     Compute the WAE's reconstruction losses
     x1: image data             [batch,im_dim]
@@ -200,9 +203,21 @@ def reconstruction_loss(opts, x1, x2):
     elif opts['cost'] == 'l2sq_norm':
         # c(x,y) = mean_i(||x - y||_2^2[:,i])
         cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
+    elif opts['cost'] == 'l2sq_gauss':
+        assert dec_Sigma is not None, 'Need to pass dec Sigma for l2sq_gauss'
+        # c(x,y) = -log N(x;y,dec_Sigma)
+        cost = 0.5*tf.reduce_sum(tf.log(dec_Sigma)+tf.square(x1 - x2)/dec_Sigma+tf.log(2*pi), axis=-1)
+    elif opts['cost'] == 'l2sq_gauss_v2':
+        assert dec_Sigma is not None, 'Need to pass dec Sigma for l2sq_gauss'
+        # c(x,y) = 0.5*sum_i(||x - y||_2^2[:,i] / Sigma[:,i])
+        cost = 0.5*tf.reduce_sum(tf.square(x1 - x2)/dec_Sigma, axis=-1)
     elif opts['cost'] == 'l1':
         # c(x,y) = ||x - y||_1
         cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
+    elif opts['cost'] == 'chebychev':
+        # c(x,y) = max_i |x[:,i] - y[:,i]|
+        cost = tf.abs(x1-x2)
+        cost =  tf.reduce_max(cost,axis=-1)
     elif opts['cost']=='cross_entropy':
         assert False, 'To implement cost function %s' % opts['cost']
         # c(x,y) = sum_i x[i]log y[i] + (1-x[i](log 1-y[i])

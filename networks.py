@@ -43,8 +43,10 @@ def one_layer_encoder(opts, input, output_dim, norm, scope, reuse=False,
                     output_dim, init=opts['mlp_init'], scope='hid_final')
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -100, 100)
+    logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
+    # logSigma = tf.clip_by_value(logSigma, -20, 20)
+    # Sigma = tf.exp(logSigma)
     return mean, Sigma
 
 def one_layer_decoder(opts, input, output_dim, norm, scope, reuse=False,
@@ -114,6 +116,8 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
     mean, logSigma = tf.split(outputs,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
+    # logSigma = tf.clip_by_value(logSigma, -20, 20)
+    # Sigma = tf.exp(logSigma)
     return mean, Sigma
 
 def mlp_encoder(opts, input, num_layers, num_units, output_dim,
@@ -218,6 +222,8 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
     mean, logSigma = tf.split(outputs,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
+    # logSigma = tf.clip_by_value(logSigma, -20, 20)
+    # Sigma = tf.exp(logSigma)
 
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)
 

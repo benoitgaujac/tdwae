@@ -21,7 +21,8 @@ parser.add_argument("--exp", default='mnist',
                     help='dataset [mnist/cifar10/].'\
                     ' celebA/dsprites Not implemented yet')
 parser.add_argument("--method", default='wae')
-parser.add_argument("--penalty", default='wae')
+parser.add_argument("--penalty", default='wae',
+                    help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -71,27 +72,30 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 4011+int(187500/8)
-    opts['print_every'] = 4*187500/8. #10*468
+    opts['epoch_num'] = 4011+int(187500/8/468)
+    opts['print_every'] = 5*468
     opts['lr'] = 0.0005
     opts['save_every_epoch'] = 2005
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['pen'] = FLAGS.penalty
-    opts['pen_enc_sigma'] = True
-    opts['lambda_pen_enc_sigma'] = 0.01
-    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
+    opts['pen_enc_sigma'] = False
+    opts['lambda_pen_enc_sigma'] = 0.001
+    opts['cost'] = 'l2sq_gauss_v2' #l2, l2sq, l2sq_norm, l2sq_gauss, l1, pearson
+
     # Penalty
+    # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
     opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
+
     # Model set up
     opts['nlatents'] = 5
-    opts['zdim'] = [32,16,8,4,2] #[64,32,16,8,4,2]
+    opts['zdim'] = [32,16,8,4,2] # [20,16,12,8,4]
+
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
@@ -101,11 +105,13 @@ def main():
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['e_nfilters'] =  [1024,512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['d_nfilters'] = [1024,512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
     # Verbose
     if opts['verbose']:
