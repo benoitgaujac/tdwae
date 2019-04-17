@@ -181,9 +181,9 @@ def square_dist_v2(opts, sample_x, sample_y):
     return squared_dist
 
 
-def reconstruction_loss(opts, x1, x2, dec_Sigma=None):
+def obs_reconstruction_loss(opts, x1, x2):
     """
-    Compute the WAE's reconstruction losses
+    Compute the WAE's reconstruction losses for the top layer
     x1: image data             [batch,im_dim]
     x2: image reconstruction   [batch,im_dim]
     """
@@ -193,41 +193,76 @@ def reconstruction_loss(opts, x1, x2, dec_Sigma=None):
     x1 = tf.layers.flatten(x1)
     x2 = tf.layers.flatten(x2)
     # Compute chosen cost
-    if opts['cost'] == 'l2':
-        # c(x,y) = ||x - y||_2
-        cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-        cost = tf.sqrt(1e-10 + cost)
-    elif opts['cost'] == 'l2sq':
-        # c(x,y) = sum_i(||x - y||_2^2[:,i])
-        cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-    elif opts['cost'] == 'l2sq_norm':
-        # c(x,y) = mean_i(||x - y||_2^2[:,i])
-        cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
-    elif opts['cost'] == 'l2sq_gauss':
-        assert dec_Sigma is not None, 'Need to pass dec Sigma for l2sq_gauss'
-        # c(x,y) = -log N(x;y,dec_Sigma)
-        cost = 0.5*tf.reduce_sum(tf.log(dec_Sigma)+tf.square(x1 - x2)/dec_Sigma+tf.log(2*pi), axis=-1)
-    elif opts['cost'] == 'l2sq_gauss_v2':
-        assert dec_Sigma is not None, 'Need to pass dec Sigma for l2sq_gauss'
-        # c(x,y) = 0.5*sum_i(||x - y||_2^2[:,i] / Sigma[:,i])
-        cost = 0.5*tf.reduce_sum(tf.square(x1 - x2)/dec_Sigma, axis=-1)
-    elif opts['cost'] == 'l1':
-        # c(x,y) = ||x - y||_1
-        cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
-    elif opts['cost'] == 'chebychev':
-        # c(x,y) = max_i |x[:,i] - y[:,i]|
-        cost = tf.abs(x1-x2)
-        cost =  tf.reduce_max(cost,axis=-1)
-    elif opts['cost']=='cross_entropy':
-        assert False, 'To implement cost function %s' % opts['cost']
-        # c(x,y) = sum_i x[i]log y[i] + (1-x[i](log 1-y[i])
-        eps = 1e-5
-        cost = tf.reduce_sum(x1*tf.log(eps+x2)+(1-x1)*tf.log(eps+1-x2),axis=-1)
+    if opts['obs_cost'] == 'l2':
+        cost = l2_cost(x1, x2)
+    elif opts['obs_cost'] == 'l2sq':
+        cost = l2sq_cost(x1, x2)
+    elif opts['obs_cost'] == 'l2sq_norm':
+        cost = l2sq_norm_cost(x1, x2)
+    elif opts['obs_cost'] == 'l1':
+        cost = l1_cost(x1, x2)
     else:
-        assert False, 'Unknown cost function %s' % opts['cost']
+        assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
-    loss = opts['coef_rec'] * tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr,
+    loss = tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr in WAE
     return loss
+
+
+def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
+    """
+    Compute the WAE's reconstruction losses for latent layers
+    x1: image data              [batch,im_dim]
+    x2: image reconstruction    [batch,im_dim]
+    mu: decoded mean            [batch,im_dim]
+    Sigma: decoded variance     [batch,im_dim]
+    """
+    # Flatten if necessary
+    assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
+                'data and reconstruction must have the same shape'
+    x1 = tf.layers.flatten(x1)
+    x2 = tf.layers.flatten(x2)
+    # Compute chosen cost
+    if opts['latent_cost'] == 'l2':
+        cost = l2_cost(x1, x2)
+    elif opts['latent_cost'] == 'l2sq':
+        cost = l2sq_cost(x1, x2)
+    elif opts['latent_cost'] == 'l2sq_gauss':
+        cost = l2sq_gauss_cost(x1, x2, mu, Sigma)
+    elif opts['latent_cost'] == 'l2sq_norm':
+        cost = l2sq_norm_cost(x1, x2)
+    elif opts['latent_cost'] == 'l1':
+        cost = l1_cost(x1, x2)
+    else:
+        assert False, 'Unknown cost function %s' % opts['obs_cost']
+    # Compute loss
+    loss = tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr in WAE
+    return loss
+
+
+def l2_cost(x1, x2):
+    # c(x,y) = ||x - y||_2
+    cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
+    return tf.sqrt(1e-10 + cost)
+
+
+def l2sq_cost(x1,x2):
+    # c(x,y) = sum_i(||x - y||_2^2[:,i])
+    return tf.reduce_sum(tf.square(x1 - x2), axis=-1)
+
+
+def l2sq_gauss_cost(x1, x2, mu, Sigma):
+    # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
+    return tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
+
+
+def l2sq_norm_cost(x1, x2):
+    # c(x,y) = mean_i(||x - y||_2^2[:,i])
+    return tf.reduce_mean(tf.square(x1 - x2), axis=-1)
+
+
+def l1_cost(x1, x2):
+    # c(x,y) = ||x - y||_1
+    return tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
 
 
 def vae_reconstruction_loss(x1, x2):

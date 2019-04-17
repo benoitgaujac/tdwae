@@ -18,7 +18,7 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
-from loss_functions import matching_penalty, reconstruction_loss, moments_loss
+from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
 from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation, save_vlae_experiment
 from networks import encoder, decoder
@@ -79,18 +79,12 @@ class WAE(object):
         encoded = self.points
         for n in range(opts['e_nlatents']):
             # - Encoding points
-            # Setting output_dim
-            # if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
-            #     enc_output_dim = 2*opts['zdim'][n]
-            # else:
-            #     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
-            enc_output_dim = 2*opts['zdim'][n]
             enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=enc_output_dim,
+                                                output_dim=2*opts['zdim'][n],
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
                                                 is_training=self.is_training,
@@ -140,41 +134,31 @@ class WAE(object):
                     else:
                         reconstructed=tf.nn.sigmoid(reconstructed)
                 reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-                if opts['decoder'][n] == 'gauss':
-                    loss_reconstruct = reconstruction_loss(opts, self.points,
-                                                reconstructed, recon_Sigma)
-                else:
-                    loss_reconstruct = 2.*reconstruction_loss(opts, self.points,
-                                                reconstructed, tf.ones_like(recon_mean,dtype=tf.float32))
+                loss_reconstruct = obs_reconstruction_loss(opts, self.points,reconstructed)
                 self.loss_reconstruct += loss_reconstruct
             else:
-                # Setting output_dim
-                # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                # else:
-                #     dec_output_dim = 2*opts['zdim'][n-1]
-                dec_output_dim = 2*opts['zdim'][n-1]
                 recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=dec_output_dim,
+                                                output_dim=2*opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training,
                                                 dropout_rate=self.dropout_rate)
                 if opts['decoder'][n] == 'det':
                     reconstructed = recon_mean
-                    loss_reconstruct = 2.*reconstruction_loss(opts, self.encoded[-2],
-                                                reconstructed, tf.ones_like(recon_mean,dtype=tf.float32))
                 elif opts['decoder'][n] == 'gauss':
                     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
                     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
-                    loss_reconstruct = reconstruction_loss(opts, self.encoded[-2],
-                                                reconstructed, recon_Sigma)
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                loss_reconstruct = latent_reconstruction_loss(opts,
+                                                self.encoded[-2],
+                                                reconstructed,
+                                                recon_mean,
+                                                recon_Sigma)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
             self.losses_reconstruct.append(loss_reconstruct)
@@ -210,12 +194,6 @@ class WAE(object):
                         decoded=tf.nn.sigmoid(decoded)
                 decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
             else:
-                # Setting output_dim
-                # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                # else:
-                #     dec_output_dim = 2*opts['zdim'][n-1]
-                dec_output_dim = 2*opts['zdim'][n-1]
                 # Reuse params
                 if n>=opts['e_nlatents']:
                     reuse=False
@@ -226,7 +204,7 @@ class WAE(object):
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=dec_output_dim,
+                                                output_dim=2*opts['zdim'][n-1],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
                                                 is_training=self.is_training)
