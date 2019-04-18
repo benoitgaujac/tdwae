@@ -270,7 +270,7 @@ def mahalanobis_cost(x1, x2):
 
 
 def cov(x):
-    mean_x = tf.reduce_mean(x, axis=0, keep_dims=True)
+    mean_x = tf.reduce_mean(x, axis=0, keepdims=True)
     mx = tf.matmul(tf.transpose(mean_x), mean_x)
     vx = tf.matmul(tf.transpose(x), x)/tf.cast(tf.shape(x)[0], tf.float32)
     cov_xx = vx - mx
@@ -312,7 +312,7 @@ def vae_sigmoid_reconstruction_loss(x1, logits):
 
 def contrast_norm(pics):
     # pics is a [N, H, W, C] tensor
-    mean, var = tf.nn.moments(pics, axes=[-3, -2, -1], keep_dims=True)
+    mean, var = tf.nn.moments(pics, axes=[-3, -2, -1], keepdims=True)
     return pics / tf.sqrt(var + 1e-08)
 
 
