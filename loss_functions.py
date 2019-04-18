@@ -232,6 +232,8 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
         cost = l2sq_norm_cost(x1, x2)
     elif opts['latent_cost'] == 'l1':
         cost = l1_cost(x1, x2)
+    elif opts['latent_cost'] == 'mahalanobis':
+        cost = mahalanobis_cost(x1, x2)
     else:
         assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
@@ -253,6 +255,26 @@ def l2sq_cost(x1,x2):
 def l2sq_gauss_cost(x1, x2, mu, Sigma):
     # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
     return tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
+
+
+def mahalanobis_cost(x1, x2):
+    # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
+    Sigma1 = cov(x1)
+    Sigma2 = cov(x2)
+    Sigma = 0.5*(Sigma1+Sigma2)
+    Sigma_inv = tf.matrix_inverse(Sigma)
+    cost = tf.tensordot(Sigma_inv, tf.expand_dims(x1-x2,axis=-1), axes=[[1], [1]])
+    cost = tf.transpose(cost, [1, 0, 2])
+    cost = tf.matmul(tf.expand_dims(x1-x2,axis=1),cost)
+    return tf.squeeze(cost,[1,2])
+
+
+def cov(x):
+    mean_x = tf.reduce_mean(x, axis=0, keep_dims=True)
+    mx = tf.matmul(tf.transpose(mean_x), mean_x)
+    vx = tf.matmul(tf.transpose(x), x)/tf.cast(tf.shape(x)[0], tf.float32)
+    cov_xx = vx - mx
+    return vx - mx
 
 
 def l2sq_norm_cost(x1, x2):
