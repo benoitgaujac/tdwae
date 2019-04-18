@@ -70,7 +70,8 @@ class WAE(object):
 
         # --- Initialize list container
         encSigmas_stats = []
-        pen_enc_sigma = 0.
+        decSigmas_stats = []
+        pen_enc_sigma, pen_dec_sigma = 0., 0.
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -106,7 +107,7 @@ class WAE(object):
             encSigmas_stats.append(Sstats)
             # Enc Sigma penalty
             if opts['pen_enc_sigma']:
-                pen_enc_sigma += tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
+                pen_enc_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
                 recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -124,6 +125,9 @@ class WAE(object):
                 elif opts['decoder'][n] == 'gauss':
                     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
                     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    # Dec Sigma penalty
+                    if opts['pen_dec_sigma']:
+                        pen_dec_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(recon_Sigma)),axis=-1))
                 elif opts['decoder'][n] == 'bernoulli':
                     reconstructed = sample_bernoulli(recon_mean)
                 else:
@@ -134,7 +138,7 @@ class WAE(object):
                     else:
                         reconstructed=tf.nn.sigmoid(reconstructed)
                 reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-                loss_reconstruct = obs_reconstruction_loss(opts, self.points,reconstructed)
+                loss_reconstruct = obs_reconstruction_loss(opts, self.points, reconstructed)
                 self.loss_reconstruct += loss_reconstruct
             else:
                 recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -152,6 +156,9 @@ class WAE(object):
                 elif opts['decoder'][n] == 'gauss':
                     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
                     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    # Dec Sigma penalty
+                    if opts['pen_dec_sigma']:
+                        pen_dec_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(recon_Sigma)),axis=-1))
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
                 loss_reconstruct = latent_reconstruction_loss(opts,
@@ -162,8 +169,15 @@ class WAE(object):
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
             self.reconstructed.append(reconstructed)
             self.losses_reconstruct.append(loss_reconstruct)
-        # Enc Sigma stats
+            # Dec Sigma stats
+            Sigma_det = tf.reduce_prod(recon_Sigma,axis=-1)
+            Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
+            Sstats = tf.stack([Smean,Svar],axis=-1)
+            decSigmas_stats.append(Sstats)
+
+        # Sigma stats
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
+        self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
 
         # --- Sampling from model (only for generation)
         decoded = self.samples
@@ -225,9 +239,9 @@ class WAE(object):
                 self.C = square_dist_v2(self.opts,self.samples, self.encoded[-1])
             else:
                 self.match_penalty = matching_penalty(opts, self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                    self.encoded[-1])
+                                                self.encoded[-1])
                 self.C = square_dist_v2(self.opts,self.decoded[opts['nlatents']-opts['e_nlatents']-1],
-                                                    self.encoded[-1])
+                                                self.encoded[-1])
             # Compute objs
             self.objective = self.loss_reconstruct \
                              + self.lmbd[-1] * self.match_penalty
@@ -237,7 +251,7 @@ class WAE(object):
             self.match_penalty = 0
             for n in range(opts['nlatents']-1):
                 self.match_penalty += self.lmbd[-1]* 0.01 * matching_penalty(opts, self.decoded[opts['nlatents']-(n+2)],
-                                                    self.encoded[n])
+                                                self.encoded[n])
             self.match_penalty += self.lmbd[-1] * matching_penalty(opts, self.samples, self.encoded[-1])
             # Compute objs
             self.objective = self.loss_reconstruct + self.match_penalty
@@ -246,6 +260,9 @@ class WAE(object):
         # Enc Sigma penalty
         if opts['pen_enc_sigma']:
             self.objective += opts['lambda_pen_enc_sigma']*pen_enc_sigma
+        # Dec Sigma penalty
+        if opts['pen_dec_sigma']:
+            self.objective += opts['lambda_pen_dec_sigma']*pen_dec_sigma
         # Implicit losses
         if opts['nlatents']>1:
             self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
@@ -610,7 +627,7 @@ class WAE(object):
             f.close()
             # Compute bluriness of real data
             real_blurr = self.sess.run(self.blurriness, feed_dict={
-                                                    self.points: data.data[:npics]})
+                                                self.points: data.data[:npics]})
             logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
             print('')
 
@@ -618,7 +635,7 @@ class WAE(object):
         Loss, imp_Loss = [], []
         Loss_rec, Losses_rec, Loss_rec_test = [], [], []
         Loss_match, imp_Match = [], []
-        enc_Sigmas = []
+        enc_Sigmas, dec_Sigmas = [], []
         mean_blurr, fid_scores = [], [],
         decay, counter = 1., 0
         wait, wait_lambda = 0, 0
@@ -664,9 +681,12 @@ class WAE(object):
                 Loss_match.append(wae_lambda[-1]*loss_match)
                 imp_Match.append(imp_match)
                 if opts['vizu_encSigma']:
-                    enc_sigmastats = self.sess.run(self.encSigmas_stats,
+                    [enc_sigmastats,dec_sigmastats] = self.sess.run(
+                                                [self.encSigmas_stats,
+                                                self.decSigmas_stats],
                                                 feed_dict=feed_dict)
                     enc_Sigmas.append(enc_sigmastats)
+                    dec_Sigmas.append(dec_sigmastats)
 
                 ##### TESTING LOOP #####
                 if counter % opts['print_every']==0 or counter==100:
@@ -682,10 +702,10 @@ class WAE(object):
                                                 replace=True)
                         batch_images = data.test_data[data_ids].astype(np.float32)
                         l = self.sess.run(self.loss_reconstruct,
-                                            feed_dict={self.points:batch_images,
-                                                       self.lmbd: wae_lambda,
-                                                       self.dropout_rate: 0.,
-                                                       self.is_training:False})
+                                                feed_dict={self.points:batch_images,
+                                                           self.lmbd: wae_lambda,
+                                                           self.dropout_rate: 0.,
+                                                           self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
 
@@ -717,7 +737,8 @@ class WAE(object):
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                 'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_encSigma'] and counter>1:
-                        plot_encSigma(opts, enc_Sigmas, work_dir,
+                        plot_encSigma(opts, enc_Sigmas, dec_Sigmas,
+                                                work_dir,
                                                 'encSigma_e%04d_mb%05d.png' % (epoch, it))
 
 
