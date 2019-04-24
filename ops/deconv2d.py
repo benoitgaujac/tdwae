@@ -30,7 +30,7 @@ def Deconv2D(opts, input, input_dim, output_shape, filter_size=3, stride=2, scop
             filters_stdev = np.sqrt(4./(fan_in+fan_out))
             filter_values = custom_uniform(
                 filters_stdev,
-                (filter_size, filter_size, output_dim,input_dim))
+                (filter_size, filter_size, output_dim, input_dim))
             w = tf.get_variable(
                 'filter', initializer=filter_values)
         elif init=='normilized_glorot':

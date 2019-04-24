@@ -72,6 +72,7 @@ class WAE(object):
         encSigmas_stats = []
         decSigmas_stats = []
         pen_enc_sigma, pen_dec_sigma = 0., 0.
+        self.features_dim = [[self.data_shape[0],self.data_shape[1],opts['e_nfilters'][0]],]
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -80,12 +81,14 @@ class WAE(object):
         encoded = self.points
         for n in range(opts['e_nlatents']):
             # - Encoding points
-            enc_mean, enc_Sigma = encoder(self.opts, input=encoded,
+            enc_mean, enc_Sigma, out_shape = encoder(self.opts, input=encoded,
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*opts['zdim'][n],
+                                                features_dim=self.features_dim[-1],
+                                                resample=opts['e_resample'][n],
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
                                                 is_training=self.is_training,
@@ -100,6 +103,7 @@ class WAE(object):
             else:
                 assert False, 'Unknown encoder %s' % opts['encoder']
             self.encoded.append(encoded)
+            self.features_dim.append(out_shape)
             # Enc Sigma stats
             Sigma_det = tf.reduce_prod(enc_Sigma,axis=-1)
             Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
@@ -116,6 +120,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                features_dim=self.features_dim[-2],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training,
@@ -147,6 +153,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*opts['zdim'][n-1],
+                                                features_dim=self.features_dim[-2],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=False,
                                                 is_training=self.is_training,
@@ -189,6 +197,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
@@ -219,6 +229,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*opts['zdim'][n-1],
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
                                                 is_training=self.is_training)
@@ -231,6 +243,7 @@ class WAE(object):
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
             self.decoded.append(decoded)
 
+        #var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='decoder')
         # --- Objectives, penalties, pretraining, FID
         if opts['pen']=='wae':
             # Compute matching penalty cost for last layer
@@ -339,6 +352,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -358,18 +373,14 @@ class WAE(object):
                             reconstructed=tf.nn.sigmoid(reconstructed)
                     reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                 else:
-                    # Setting output_dim
-                    # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    # else:
-                    #     dec_output_dim = 2*opts['zdim'][n-1]
-                    dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=dec_output_dim,
+                                                output_dim=2*opts['zdim'][n-1],
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -388,19 +399,14 @@ class WAE(object):
         self.sampled_reconstructed = []
         encoded_samples = [self.points,]
         for n in range(opts['e_nlatents']):
-            # - Encoding points
-            # Setting output_dim
-            # if opts['e_arch'][n]=='mlp' or n==opts['nlatents']-1:
-            #     enc_output_dim = 2*opts['zdim'][n]
-            # else:
-            #     enc_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n]
-            enc_output_dim = 2*opts['zdim'][n]
-            enc_mean, enc_Sigma = encoder(self.opts, input=tf.expand_dims(encoded_samples[-1][0],0),
+            enc_mean, enc_Sigma, out_shape = encoder(self.opts, input=tf.expand_dims(encoded_samples[-1][0],0),
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
                                                 num_units=opts['e_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=enc_output_dim,
+                                                output_dim=2*opts['zdim'][n],
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['e_resample'][n],
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=True,
                                                 is_training=False)
@@ -418,6 +424,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -437,18 +445,14 @@ class WAE(object):
                             reconstructed=tf.nn.sigmoid(reconstructed)
                     reconstructed = tf.reshape(reconstructed,[-1,]+datashapes[opts['dataset']])
                 else:
-                    # Setting output_dim
-                    # if opts['e_arch'][n-1]=='dcgan' or opts['e_arch'][n-1]=='dcgan_mod':
-                    #     dec_output_dim = 2*datashapes[opts['dataset']][-1]*opts['zdim'][n-1]
-                    # else:
-                    #     dec_output_dim = 2*opts['zdim'][n-1]
-                    dec_output_dim = 2*opts['zdim'][n-1]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=dec_output_dim,
+                                                output_dim=2*opts['zdim'][n-1],
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -470,6 +474,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][0],
                                                 filter_size=opts['filter_size'][0],
                                                 output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                features_dim=self.features_dim[0],
+                                                resample=opts['d_resample'][0],
                                                 scope='decoder/layer_0',
                                                 reuse=True,
                                                 is_training=False)
@@ -713,7 +719,6 @@ class WAE(object):
                     [reconstructed_test, encoded, samples] = self.sess.run(
                                                 [self.full_reconstructed[-1],
                                                  self.encoded,
-                                                 #self.decoded[:-1]],
                                                  self.decoded],
                                                 feed_dict={self.points:data.test_data[:30*npics],
                                                            self.samples: fixed_noise,
@@ -1013,6 +1018,8 @@ class WAE(object):
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=output_dim,
+                                                features_dim=self.features_dim[n],
+                                                resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
