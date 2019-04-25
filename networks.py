@@ -295,7 +295,7 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 500)
+    logSigma = tf.clip_by_value(logSigma, -10, 500)
     Sigma = tf.nn.softplus(logSigma)
 
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)

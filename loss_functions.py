@@ -185,13 +185,20 @@ def obs_reconstruction_loss(opts, x1, x2):
     """
     Compute the WAE's reconstruction losses for the top layer
     x1: image data             [batch,im_dim]
-    x2: image reconstruction   [batch,im_dim]
+    x2: image reconstruction   [batch,nsamples,im_dim]
     """
-    # Flatten if necessary
-    assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
-                'data and reconstruction must have the same shape'
+    # assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
+    #             'data and reconstruction must have the same shape'
+    # Flatten last dim input
     x1 = tf.layers.flatten(x1)
-    x2 = tf.layers.flatten(x2)
+    # Expand dim x1 if needed and flatten last dim input
+    if len(x2.get_shape().as_list())>4:
+        x1 = tf.expand_dims(x1,axis=1)
+        # Flatten last dim input
+        rec_shape = x2.get_shape().as_list()[1:]
+        x2 = tf.reshape(x2,[-1,rec_shape[0]]+[np.prod(rec_shape[-3:]),])
+    else:
+        x2 = tf.layers.flatten(x2)
     # Compute chosen cost
     if opts['obs_cost'] == 'l2':
         cost = l2_cost(x1, x2)
@@ -212,15 +219,15 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
     """
     Compute the WAE's reconstruction losses for latent layers
     x1: image data              [batch,im_dim]
-    x2: image reconstruction    [batch,im_dim]
-    mu: decoded mean            [batch,im_dim]
-    Sigma: decoded variance     [batch,im_dim]
+    x2: image reconstruction    [batch,nsamples,im_dim]
+    mu: decoded mean            [batch,nsamples,im_dim]
+    Sigma: decoded variance     [batch,nsamples,im_dim]
     """
-    # Flatten if necessary
-    assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
-                'data and reconstruction must have the same shape'
-    x1 = tf.layers.flatten(x1)
-    x2 = tf.layers.flatten(x2)
+    # assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
+    #             'data and reconstruction must have the same shape'
+    # Expand dim x1 if needed
+    if len(x1.get_shape().as_list())!=len(x2.get_shape().as_list()):
+        x1 = tf.expand_dims(x1,axis=1)
     # Compute chosen cost
     if opts['latent_cost'] == 'l2':
         cost = l2_cost(x1, x2)
@@ -234,6 +241,8 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
         cost = l1_cost(x1, x2)
     elif opts['latent_cost'] == 'mahalanobis':
         cost = mahalanobis_cost(x1, x2)
+    elif opts['latent_cost'] == 'mahalanobis_v2':
+        cost = mahalanobis_cost_v2(x1, x2)
     else:
         assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
@@ -244,21 +253,32 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
 def l2_cost(x1, x2):
     # c(x,y) = ||x - y||_2
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-    return tf.sqrt(1e-10 + cost)
+    cost = tf.sqrt(1e-10 + cost)
+    if len(x2.get_shape().as_list())>2:
+        return tf.reduce_mean(cost,axis=1)
+    else:
+        return cost
 
 
 def l2sq_cost(x1,x2):
     # c(x,y) = sum_i(||x - y||_2^2[:,i])
-    return tf.reduce_sum(tf.square(x1 - x2), axis=-1)
+    cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
+    if len(x2.get_shape().as_list())>2:
+        return tf.reduce_mean(cost,axis=1)
+    else:
+        return cost
 
 
 def l2sq_gauss_cost(x1, x2, mu, Sigma):
     # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
-    return tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
+    cost = tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
+    if len(x2.get_shape().as_list())>2:
+        return tf.reduce_mean(cost,axis=1)
+    else:
+        return cost
 
 
 def mahalanobis_cost(x1, x2):
-    # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
     Sigma1 = cov(x1)
     Sigma2 = cov(x2)
     Sigma = 0.5*(Sigma1+Sigma2)
@@ -269,22 +289,38 @@ def mahalanobis_cost(x1, x2):
     return tf.squeeze(cost,[1,2])
 
 
-def cov(x):
-    mean_x = tf.reduce_mean(x, axis=0, keepdims=True)
-    mx = tf.matmul(tf.transpose(mean_x), mean_x)
-    vx = tf.matmul(tf.transpose(x), x)/tf.cast(tf.shape(x)[0], tf.float32)
-    cov_xx = vx - mx
+def mahalanobis_cost_v2(x1, x2):
+    mu2 = tf.reduce_mean(x2, axis=1, keepdims=True)
+    Sigma2 = cov(x2,mu2)
+    shape = Sigma2.get_shape().as_list()[1:]
+    Sigma_inv = tf.matrix_inverse(Sigma2+1e-5*tf.eye(shape[0]))
+    cost = tf.matmul(Sigma_inv, tf.transpose(x1-mu2,perm=[0,2,1]))
+    cost = tf.matmul(x1-mu2,cost)
+    return tf.squeeze(cost,[1,2])
+
+
+def cov(x,mu):
+    mx = tf.matmul(tf.transpose(mu,perm=[0,2,1]), mu)
+    vx = tf.matmul(tf.transpose(x,perm=[0,2,1]), x)/tf.cast(tf.shape(x)[1], tf.float32)
     return vx - mx
 
 
 def l2sq_norm_cost(x1, x2):
     # c(x,y) = mean_i(||x - y||_2^2[:,i])
-    return tf.reduce_mean(tf.square(x1 - x2), axis=-1)
+    cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
+    if len(x2.get_shape().as_list())>2:
+        return tf.reduce_mean(cost,axis=1)
+    else:
+        return cost
 
 
 def l1_cost(x1, x2):
     # c(x,y) = ||x - y||_1
-    return tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
+    cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
+    if len(x2.get_shape().as_list())>2:
+        return tf.reduce_mean(cost,axis=1)
+    else:
+        return cost
 
 
 def vae_reconstruction_loss(x1, x2):

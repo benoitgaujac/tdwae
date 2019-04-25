@@ -241,25 +241,30 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     plt.close()
 
 
-def plot_encSigma(opts, enc_Sigmas, work_dir, filename):
+def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     fig = plt.figure()
-    Sigmas = np.stack(enc_Sigmas,axis=0)
-    shape = np.shape(Sigmas)
+    encSig = np.stack(enc_Sigmas,axis=0)
+    decSig = np.stack(dec_Sigmas,axis=0)
+    shape = np.shape(encSig)
     # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
     x = np.arange(1, total_num + 1, x_step)
-    for i in range(shape[1]):
-        mean, var = Sigmas[::x_step,i,0], Sigmas[::x_step,i,1]
+    for i in range(opts['nlatents']):
+        mean, var = encSig[::x_step,i,0], encSig[::x_step,i,1]
         y = np.log(mean)
-        plt.plot(x, y, linewidth=2, color=color_list[i], label=r'$\Sigma_%d$' % i)
-        y = np.log(mean+np.sqrt(var))
-        plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
+        plt.plot(x, y, linewidth=1, color=color_list[i], label=r'e$\Sigma_%d$' % i)
+        if i!=0:
+            mean, var = decSig[::x_step,i-1,0], decSig[::x_step,i-1,1]
+            y = np.log(mean)
+            plt.plot(x, y, linewidth=1, linestyle='--', color=color_list[i], label=r'd$\Sigma_%d$' % i)
+        # y = np.log(mean+np.sqrt(var))
+        # plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
     plt.grid(axis='y')
     plt.legend(loc='lower left')
-    plt.title('logSigma curves')
+    plt.title(r'log|$\Sigma$| curves')
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)
@@ -354,40 +359,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         samples = samples / 2. + 0.5
     images = []
 
-
-    """
-    # --- Reconstruction plots
-    num_pics = 200
-    num_cols = 20
-    sample = data_test[:num_pics]
-    recon = reconstructed[:num_pics]
-    pics = []
-    merged = np.vstack([recon, sample])
-    r_ptr = 0
-    w_ptr = 0
-    for _ in range(int(num_pics / 2)):
-        merged[w_ptr] = sample[r_ptr]
-        merged[w_ptr + 1] = recon[r_ptr]
-        r_ptr += 1
-        w_ptr += 2
-    for idx in range(num_pics):
-        if greyscale:
-            pics.append(1. - merged[idx, :, :, :])
-        else:
-            pics.append(merged[idx, :, :, :])
-    # Figuring out a layout
-    pics = np.array(pics)
-    image = np.concatenate(np.split(pics, num_cols), axis=2)
-    image = np.concatenate(image, axis=0)
-    images.append(image)
-    """
-
-
     # --- full reconstruction plots
-    # num_cols = len(full_reconstructed)
-    # num_rows = np.shape(full_reconstructed[0])[0]
-    # pics = np.concatenate(full_reconstructed,axis=2)
-    # pics = np.concatenate(np.split(pics,num_rows),axis=1)
     num_rows = len(full_reconstructed)
     num_cols = np.shape(full_reconstructed[0])[0]
     full_reconstructed = np.split(np.array(full_reconstructed),num_cols,axis=1)
