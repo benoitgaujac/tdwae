@@ -293,7 +293,7 @@ def mahalanobis_cost_v2(x1, x2):
     mu2 = tf.reduce_mean(x2, axis=1, keepdims=True)
     Sigma2 = cov(x2,mu2)
     shape = Sigma2.get_shape().as_list()[1:]
-    Sigma_inv = tf.matrix_inverse(Sigma2+1e-5*tf.eye(shape[0]))
+    Sigma_inv = tf.matrix_inverse(Sigma2+1e-8*tf.eye(shape[0]))
     cost = tf.matmul(Sigma_inv, tf.transpose(x1-mu2,perm=[0,2,1]))
     cost = tf.matmul(x1-mu2,cost)
     return tf.squeeze(cost,[1,2])

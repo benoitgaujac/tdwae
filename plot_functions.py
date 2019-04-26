@@ -264,7 +264,7 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
         # plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
     plt.grid(axis='y')
     plt.legend(loc='lower left')
-    plt.title(r'log|$\Sigma$| curves')
+    plt.title(r'log Tr$(\Sigma)$ curves')
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)

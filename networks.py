@@ -129,7 +129,7 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
             raise ValueError('%s Unknown encoder architecture for mixtures' % archi)
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 500)
+    logSigma = tf.clip_by_value(logSigma, -20, 500)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma, out_shape
 
@@ -240,6 +240,22 @@ def dcgan_v2_encoder(opts, input, num_layers, num_units, filter_size,
     return outputs, out_shape
 
 
+def resnet_encoder(opts, input, num_layers, num_units, filter_size,
+                                                        output_dim,
+                                                        features_dim,
+                                                        resample=False,
+                                                        reuse=False,
+                                                        is_training=False):
+    output, output_shape = dcgan_v2_encoder(opts, input, num_layers,
+                                                        num_units,
+                                                        filter_size,
+                                                        output_dim,
+                                                        features_dim,
+                                                        resample,
+                                                        reuse,
+                                                        is_training)
+
+
 def resnet_encoder(opts, input, output_dim, reuse=False, is_training=False):
     output = ops.resnet.OptimizedResBlockEnc1(opts,input,output_dim)
     output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res2', resample='down', reuse=reuse, is_training=is_training)
@@ -295,7 +311,7 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -10, 500)
+    logSigma = tf.clip_by_value(logSigma, -20, 500)
     Sigma = tf.nn.softplus(logSigma)
 
     return tf.layers.flatten(mean), tf.layers.flatten(Sigma)

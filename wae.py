@@ -80,7 +80,6 @@ class WAE(object):
         self.loss_reconstruct = 0
 
         # --- Encoding & decoding Loop
-        encoded = self.points
         for n in range(opts['e_nlatents']):
             # - Encoding points
             if n==0:
@@ -108,20 +107,25 @@ class WAE(object):
             elif opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
                 qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-                qz_params = tf.stack([qz_params for i in range(opts['rec_loss_nsamples'])],axis=1)
-                encoded = sample_gaussian(opts, qz_params, 'tensorflow')
-                self.encoded.append(encoded[:,0])
-                encoded = tf.concat(tf.split(encoded,opts['rec_loss_nsamples'],1),axis=0)[:,0]
+                if opts['rec_loss_resamples']=='encoder':
+                    qz_params = tf.stack([qz_params for i in range(opts['rec_loss_nsamples'])],axis=1)
+                    encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+                    self.encoded.append(encoded[:,0])
+                    encoded = tf.concat(tf.split(encoded,opts['rec_loss_nsamples'],1),axis=0)[:,0]
+                else:
+                    encoded = sample_gaussian(opts, qz_params, 'tensorflow')
+                    self.encoded.append(encoded)
                 # Enc Sigma penalty
                 if opts['pen_enc_sigma']:
                     pen_enc_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
                 # Enc Sigma stats
-                Sigma_det = tf.reduce_prod(enc_Sigma,axis=-1)
-                Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
+                Sigma_tr = tf.reduce_sum(enc_Sigma,axis=-1)
+                Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
                 Sstats = tf.stack([Smean,Svar],axis=-1)
                 encSigmas_stats.append(Sstats)
             else:
                 assert False, 'Unknown encoder %s' % opts['encoder']
+            # pdb.set_trace()
             self.features_dim.append(out_shape)
 
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
@@ -144,19 +148,21 @@ class WAE(object):
             if opts['decoder'][n] == 'det':
                 # - deterministic decoder
                 reconstructed = recon_mean
-                if opts['encoder'][n] != 'det':
+                if opts['encoder'][n] != 'det' and opts['rec_loss_resamples']=='encoder':
                     reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'])
                     reconstructed = tf.stack(reconstructed_list,axis=1)
                 if n==0:
-                    if opts['encoder'][n] != 'det':
-                        reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
-                    else:
-                        reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                     if opts['decoder'][n]!='bernoulli':
                         if opts['input_normalize_sym']:
                             reconstructed=tf.nn.tanh(reconstructed)
                         else:
                             reconstructed=tf.nn.sigmoid(reconstructed)
+                    if len(reconstructed.get_shape().as_list())>2:
+                        reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
+                        self.reconstructed.append(reconstructed[:,0])
+                    else:
+                        reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                        self.reconstructed.append(reconstructed)
                     loss_reconstruct = obs_reconstruction_loss(opts, self.points, reconstructed)
                     self.loss_reconstruct += loss_reconstruct
                 else:
@@ -166,32 +172,43 @@ class WAE(object):
                                                     recon_mean,
                                                     recon_Sigma)
                     self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
-
             elif opts['decoder'][n] == 'gauss':
                 # - gaussian decoder
-                p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
-                reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
-                if opts['encoder'][n] != 'det':
+                if opts['encoder'][n] != 'det' and opts['rec_loss_resamples']=='encoder':
+                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
                     reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'])
                     reconstructed = tf.stack(reconstructed_list,axis=1)
+                    recon_mean_list = tf.split(recon_mean,opts['rec_loss_nsamples'])
+                    recon_mean = tf.stack(recon_mean_list,axis=1)
+                    recon_Sigma_list = tf.split(recon_Sigma,opts['rec_loss_nsamples'])
+                    recon_Sigma = tf.stack(recon_Sigma_list,axis=1)
+                elif opts['rec_loss_resamples']=='decoder':
+                    p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
+                    p_params = tf.stack([p_params for i in range(opts['rec_loss_nsamples'])],axis=1)
+                    recon_mean, recon_Sigma = tf.split(p_params,num_or_size_splits=2,axis=-1)
+                    reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
+                    reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'],axis=1)
+                    reconstructed = tf.squeeze(tf.stack(reconstructed_list,axis=2),[1])
                 if n==0:
-                    if opts['encoder'][n] != 'det':
-                        reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
-                    else:
-                        reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
                     if opts['decoder'][n]!='bernoulli':
                         if opts['input_normalize_sym']:
                             reconstructed=tf.nn.tanh(reconstructed)
                         else:
                             reconstructed=tf.nn.sigmoid(reconstructed)
+                    if len(reconstructed.get_shape().as_list())>2:
+                        reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
+                        self.reconstructed.append(reconstructed[:,0])
+                    else:
+                        reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
+                        self.reconstructed.append(reconstructed)
                     loss_reconstruct = obs_reconstruction_loss(opts, self.points, reconstructed)
                     self.loss_reconstruct += loss_reconstruct
                 else:
-                    if opts['encoder'][n] != 'det':
-                        recon_mean_list = tf.split(recon_mean,opts['rec_loss_nsamples'])
-                        recon_mean = tf.stack(recon_mean_list,axis=1)
-                        recon_Sigma_list = tf.split(recon_Sigma,opts['rec_loss_nsamples'])
-                        recon_Sigma = tf.stack(recon_Sigma_list,axis=1)
+                    if len(reconstructed.get_shape().as_list())>2:
+                        self.reconstructed.append(reconstructed[:,0])
+                    else:
+                        self.reconstructed.append(reconstructed)
                     loss_reconstruct = latent_reconstruction_loss(opts,
                                                     self.encoded[-2],
                                                     reconstructed,
@@ -202,21 +219,20 @@ class WAE(object):
                 if opts['pen_dec_sigma']:
                     pen_dec_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(recon_Sigma)),axis=-1))
                 # Dec Sigma stats
-                Sigma_det = tf.reduce_prod(recon_Sigma[:,0],axis=-1)
-                Smean, Svar = tf.nn.moments(Sigma_det,axes=[0])
+                if len(recon_Sigma.get_shape().as_list())>2:
+                    Sigma_tr = tf.reduce_mean(tf.reduce_sum(recon_Sigma,axis=-1),axis=-1)
+                else:
+                    Sigma_tr = tf.reduce_sum(recon_Sigma,axis=-1)
+                Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
                 Sstats = tf.stack([Smean,Svar],axis=-1)
                 decSigmas_stats.append(Sstats)
-            # elif opts['decoder'][n] == 'bernoulli':
-            #     reconstructed = sample_bernoulli(recon_mean)
             else:
                 assert False, 'Unknown encoder %s' % opts['decoder'][n]
 
-            self.reconstructed.append(reconstructed[:,0])
+            # pdb.set_trace()
             self.losses_reconstruct.append(loss_reconstruct)
-
-
-        self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
-        self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
+            self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
+            self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
 
         # --- Sampling from model (only for generation)
         decoded = self.samples
@@ -923,7 +939,6 @@ class WAE(object):
         # --- Reconstructions
         logging.error('Encoding test images..')
         num_pics = 5000
-        pdb.set_trace()
         # [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
         encoded = self.sess.run(self.encoded,
                                 feed_dict={self.points:data.test_data[:num_pics],
