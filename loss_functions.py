@@ -255,27 +255,32 @@ def l2_cost(x1, x2):
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     cost = tf.sqrt(1e-10 + cost)
     if len(x2.get_shape().as_list())>2:
-        return tf.reduce_mean(cost,axis=1)
-    else:
-        return cost
+    return cost
+    # if len(x2.get_shape().as_list())>2:
+    #     return tf.reduce_mean(cost,axis=1)
+    # else:
+    #     return cost
 
 
 def l2sq_cost(x1,x2):
     # c(x,y) = sum_i(||x - y||_2^2[:,i])
+    # pdb.set_trace()
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
-    if len(x2.get_shape().as_list())>2:
-        return tf.reduce_mean(cost,axis=1)
-    else:
-        return cost
+    return cost
+    # if len(x2.get_shape().as_list())>2:
+    #     return tf.reduce_mean(cost,axis=1)
+    # else:
+    #     return cost
 
 
 def l2sq_gauss_cost(x1, x2, mu, Sigma):
     # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
     cost = tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
-    if len(x2.get_shape().as_list())>2:
-        return tf.reduce_mean(cost,axis=1)
-    else:
-        return cost
+    return cost
+    # if len(x2.get_shape().as_list())>2:
+    #     return tf.reduce_mean(cost,axis=1)
+    # else:
+    #     return cost
 
 
 def mahalanobis_cost(x1, x2):
@@ -290,6 +295,7 @@ def mahalanobis_cost(x1, x2):
 
 
 def mahalanobis_cost_v2(x1, x2):
+    # pdb.set_trace()
     mu2 = tf.reduce_mean(x2, axis=1, keepdims=True)
     Sigma2 = cov(x2,mu2)
     shape = Sigma2.get_shape().as_list()[1:]
@@ -308,19 +314,21 @@ def cov(x,mu):
 def l2sq_norm_cost(x1, x2):
     # c(x,y) = mean_i(||x - y||_2^2[:,i])
     cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
-    if len(x2.get_shape().as_list())>2:
-        return tf.reduce_mean(cost,axis=1)
-    else:
-        return cost
+    return cost
+    # if len(x2.get_shape().as_list())>2:
+    #     return tf.reduce_mean(cost,axis=1)
+    # else:
+    #     return cost
 
 
 def l1_cost(x1, x2):
     # c(x,y) = ||x - y||_1
     cost = tf.reduce_sum(tf.abs(x1 - x2), axis=-1)
-    if len(x2.get_shape().as_list())>2:
-        return tf.reduce_mean(cost,axis=1)
-    else:
-        return cost
+    return cost
+    # if len(x2.get_shape().as_list())>2:
+    #     return tf.reduce_mean(cost,axis=1)
+    # else:
+    #     return cost
 
 
 def vae_reconstruction_loss(x1, x2):
