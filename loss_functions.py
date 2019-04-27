@@ -254,7 +254,6 @@ def l2_cost(x1, x2):
     # c(x,y) = ||x - y||_2
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     cost = tf.sqrt(1e-10 + cost)
-    if len(x2.get_shape().as_list())>2:
     return cost
     # if len(x2.get_shape().as_list())>2:
     #     return tf.reduce_mean(cost,axis=1)
