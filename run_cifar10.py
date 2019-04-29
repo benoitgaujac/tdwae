@@ -4,7 +4,8 @@ import logging
 import argparse
 import configs
 from wae import WAE
-from vae import VAE
+# from vae import VAE
+from vae_v2 import VAE
 from datahandler import DataHandler
 import utils
 
@@ -15,11 +16,18 @@ import pdb
 parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
-                    help='mode to run [train/vizu/fid]')
+                    help='mode to run [train/vizu/fid/test]')
+parser.add_argument("--exp", default='mnist',
+                    help='dataset [mnist/cifar10/].'\
+                    ' celebA/dsprites Not implemented yet')
 parser.add_argument("--method", default='wae')
+parser.add_argument("--penalty", default='wae',
+                    help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
+parser.add_argument("--base_lmba", type=float, default=1.,
+                    help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
 parser.add_argument("--weights_file")
@@ -47,37 +55,55 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 4011
-    opts['print_every'] = 20 * 390
-    opts['lr'] = 0.0005
-    opts['save_every_epoch'] = 2005 #4011
+    opts['epoch_num'] = 5011
+    opts['print_every'] = 10*468
+    opts['lr'] = 0.0001
+    opts['batch_size'] = 64
+    opts['rec_loss_resamples'] = 'encoder'
+    opts['rec_loss_nsamples'] = 4
+    opts['save_every_epoch'] = 10
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
-    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
+    opts['vizu_encSigma'] = True
+
+    # Penalty
+    opts['pen'] = FLAGS.penalty
+    opts['pen_enc_sigma'] = False
+    opts['lambda_pen_enc_sigma'] = 0.0005
+    opts['pen_dec_sigma'] = False
+    opts['lambda_pen_dec_sigma'] = 0.0005
+    opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+    opts['latent_cost'] = 'mahalanobis_v3' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
+    # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(FLAGS.lmba)
+    # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
+    opts['lambda_schedule'] = 'constant'
+
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [36,16,16,16,16,9,9,9,9,4] #[32,16,8,4,2]
-    opts['lambda'] = [1./opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
-    opts['lambda_scalar'] = FLAGS.lmba
-    #opts['lambda'].append(FLAGS.lmba / opts['zdim'][-1])
-    opts['lambda'].append(FLAGS.lmba)
-    opts['lambda_schedule'] = 'constant'
+    opts['zdim'] = [80,72,64,56,48,40,32,24,16,8]
+
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['e_nlatents'] = opts['nlatents']
-    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
-    opts['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan
-    opts['e_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
-    opts['e_nfilters'] =  [128,96,96,96,96,64,64,64,64,64,32] #[512,256,128,64,32,16]
+    opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['e_arch'] = ['resnet',]*opts['nlatents']# ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_v2, resnet
+    opts['e_resample'] = ['down',None,None,None,None,'down',None,None,None,'down'] #None, down
+    opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
+    opts['e_nfilters'] = [64,128,128,128,128,128,256,256,256,256]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod
-    opts['d_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
-    opts['d_nfilters'] = [128,96,96,96,96,64,64,64,64,64,32] #[512,256,128,64,32,16]
+    opts['d_arch'] =  ['resnet',]*opts['nlatents']#['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
+    opts['d_resample'] = ['up',None,None,None,None,'up',None,None,None,'up'] #None, up
+    opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
+    opts['d_nfilters'] = [64,128,128,128,128,128,256,256,256,256]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
     # Verbose
     if opts['verbose']:
@@ -118,9 +144,14 @@ def main():
                 text.write('%s : %s\n' % (key, opts[key]))
         wae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
+        opts['rec_loss_nsamples'] = 1
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="fid":
         wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
+    elif FLAGS.mode=="test":
+        wae.test_losses(data, opts['work_dir'], FLAGS.weights_file)
+    elif FLAGS.mode=="vlae_exp":
+        wae.vlae_experiment(data, opts['work_dir'], FLAGS.weights_file)
     else:
         assert False, 'Unknown mode %s' % FLAGS.mode
 

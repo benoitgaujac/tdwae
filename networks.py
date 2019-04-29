@@ -122,7 +122,13 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         is_training)
         elif archi == 'resnet':
             # Resnet archi similar to Imporved training of WAGAN
-            outputs, out_shape = resnet_encoder(opts, input, 128, reuse,
+            outputs, out_shape = resnet_encoder(opts, input, num_layers,
+                                                        num_units,
+                                                        filter_size,
+                                                        output_dim,
+                                                        features_dim,
+                                                        resample,
+                                                        reuse,
                                                         is_training)
 
         else:
@@ -246,26 +252,78 @@ def resnet_encoder(opts, input, num_layers, num_units, filter_size,
                                                         resample=False,
                                                         reuse=False,
                                                         is_training=False):
-    output, output_shape = dcgan_v2_encoder(opts, input, num_layers,
-                                                        num_units,
-                                                        filter_size,
-                                                        output_dim,
-                                                        features_dim,
-                                                        resample,
-                                                        reuse,
-                                                        is_training)
+    layer_x = input
+    # -- Reshapping to features_dim if needed
+    if layer_x.get_shape().as_list()[1:-1]!=features_dim[:-1]:
+        layer_x = ops.linear.Linear(opts,layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                    np.prod(features_dim), scope='hid_linear_init')
+        layer_x = tf.reshape(layer_x,[-1,]+features_dim)
+    # -- Conv block
+    conv = layer_x
+    if opts['e_norm']=='batchnorm':
+        conv = ops.batchnorm.Batchnorm_layers(
+            opts, conv, 'hid0/bn', is_training, reuse)
+    elif opts['e_norm']=='layernorm':
+        conv = ops.layernorm.Layernorm(
+            opts, conv, 'hid0/bn' % i, reuse)
+    conv = ops._ops.non_linear(conv,opts['e_nonlinearity'])
+    for i in range(num_layers-1):
+        conv = ops.conv2d.Conv2d(opts,conv,conv.get_shape().as_list()[-1],num_units,
+                filter_size,stride=1,scope='hid{}/conv'.format(i),init=opts['conv_init'])
+        if opts['e_norm']=='batchnorm':
+            conv = ops.batchnorm.Batchnorm_layers(
+                opts, conv, 'hid%d/bn' % (i+1), is_training, reuse)
+        elif opts['e_norm']=='layernorm':
+            conv = ops.layernorm.Layernorm(
+                opts, conv, 'hid%d/bn' % (i+1), reuse)
+        conv = ops._ops.non_linear(conv,opts['e_nonlinearity'])
+    # Last conv resampling
+    if resample=='down':
+        conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1],2*num_units,
+                filter_size,stride=2,scope='hid{}/conv'.format(i+1),init=opts['conv_init'])
+    elif resample==None:
+        conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1],num_units,
+                filter_size,stride=1,scope='hid{}/conv'.format(i+1),init=opts['conv_init'])
+    else:
+        assert False, 'Resample %s not allowed for encoder' % resample
+    out_shape = conv.get_shape().as_list()[1:]
+    # pdb.set_trace()
+    # -- Shortcut
+    if resample=='down':
+        shortcut = ops.conv2d.Conv2d(opts, layer_x,layer_x.get_shape().as_list()[-1],2*num_units,
+                filter_size,stride=2,scope='hid_shortcut',init=opts['conv_init'])
+    elif resample==None:
+        if conv.get_shape().as_list()[1:]==layer_x.get_shape().as_list()[1:]:
+            shortcut = layer_x
+        else:
+            shortcut = ops.conv2d.Conv2d(opts, layer_x,layer_x.get_shape().as_list()[-1],num_units,
+                    filter_size,stride=1,scope='hid_shortcut',init=opts['conv_init'])
+    else:
+        assert False, 'Resample %s not allowed for encoder' % resample
+    # -- Resnet output
+    outputs = conv + shortcut
+    if opts['e_norm']=='batchnorm':
+        outputs = ops.batchnorm.Batchnorm_layers(
+            opts, outputs, 'hid%d/bn' % (i+2), is_training, reuse)
+    elif opts['e_norm']=='layernorm':
+        outputs = ops.layernorm.Layernorm(
+            opts, outputs, 'hid%d/bn' % (i+2), reuse)
+    outputs = ops._ops.non_linear(outputs,opts['e_nonlinearity'])
+    outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
+                output_dim, scope='hid_final')
 
+    return outputs, out_shape
 
-def resnet_encoder(opts, input, output_dim, reuse=False, is_training=False):
-    output = ops.resnet.OptimizedResBlockEnc1(opts,input,output_dim)
-    output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res2', resample='down', reuse=reuse, is_training=is_training)
-    output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res3', resample=None, reuse=reuse, is_training=is_training)
-    output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res4', resample=None, reuse=reuse, is_training=is_training)
-    output = ops._ops.non_linear(output,'relu')
-    output = tf.reduce_mean(output, axis=[1,2])
-    output = ops.linear.Linear(opts, output, np.prod(output.get_shape().as_list()[1:]), 2*output_dim, scope='hid_final')
-
-    return output, None
+# def resnet_encoder(opts, input, output_dim, reuse=False, is_training=False):
+#     output = ops.resnet.OptimizedResBlockEnc1(opts,input,output_dim)
+#     output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res2', resample='down', reuse=reuse, is_training=is_training)
+#     output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res3', resample=None, reuse=reuse, is_training=is_training)
+#     output = ops.resnet.ResidualBlock(opts, output, output_dim, output_dim, 3, 'enc_res4', resample=None, reuse=reuse, is_training=is_training)
+#     output = ops._ops.non_linear(output,'relu')
+#     output = tf.reduce_mean(output, axis=[1,2])
+#     output = ops.linear.Linear(opts, output, np.prod(output.get_shape().as_list()[1:]), 2*output_dim, scope='hid_final')
+#
+#     return output, None
 
 
 def decoder(opts, input, archi, num_layers, num_units, filter_size,
@@ -304,8 +362,14 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         reuse,
                                                         is_training)
         elif archi == 'resnet':
-            # Resnet archi similar to Imporved training of WAGAN
-            outputs = resnet_decoder(opts, input, output_dim, reuse,
+            # Fully convolutional architecture similar to improve Wasserstein nGAN
+            outputs = resnet_decoder(opts, input, archi, num_layers,
+                                                        num_units,
+                                                        filter_size,
+                                                        output_dim,
+                                                        features_dim,
+                                                        resample,
+                                                        reuse,
                                                         is_training)
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['d_arch'])
@@ -464,14 +528,97 @@ def  dcgan_v2_decoder(opts, input, archi, num_layers, num_units,
 
     return outputs
 
-def resnet_decoder(opts, input, output_dim, reuse=False, is_training=False):
-    input_dim = np.prod(input.get_shape().as_list()[1:])
-    output = ops.linear.Linear(opts,input,input_dim,4*4*input_dim,scope='hid0/lin')
-    output = tf.reshape(output, [-1, 4, 4, input_dim])
-    output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res1', resample='up', reuse=reuse, is_training=is_training)
-    output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res2', resample='up', reuse=reuse, is_training=is_training)
-    output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res3', resample='up', reuse=reuse, is_training=is_training)
-    output = ops.batchnorm.Batchnorm_layers(opts, output, 'hid3/bn', is_training, reuse)
-    output = ops._ops.non_linear(output,'relu')
-    output = ops.conv2d.Conv2d(opts, output, input_dim, 2*3, 3, scope='hid_final/conv', init='normilized_glorot')
-    return output
+def  resnet_decoder(opts, input, archi, num_layers, num_units,
+                                                        filter_size,
+                                                        output_dim,
+                                                        features_dim,
+                                                        resample,
+                                                        reuse,
+                                                        is_training):
+    # batch_size
+    batch_size = tf.shape(input)[0]
+    # -- Reshapping to features dim
+    if resample=='up':
+        if num_units!=features_dim[2]:
+            logging.error('num units decoder not matching num_units decoder')
+        if features_dim[0]%2==0:
+            reshape = [int(features_dim[0]/2),int(features_dim[1]/2),2*num_units]
+        else:
+            reshape = [int((features_dim[0]+1)/2),int((features_dim[1]+1)/2),2*num_units]
+    elif resample==None:
+        if num_units!=features_dim[2]:
+            logging.error('num units decoder not matching num_units decoder')
+        reshape = [features_dim[0], features_dim[1], num_units]
+    else:
+        assert False, 'Resample {} not allowed for encoder'.format(resample)
+    layer_x = ops.linear.Linear(opts,input,np.prod(input.get_shape().as_list()[1:]),
+            np.prod(reshape), scope='hid0/lin')
+    layer_x = tf.reshape(layer_x, [-1,]+ reshape)
+    # -- Conv block
+    conv = layer_x
+    if opts['d_norm']=='batchnorm':
+        conv = ops.batchnorm.Batchnorm_layers(
+                    opts, conv, 'hid0/bn', is_training, reuse)
+    elif opts['d_norm']=='layernorm':
+        conv = ops.layernorm.Layernorm(
+                    opts, conv, 'hid0/bn', reuse)
+    conv = ops._ops.non_linear(conv,opts['d_nonlinearity'])
+    # First deconv resampling
+    if resample=='up':
+        conv = ops.deconv2d.Deconv2D(opts, conv, conv.get_shape().as_list()[-1], [batch_size,]+features_dim,
+                    filter_size, stride=2, scope='hid0/deconv', init=opts['conv_init'])
+    elif resample==None:
+        conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
+                filter_size, stride=1, scope='hid0/deconv', init=opts['conv_init'])
+    else:
+        assert False, 'Resample {} not allowed for encoder'.format(resample)
+    # Deconv block
+    for i in range(num_layers - 1):
+        if opts['d_norm']=='batchnorm':
+            conv = ops.batchnorm.Batchnorm_layers(
+                        opts, conv, 'hid%d/bn' % (i+1), is_training, reuse)
+        elif opts['d_norm']=='layernorm':
+            conv = ops.layernorm.Layernorm(
+                        opts, conv, 'hid%d/bn' % (i+1), reuse)
+        conv = ops._ops.non_linear(conv,opts['d_nonlinearity'])
+        conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
+                filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
+    # pdb.set_trace()
+    # -- Shortcut
+    if resample=='up':
+        shortcut = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], [batch_size,]+features_dim,
+                    filter_size, stride=2, scope='hid_shortcut', init=opts['conv_init'])
+    elif resample==None:
+        if conv.get_shape().as_list()[-1]==layer_x.get_shape().as_list()[-1]:
+            shortcut = layer_x
+        else:
+            shortcut = ops.conv2d.Conv2d(opts, layer_x, layer_x.get_shape().as_list()[-1], num_units,
+                        filter_size, stride=1, scope='hid_shortcut', init=opts['conv_init'])
+    else:
+        assert False, 'Resample {} not allowed for encoder'.format(resample)
+    # -- Resnet output
+    outputs = conv + shortcut
+    if opts['d_norm']=='batchnorm':
+        outputs = ops.batchnorm.Batchnorm_layers(
+                    opts, outputs, 'hid%d/bn' % (i+2), is_training, reuse)
+    elif opts['d_norm']=='layernorm':
+        outputs = ops.layernorm.Layernorm(
+                    opts, outputs, 'hid%d/bn' % (i+2), reuse)
+    outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
+    outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
+                output_dim, scope='hid_final')
+
+    return outputs
+
+
+# def resnet_decoder(opts, input, output_dim, reuse=False, is_training=False):
+#     input_dim = np.prod(input.get_shape().as_list()[1:])
+#     output = ops.linear.Linear(opts,input,input_dim,4*4*input_dim,scope='hid0/lin')
+#     output = tf.reshape(output, [-1, 4, 4, input_dim])
+#     output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res1', resample='up', reuse=reuse, is_training=is_training)
+#     output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res2', resample='up', reuse=reuse, is_training=is_training)
+#     output = ops.resnet.ResidualBlock(opts, output, input_dim, input_dim, 3, 'dec_res3', resample='up', reuse=reuse, is_training=is_training)
+#     output = ops.batchnorm.Batchnorm_layers(opts, output, 'hid3/bn', is_training, reuse)
+#     output = ops._ops.non_linear(output,'relu')
+#     output = ops.conv2d.Conv2d(opts, output, input_dim, 2*3, 3, scope='hid_final/conv', init='normilized_glorot')
+#     return output
