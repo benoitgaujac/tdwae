@@ -302,8 +302,9 @@ def mahalanobis_cost_v2(x1, x2, mu, Sigma):
     Sigma_inv = tf.matrix_inverse(Sigma_square)
     xdiff = tf.expand_dims(x1-mu,axis=-1)
     cost = tf.matmul(Sigma_inv, xdiff)
-    cost = tf.matmul(tf.transpose(xdiff,perm=[0,1,3,2]),cost)
-    return tf.squeeze(cost,[2,3])
+    cost = tf.matmul(tf.transpose(xdiff,perm=[0,1,3,2]),cost) \
+            + x1.get_shape().as_list()[-1]
+    return tf.reduce_mean(tf.squeeze(cost,[2,3]),axis=-1)
 
 
 def mahalanobis_cost_v3(x1, x2, mu, Sigma):
@@ -317,7 +318,9 @@ def mahalanobis_cost_v3(x1, x2, mu, Sigma):
     xdiff = tf.expand_dims(x1-mu,axis=-1)
     cost = tf.matmul(pool_Sigma_inv, xdiff)
     cost = tf.matmul(tf.transpose(xdiff,perm=[0,1,3,2]),cost)
-    return tf.squeeze(cost,[2,3])
+    cost = tf.squeeze(cost,[2,3])
+    cost += tf.linalg.trace(tf.matmul(pool_Sigma_inv,Sigma_square))
+    return tf.reduce_mean(cost,axis=-1)
 
 
 def cov(x,mu,axis):
