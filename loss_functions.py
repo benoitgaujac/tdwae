@@ -243,6 +243,8 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
         cost = mahalanobis_cost(x1, x2)
     elif opts['latent_cost'] == 'mahalanobis_v2':
         cost = mahalanobis_cost_v2(x1, x2)
+    elif opts['latent_cost'] == 'mahalanobis_v3':
+        cost = mahalanobis_cost_v3(x1, x2, mu, Sigma)
     else:
         assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
@@ -293,21 +295,44 @@ def mahalanobis_cost(x1, x2):
     return tf.squeeze(cost,[1,2])
 
 
-def mahalanobis_cost_v2(x1, x2):
+def mahalanobis_cost_v2(x1, x2, mu, Sigma):
     # pdb.set_trace()
-    mu2 = tf.reduce_mean(x2, axis=1, keepdims=True)
-    Sigma2 = cov(x2,mu2)
-    shape = Sigma2.get_shape().as_list()[1:]
-    Sigma_inv = tf.matrix_inverse(Sigma2+1e-5*tf.eye(shape[0]))
-    cost = tf.matmul(Sigma_inv, tf.transpose(x1-mu2,perm=[0,2,1]))
-    cost = tf.matmul(x1-mu2,cost)
-    return tf.squeeze(cost,[1,2])
+    eps = 1e-10
+    Sigma_square = tf.matrix_diag(Sigma+eps)
+    Sigma_inv = tf.matrix_inverse(Sigma_square)
+    xdiff = tf.expand_dims(x1-mu,axis=-1)
+    cost = tf.matmul(Sigma_inv, xdiff)
+    cost = tf.matmul(tf.transpose(xdiff,perm=[0,1,3,2]),cost)
+    return tf.squeeze(cost,[2,3])
 
 
-def cov(x,mu):
+def mahalanobis_cost_v3(x1, x2, mu, Sigma):
+    # pdb.set_trace()
+    eps = 1e-10
+    Sigma_square = tf.matrix_diag(Sigma+eps)
+    mu1 = tf.reduce_mean(x1, axis=0, keepdims=True)
+    Sigma1 = tf.expand_dims(cov(x1,mu1,axis=0),axis=1)
+    pool_Sigma = 0.5 * (Sigma_square + Sigma1)
+    pool_Sigma_inv = tf.matrix_inverse(pool_Sigma)
+    xdiff = tf.expand_dims(x1-mu,axis=-1)
+    cost = tf.matmul(pool_Sigma_inv, xdiff)
+    cost = tf.matmul(tf.transpose(xdiff,perm=[0,1,3,2]),cost)
+    return tf.squeeze(cost,[2,3])
+
+
+def cov(x,mu,axis):
     mx = tf.matmul(tf.transpose(mu,perm=[0,2,1]), mu)
-    vx = tf.matmul(tf.transpose(x,perm=[0,2,1]), x)/tf.cast(tf.shape(x)[1], tf.float32)
-    return vx - mx
+    if axis==0:
+        assert x.get_shape().as_list()[1]==1, \
+                'Input shape[1] must be 1 when computing covariance on axis 0'
+        vx = tf.matmul(tf.transpose(x,perm=[1,2,0]), tf.transpose(x,perm=[1,0,2])) \
+                /tf.cast(tf.shape(x)[0], tf.float32)
+        return vx - mx
+    elif axis==1:
+        vx = tf.matmul(tf.transpose(x,perm=[0,2,1]), x)/tf.cast(tf.shape(x)[1], tf.float32)
+        return vx - mx
+    else:
+        assert False, 'Wrong axis value for covariance'
 
 
 def l2sq_norm_cost(x1, x2):
