@@ -242,7 +242,7 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
     elif opts['latent_cost'] == 'mahalanobis':
         cost = mahalanobis_cost(x1, x2)
     elif opts['latent_cost'] == 'mahalanobis_v2':
-        cost = mahalanobis_cost_v2(x1, x2)
+        cost = mahalanobis_cost_v2(x1, x2, mu, Sigma)
     elif opts['latent_cost'] == 'mahalanobis_v3':
         cost = mahalanobis_cost_v3(x1, x2, mu, Sigma)
     else:
