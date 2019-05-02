@@ -24,7 +24,7 @@ parser.add_argument("--method", default='wae')
 parser.add_argument("--penalty", default='wae',
                     help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
-parser.add_argument("--lmba", type=float, default=100.,
+parser.add_argument("--lmba", type=int, default=0,
                     help='lambda')
 parser.add_argument("--base_lmba", type=float, default=1.,
                     help='base lambda')
