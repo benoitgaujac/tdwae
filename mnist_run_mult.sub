@@ -6,7 +6,7 @@
 
 #$ -l gpu=1
 #$ -l tmem=8G
-#$ -l h_rt=200:00:00
+#$ -l h_rt=150:00:00
 
 #$ -t 1-5
 
@@ -18,4 +18,4 @@ source /share/apps/examples/cuda/cuda-9.0.source
 
 
 # LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run_array_encSigma_pen.py --work_dir pen_encSigma_$SGE_TASK_ID --lmba 0.001 --base_lmba 0.5 --idx_pen_enc_sigma $SGE_TASK_ID --nfilters 1024
-LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run_array_encSigma_pen.py --work_dir 5l_mnist_l2sq_5qsamples_lmba_$SGE_TASK_ID --lmba SGE_TASK_ID --base_lmba 0.5 $SGE_TASK_ID -nfilters 1024
+LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run.py --work_dir 5l_mnist_l2sq_5qs_1024u_l$SGE_TASK_ID --lmba $SGE_TASK_ID --base_lmba 0.5 $SGE_TASK_ID --nfilters 1024
