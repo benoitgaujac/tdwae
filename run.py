@@ -99,7 +99,7 @@ def main():
     opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     lambda_pen_values = [10e-3,10e-2,10e-1,1,10]
-    opts['lambda'].append(lambda_pen_values[FLAGS.lmba])
+    opts['lambda'].append(lambda_pen_values[FLAGS.lmba-1])
     # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
