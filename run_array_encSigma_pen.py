@@ -77,12 +77,12 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 5011
-    opts['print_every'] = 5*468
+    opts['print_every'] = 187500
     opts['lr'] = 0.001
     opts['batch_size'] = 128
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 5
-    opts['save_every_epoch'] = 10
+    opts['save_every_epoch'] = 2005
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False

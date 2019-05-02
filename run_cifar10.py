@@ -58,9 +58,9 @@ def main():
     opts['epoch_num'] = 5011
     opts['print_every'] = 10*468
     opts['lr'] = 0.0001
-    opts['batch_size'] = 64
+    opts['batch_size'] = 32
     opts['rec_loss_resamples'] = 'encoder'
-    opts['rec_loss_nsamples'] = 4
+    opts['rec_loss_nsamples'] = 2
     opts['save_every_epoch'] = 10
     opts['save_final'] = True
     opts['save_train_data'] = True
@@ -74,7 +74,7 @@ def main():
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = 0.0005
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
-    opts['latent_cost'] = 'mahalanobis_v3' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
+    opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
     opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
@@ -93,14 +93,14 @@ def main():
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['resnet',]*opts['nlatents']# ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down',None,None,None,None,'down',None,None,None,'down'] #None, down
-    opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
+    opts['e_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
     opts['e_nfilters'] = [64,128,128,128,128,128,256,256,256,256]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  ['resnet',]*opts['nlatents']#['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_resample'] = ['up',None,None,None,None,'up',None,None,None,'up'] #None, up
-    opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
+    opts['d_nlayers'] = [2,2,2,2,2,2,2,2,2,2]
     opts['d_nfilters'] = [64,128,128,128,128,128,256,256,256,256]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
