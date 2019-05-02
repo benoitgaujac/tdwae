@@ -88,6 +88,10 @@ def main():
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
 
+    # Model set up
+    opts['nlatents'] = 5
+    opts['zdim'] = [32,16,8,4,2]
+
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['pen_enc_sigma'] = False
@@ -100,13 +104,7 @@ def main():
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     lambda_values = [0.0001,0.001,0.01,0.1,1]
     opts['lambda'].append(lambda_values[FLAGS.lmba - 1])
-    # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
-
-    # Model set up
-    opts['nlatents'] = 5
-    opts['zdim'] = [32,16,8,4,2]
 
     # NN set up
     opts['filter_size'] = [3,3,3,3,3,3,3,3,3,3]
@@ -117,7 +115,6 @@ def main():
     opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down
     opts['e_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['e_nfilters'] = [FLAGS.nfilters/2**i for i in range(opts['nlatents'])]
-    # opts['e_nfilters'] = [2048,1024,512,256,128,64,32,16]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -125,7 +122,6 @@ def main():
     opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
     opts['d_nfilters'] = [FLAGS.nfilters/2**i for i in range(opts['nlatents'])]
-    # opts['d_nfilters'] = [2048,1024,512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
