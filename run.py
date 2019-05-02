@@ -124,7 +124,7 @@ def main():
     opts['d_arch'] =  ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
     opts['d_nlayers'] = [2,2,2,2,2,2,2,2]
-    opts['e_nfilters'] = [FLAGS.nfilters/2**i for i in range(opts['nlatents'])]
+    opts['d_nfilters'] = [FLAGS.nfilters/2**i for i in range(opts['nlatents'])]
     # opts['d_nfilters'] = [2048,1024,512,256,128,64,32,16]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
