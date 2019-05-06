@@ -290,8 +290,8 @@ class WAE(object):
 
             # pdb.set_trace()
             self.losses_reconstruct.append(loss_reconstruct)
-            self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
-            self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
+        self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
+        self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
 
         # --- Sampling from model (only for generation)
         decoded = self.samples
@@ -826,7 +826,7 @@ class WAE(object):
                                                 [self.full_reconstructed[-1],
                                                  self.encoded,
                                                  self.decoded],
-                                                feed_dict={self.points:data.test_data[:30*npics],
+                                                feed_dict={self.points:data.test_data[:5*npics],
                                                            self.samples: fixed_noise,
                                                            self.dropout_rate: 0.,
                                                            self.is_training:False})
@@ -837,7 +837,7 @@ class WAE(object):
                         # decoded = samples[::-1]
                         decoded.append(fixed_noise)
                         plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
-                                                data.test_labels[:30*npics],
+                                                data.test_labels[:5*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -912,7 +912,7 @@ class WAE(object):
                         samples_prior = samples[opts['nlatents']-opts['e_nlatents']-1]
 
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:30*npics],    # labels
+                                     data.test_labels[:5*npics],    # labels
                                      reconstructed_train, reconstructed_test[:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
@@ -971,9 +971,9 @@ class WAE(object):
                         samples_prior=samples_prior, samples=samples[-1],
                         loss=np.array(Loss), imp_loss=np.array(imp_Loss),
                         loss_match=np.array(Loss_match), imp_match=np.array(imp_Match),
-                        loss_rec=np.array(loss_rec),
-                        loss_rec_test=np.array(loss_rec_test),
-                        losses_rec=np.array(losses_rec))
+                        loss_rec=np.array(Loss_rec),
+                        loss_rec_test=np.array(Loss_rec_test),
+                        losses_rec=np.array(Losses_rec))
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
