@@ -826,7 +826,7 @@ class WAE(object):
                                                 [self.full_reconstructed[-1],
                                                  self.encoded,
                                                  self.decoded],
-                                                feed_dict={self.points:data.test_data[:5*npics],
+                                                feed_dict={self.points:data.test_data[:10*npics],
                                                            self.samples: fixed_noise,
                                                            self.dropout_rate: 0.,
                                                            self.is_training:False})
@@ -837,7 +837,7 @@ class WAE(object):
                         # decoded = samples[::-1]
                         decoded.append(fixed_noise)
                         plot_embedded(opts,encoded,decoded, #[fixed_noise,].append(samples)
-                                                data.test_labels[:5*npics],
+                                                data.test_labels[:10*npics],
                                                 work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
                     if opts['vizu_sinkhorn']:
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
@@ -912,7 +912,7 @@ class WAE(object):
                         samples_prior = samples[opts['nlatents']-opts['e_nlatents']-1]
 
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
-                                     data.test_labels[:5*npics],    # labels
+                                     data.test_labels[:10*npics],    # labels
                                      reconstructed_train, reconstructed_test[:npics], # reconstructions
                                      encoded[-1],   # encoded points (bottom)
                                      samples_prior, samples[-1],  # prior samples, model samples
@@ -965,7 +965,7 @@ class WAE(object):
             name = 'res_train_final'
             np.savez(os.path.join(save_path,name),
                         data_test=data.data[200:200+npics], data_train=data.test_data[:npics],
-                        label_test=data.test_labels[:30*npics],
+                        label_test=data.test_labels[:10*npics],
                         encoded = encoded[-1],
                         rec_train=reconstructed_train, rec_test=reconstructed_test[:npics],
                         samples_prior=samples_prior, samples=samples[-1],
