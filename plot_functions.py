@@ -252,7 +252,7 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
     x = np.arange(1, total_num + 1, x_step)
-    for i in range(opts['nlatents']):
+    for i in range(opts['e_nlatents']):
         mean, var = encSig[::x_step,i,0], encSig[::x_step,i,1]
         y = np.log(mean)
         plt.plot(x, y, linewidth=1, color=color_list[i], label=r'e$\Sigma_%d$' % i)
@@ -424,7 +424,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
                          'Latent interpolation',
                          'Points interpolation'],
                          ['full_recon',
-                         'pior_samples',
+                         'prior_samples',
                          'latent_inter',
                          'point_inter'])
 
@@ -490,7 +490,6 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         plt.close()
 
 
-    """
     # --- Embedings vizu
     num_pics = np.shape(encoded[0])[0]
     embeds = []
@@ -521,8 +520,8 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         # ax = plt.subplot(gs[0, i])
         ax = fig.add_subplot(1, len(embeds), i+1)
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
-                    # c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    # c=label_test, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
@@ -556,7 +555,6 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
                 dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.01)
     plt.close()
-    """
 
 def save_vlae_experiment(opts, decoded, work_dir):
     num_pics = opts['plot_num_pics']

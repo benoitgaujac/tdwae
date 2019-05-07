@@ -327,15 +327,17 @@ class WAE(object):
                 # Reuse params
                 if n>=opts['e_nlatents']:
                     reuse=False
+                    features_dim=None
                 else:
                     reuse=True
+                    features_dim=self.features_dim[n]
                 decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
                                                 output_dim=2*opts['zdim'][n-1],
-                                                features_dim=self.features_dim[n],
+                                                features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
@@ -349,7 +351,6 @@ class WAE(object):
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
             self.decoded.append(decoded)
 
-        #var = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='decoder')
         # --- Objectives, penalties, pretraining, FID
         if opts['pen']=='wae':
             # Compute matching penalty cost for last layer
