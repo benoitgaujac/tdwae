@@ -24,9 +24,9 @@ parser.add_argument("--method", default='wae')
 parser.add_argument("--penalty", default='wae',
                     help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
-parser.add_argument("--lmba", type=int, default=0,
+parser.add_argument("--lmba", type=float, default=0.0001,
                     help='lambda')
-parser.add_argument("--base_lmba", type=float, default=1.,
+parser.add_argument("--base_lmba", type=int, default=0,
                     help='base lambda')
 parser.add_argument("--lambda_pen_enc_sigma", type=float, default=.0001,
                     help='Encoder Sgima penalization weight')
@@ -100,10 +100,10 @@ def main():
     opts['lambda_pen_dec_sigma'] = 0.0005
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
+    lambda_values = [0.1,0.5,1.,2.,5.]
+    opts['lambda'] = [lambda_values[FLAGS.base_lmba+1]**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
-    lambda_values = [0.0001,0.001,0.01,0.1,1]
-    opts['lambda'].append(lambda_values[FLAGS.lmba - 1])
+    opts['lambda'].append(FLAGS.lmba/opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
 
     # NN set up
