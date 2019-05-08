@@ -104,7 +104,7 @@ def main():
     opts['lambda'] = [0,]*(opts['nlatents']-1)
     #opts['lambda'] = [lambda_values[FLAGS.base_lmba+1]**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     lambda_values = [0.001,0.01,.1,1.,10.]
-    opts['lambda'].append(lambda_values[FLAGS.lmba])
+    opts['lambda'].append(lambda_values[FLAGS.lmba-1])
     opts['lambda_schedule'] = 'constant'
 
     # NN set up

@@ -101,7 +101,7 @@ def main():
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     lambda_values = [0.1,0.5,1.,2.,5.]
-    opts['lambda'] = [lambda_values[FLAGS.base_lmba+1]**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [lambda_values[FLAGS.base_lmba-1]**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba/opts['zdim'][-1])
     opts['lambda_schedule'] = 'constant'
