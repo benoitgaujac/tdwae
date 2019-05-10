@@ -10,6 +10,7 @@ from datahandler import DataHandler
 import utils
 
 import tensorflow as tf
+import itertools
 
 import pdb
 
@@ -28,6 +29,8 @@ parser.add_argument("--lmba", type=float, default=0.0001,
                     help='lambda')
 parser.add_argument("--base_lmba", type=int, default=0,
                     help='base lambda')
+parser.add_argument("--param_idx", type=int, default=0,
+                    help='experience idx')
 parser.add_argument("--lambda_pen_enc_sigma", type=float, default=.0001,
                     help='Encoder Sgima penalization weight')
 parser.add_argument("--etype", default='gauss',
@@ -100,10 +103,15 @@ def main():
     opts['lambda_pen_dec_sigma'] = 0.0005
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    lambda_values = [0.1,0.5,1.,2.,5.]
-    opts['lambda'] = [lambda_values[FLAGS.base_lmba-1]**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    baselambda_values = [0.01,0.5,0.1,0.5,1.,2.]
+    lambda_values = [10**i for i in range(-4,2)]
+    params_list = list(itertools.product(baselambda_values, lambda_values))
+    base = params_list[FLAGS.param_idx-1][0]*32.
+    lmba = params_list[FLAGS.param_idx-1][1]
+    opts['lambda'] = [base**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(lmba)
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(FLAGS.lmba)
+    # opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
 
     # NN set up
