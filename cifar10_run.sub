@@ -5,15 +5,16 @@
 #$ -wd /home/bgaujac/tdwae
 
 #$ -l gpu=1
-#$ -l tmem=10G
+#$ -l tmem=50G
 #$ -l h_rt=100:00:00
 
 
-#$ -N cifar10_10l
+#$ -N cifar10_3l
 #$ -P gpu
 
 source /share/apps/examples/python/python-3.6.5.source
 source /share/apps/examples/cuda/cuda-9.0.source
 
 
-LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run_cifar10.py --exp cifar10 --base_lmba 0.8 --lmba 0.01 --work_dir 10l_cifar10
+LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run_cifar10_3l.py --exp cifar10 --base_lmba 1. --lmba 0.0001 --zdim small --work_dir 3l_cifar10_small_v0
+# LD_LIBRARY_PATH="/share/apps/libc6_2.23/lib/x86_64-linux-gnu:/share/apps/libc6_2.23/lib64:/share/apps/gcc-6.2.0/lib64:/share/apps/gcc-6.2.0/lib:/share/apps/python-3.6.5-shared/lib:/share/apps/cuda-9.0/lib64:${LD_LIBRARY_PATH}" /share/apps/libc6_2.23/lib/x86_64-linux-gnu/ld-2.23.so $(command -v /share/apps/python-3.6.5-shared/bin/python3) /home/bgaujac/tdwae/run_cifar10_5l.py --exp cifar10 --base_lmba 1. --lmba 0.0001 --zdim small --work_dir 5l_cifar10_small_v0

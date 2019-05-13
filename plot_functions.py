@@ -277,7 +277,8 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
-        encods = np.concatenate([encoded[i],decoded[i]],axis=0)
+        # encods = np.concatenate([encoded[i],decoded[i]],axis=0)
+        encods = encoded[i]
         if np.shape(encods)[-1]==2:
             embedding = encods
         else:
@@ -612,7 +613,9 @@ def save_vlae_experiment(opts, decoded, work_dir):
         ax.axes.set_xlim([0, width_pic])
         ax.axes.set_ylim([height_pic, 0])
         ax.axes.set_aspect(1)
-
+    # placing subplot
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
+            hspace = 0, wspace = 0)
     ### Saving plots and data
     # Plot
     plots_dir = 'test_plots'
@@ -620,7 +623,7 @@ def save_vlae_experiment(opts, decoded, work_dir):
     utils.create_dir(save_path)
     filename = 'vlae_exp.png'
     fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png')
+                dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
     plt.close()
 
 
