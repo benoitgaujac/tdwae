@@ -33,6 +33,8 @@ parser.add_argument("--etype", default='gauss',
 parser.add_argument("--net_archi", default='resnet',
                     help='networks architecture [mlp/dcgan_v2/resnet]')
 parser.add_argument("--weights_file")
+parser.add_argument("--zdim", default='small',
+                    help='dim of latent spaces [small/large]')
 
 
 FLAGS = parser.parse_args()
