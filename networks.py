@@ -158,7 +158,7 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
             layer_x = ops.layernorm.Layernorm(
                 opts, layer_x, 'hid%d/bn' % i, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, init=opts['mlp_init'], scope='hid_final')
 
@@ -191,7 +191,7 @@ def dcgan_encoder(opts, input, num_layers, num_units, filter_size,
             layer_x = ops.layernorm.Layernorm(
                 opts, layer_x, 'hid%d/bn' % i, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts,layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, scope='hid_final')
 
@@ -222,7 +222,7 @@ def dcgan_v2_encoder(opts, input, num_layers, num_units, filter_size,
             layer_x = ops.layernorm.Layernorm(
                 opts, layer_x, 'hid%d/bn' % i, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     # Last conv resampling
     if resample=='down':
         layer_x = ops.conv2d.Conv2d(opts, layer_x,layer_x.get_shape().as_list()[-1],2*num_units,
@@ -239,7 +239,7 @@ def dcgan_v2_encoder(opts, input, num_layers, num_units, filter_size,
         layer_x = ops.layernorm.Layernorm(
             opts, layer_x, 'hid%d/bn' % (i+1), reuse)
     layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-    layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+    layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     # Flaten layer
     out_shape = layer_x.get_shape().as_list()[1:]
     layer_x = tf.reshape(layer_x,[-1,np.prod(out_shape)])
@@ -282,7 +282,7 @@ def resnet_encoder(opts, input, num_layers, num_units, filter_size,
             conv = ops.layernorm.Layernorm(
                 opts, conv, 'hid%d/bn' % (i+1), reuse)
         conv = ops._ops.non_linear(conv,opts['e_nonlinearity'])
-        conv = tf.nn.dropout(conv, rate=dropout_rate)
+        conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
     # Last conv resampling
     if resample=='down':
         conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1],2*num_units,
@@ -314,7 +314,7 @@ def resnet_encoder(opts, input, num_layers, num_units, filter_size,
         outputs = ops.layernorm.Layernorm(
             opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['e_nonlinearity'])
-    outputs = tf.nn.dropout(outputs, rate=dropout_rate)
+    outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
                 output_dim, scope='hid_final')
 
@@ -408,7 +408,7 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
                 opts, layer_x, 'hid%d/bn' % i, reuse)
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, init=opts['mlp_init'], scope='hid_final')
 
@@ -462,7 +462,7 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
             # layer_x = ops.batchnorm.Batchnorm_contrib(
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     _out_shape = [batch_size] + list(output_shape)
     if archi == 'dcgan':
         outputs = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], _out_shape,
@@ -529,7 +529,7 @@ def  dcgan_v2_decoder(opts, input, archi, num_layers, num_units,
             layer_x = ops.layernorm.Layernorm(
                         opts, layer_x, 'hid%d/bn' % (i+1), reuse)
         layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-        layer_x = tf.nn.dropout(layer_x, rate=dropout_rate)
+        layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
         # layer_x = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], [-1,]+features_dim,
         #             filter_size, stride=1, scope='hid%d/deconv' % (i+1), init= opts['conv_init'])
         layer_x = ops.conv2d.Conv2d(opts, layer_x,layer_x.get_shape().as_list()[-1], num_units,
@@ -594,7 +594,7 @@ def  resnet_decoder(opts, input, archi, num_layers, num_units,
             conv = ops.layernorm.Layernorm(
                         opts, conv, 'hid%d/bn' % (i+1), reuse)
         conv = ops._ops.non_linear(conv,opts['d_nonlinearity'])
-        conv = tf.nn.dropout(conv, rate=dropout_rate)
+        conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
         conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
                 filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
     # pdb.set_trace()
@@ -619,7 +619,7 @@ def  resnet_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.layernorm.Layernorm(
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
-    outputs = tf.nn.dropout(outputs, rate=dropout_rate)
+    outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
                 output_dim, scope='hid_final')
 
