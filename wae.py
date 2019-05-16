@@ -307,8 +307,7 @@ class WAE(object):
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
-                                                is_training=self.is_training,
-                                                dropout_rate=tf.zeros([], tf.float32))
+                                                is_training=self.is_training)
                 if opts['decoder'][n] == 'det':
                     decoded = decoded_mean
                 elif opts['decoder'][n] == 'gauss':
@@ -342,8 +341,7 @@ class WAE(object):
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
-                                                is_training=self.is_training,
-                                                dropout_rate=0.)
+                                                is_training=self.is_training)
                 if opts['decoder'][n] == 'det':
                     decoded = decoded_mean
                 elif opts['decoder'][n] == 'gauss':
@@ -819,7 +817,7 @@ class WAE(object):
                         l = self.sess.run(self.loss_reconstruct,
                                                 feed_dict={self.points:batch_images,
                                                            self.lmbd: wae_lambda,
-                                                           self.dropout_rate: 0.,
+                                                           self.dropout_rate: 1.,
                                                            self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
@@ -831,7 +829,7 @@ class WAE(object):
                                                  self.decoded],
                                                 feed_dict={self.points:data.test_data[:10*npics],
                                                            self.samples: fixed_noise,
-                                                           self.dropout_rate: 0.,
+                                                           self.dropout_rate: 1.,
                                                            self.is_training:False})
 
                     if opts['vizu_embedded'] and counter>1:
@@ -846,7 +844,7 @@ class WAE(object):
                         [C,sinkhorn] = self.sess.run([self.C, self.sinkhorn],
                                                 feed_dict={self.points:data.test_data[:npics],
                                                            self.samples: fixed_noise,
-                                                           self.dropout_rate: 0.,
+                                                           self.dropout_rate: 1.,
                                                            self.is_training:False})
                         plot_sinkhorn(opts, sinkhorn, work_dir,
                                                 'sinkhorn_e%04d_mb%05d.png' % (epoch, it))
@@ -859,7 +857,7 @@ class WAE(object):
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.full_reconstructed[-1],
                                                 feed_dict={self.points:data.data[200:200+npics],
-                                                           self.dropout_rate: 0.,
+                                                           self.dropout_rate: 1.,
                                                            self.is_training:False})
 
                     if opts['fid']:
@@ -1005,13 +1003,13 @@ class WAE(object):
         # [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
         encoded = self.sess.run(self.encoded,
                                 feed_dict={self.points:data.test_data[:num_pics],
-                                           self.dropout_rate: 0.,
+                                           self.dropout_rate: 1.,
                                            self.is_training:False})
         # data_ids = np.random.choice(num_pics,20,replace=False)
         data_ids = np.arange(30,30+42)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
-                                          self.dropout_rate: 0.,
+                                          self.dropout_rate: 1.,
                                           self.is_training: False})
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
@@ -1019,7 +1017,7 @@ class WAE(object):
             data_ids = np.arange(48,49)
             sampled_recon = self.sess.run(self.sampled_reconstructed,
                                    feed_dict={self.points:data.test_data[data_ids],
-                                              self.dropout_rate: 0.,
+                                              self.dropout_rate: 1.,
                                               self.is_training: False})
 
             sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(4)]),] + sampled_recon
@@ -1038,12 +1036,12 @@ class WAE(object):
         if opts['e_nlatents']!=opts['nlatents']:
             dec_anchors = self.sess.run(self.anchors_decoded,
                                     feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
-                                               self.dropout_rate: 0.,
+                                               self.dropout_rate: 1.,
                                                self.is_training: False})
         else:
             dec_anchors = self.sess.run(self.decoded[-1],
                                     feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
-                                               self.dropout_rate: 0.,
+                                               self.dropout_rate: 1.,
                                                self.is_training: False})
         inter_anchors = np.reshape(dec_anchors,[-1,num_int]+imshape)
         # adding data
@@ -1068,7 +1066,7 @@ class WAE(object):
                                 anchors=latent_anchors)
         dec_latent = self.sess.run(self.decoded[-1],
                                 feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
-                                           self.dropout_rate: 0.,
+                                           self.dropout_rate: 1.,
                                            self.is_training: False})
         inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
 
@@ -1079,7 +1077,7 @@ class WAE(object):
         prior_noise = sample_pz(opts, self.pz_params, npics)
         samples = self.sess.run(self.decoded[-1],
                                feed_dict={self.samples: prior_noise,
-                                          self.dropout_rate: 0.,
+                                          self.dropout_rate: 1.,
                                           self.is_training: False})
         # --- Making & saving plots
         logging.error('Saving images..')

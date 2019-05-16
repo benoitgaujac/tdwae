@@ -90,7 +90,7 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         scope=None,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
@@ -145,7 +145,7 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
 def mlp_encoder(opts, input, num_layers, num_units, output_dim,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     layer_x = input
     for i in range(num_layers):
         layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
@@ -168,7 +168,7 @@ def dcgan_encoder(opts, input, num_layers, num_units, filter_size,
                                                         output_dim,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     # Reshaping if needed
     shape = input.get_shape().as_list()
     if len(shape)<4:
@@ -203,7 +203,7 @@ def dcgan_v2_encoder(opts, input, num_layers, num_units, filter_size,
                                                         resample=False,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
 
     layer_x = input
     # Reshapping to features_dim if needed
@@ -256,7 +256,7 @@ def resnet_encoder(opts, input, num_layers, num_units, filter_size,
                                                         resample=False,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     layer_x = input
     # -- Reshapping to features_dim if needed
     if layer_x.get_shape().as_list()[1:-1]!=features_dim[:-1]:
@@ -339,7 +339,7 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         scope=None,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus
@@ -392,7 +392,7 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
 def mlp_decoder(opts, input, num_layers, num_units, output_dim,
                                                         reuse,
                                                         is_training,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     # Architecture with only fully connected layers and ReLUs
     layer_x = input
     for i in range(num_layers):
@@ -419,7 +419,7 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
                                                         output_dim,
                                                         reuse,
                                                         is_training,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
 
     if output_dim==2*np.prod(datashapes[opts['dataset']]):
         h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
@@ -480,7 +480,7 @@ def  dcgan_v2_decoder(opts, input, archi, num_layers, num_units,
                                                         resample,
                                                         reuse,
                                                         is_training,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     # batch_size
     batch_size = tf.shape(input)[0]
     # Reshapping to linear
@@ -547,7 +547,7 @@ def  resnet_decoder(opts, input, archi, num_layers, num_units,
                                                         resample,
                                                         reuse,
                                                         is_training,
-                                                        dropout_rate=0.):
+                                                        dropout_rate=1.):
     # batch_size
     batch_size = tf.shape(input)[0]
     # -- Reshapping to features dim
