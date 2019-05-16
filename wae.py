@@ -307,7 +307,8 @@ class WAE(object):
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
-                                                is_training=self.is_training)
+                                                is_training=self.is_training,
+                                                dropout_rate=tf.zeros([], tf.float32))
                 if opts['decoder'][n] == 'det':
                     decoded = decoded_mean
                 elif opts['decoder'][n] == 'gauss':
@@ -341,7 +342,8 @@ class WAE(object):
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
-                                                is_training=self.is_training)
+                                                is_training=self.is_training,
+                                                dropout_rate=0.)
                 if opts['decoder'][n] == 'det':
                     decoded = decoded_mean
                 elif opts['decoder'][n] == 'gauss':
