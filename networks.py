@@ -90,7 +90,7 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         scope=None,
                                                         reuse=False,
                                                         is_training=False,
-                                                        dropout_rate=0):
+                                                        dropout_rate=0.):
     with tf.variable_scope(scope, reuse=reuse):
         if archi == 'mlp':
             # Encoder uses only fully connected layers with ReLus

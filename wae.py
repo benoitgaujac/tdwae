@@ -518,7 +518,7 @@ class WAE(object):
                                                 reuse=True,
                                                 is_training=False)
             qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-            qz_params = tf.concat([qz_params for i in range(20)],axis=0)
+            qz_params = tf.concat([qz_params for i in range(4)],axis=0)
             enc_samples = sample_gaussian(opts, qz_params, 'tensorflow')
             encoded_samples.append(enc_samples)
         for m in range(len(encoded_samples[1:])):
@@ -774,7 +774,7 @@ class WAE(object):
                            self.samples: batch_samples,
                            self.lr_decay: decay,
                            self.lmbd: wae_lambda,
-                           self.dropout_rate: 0.,
+                           self.dropout_rate: opts['dropout_rate'],
                            self.is_training: True}
                 # Update encoder and decoder
                 [_, loss, imp_loss, loss_rec, losses_rec, loss_match, imp_match] = self.sess.run([
@@ -792,7 +792,7 @@ class WAE(object):
                 losses_rec = list(np.array(losses_rec)*np.concatenate((np.ones(1),np.array(wae_lambda[:opts['e_nlatents']-1]))))
                 Losses_rec.append(losses_rec)
                 Loss_match.append(wae_lambda[-1]*loss_match)
-                imp_Match.append(imp_match)
+                imp_Match.append(wae_lambda[0]*imp_match)
                 if opts['vizu_encSigma']:
                     [enc_sigmastats,dec_sigmastats] = self.sess.run(
                                                 [self.encSigmas_stats,
@@ -968,6 +968,7 @@ class WAE(object):
                         data_test=data.data[200:200+npics], data_train=data.test_data[:npics],
                         label_test=data.test_labels[:10*npics],
                         encoded = encoded[-1],
+                        enc_Sigmas=np.array(enc_Sigmas),dec_Sigmas=np.array(dec_Sigmas),
                         rec_train=reconstructed_train, rec_test=reconstructed_test[:npics],
                         samples_prior=samples_prior, samples=samples[-1],
                         loss=np.array(Loss), imp_loss=np.array(imp_Loss),
@@ -992,7 +993,7 @@ class WAE(object):
         self.saver.restore(self.sess, WEIGHTS_PATH)
         # Set up
         test_size = np.shape(data.test_data)[0]
-        num_steps = 40
+        num_steps = 20
         num_anchors = 20
         imshape = datashapes[opts['dataset']]
 
@@ -1005,7 +1006,7 @@ class WAE(object):
                                            self.dropout_rate: 0.,
                                            self.is_training:False})
         # data_ids = np.random.choice(num_pics,20,replace=False)
-        data_ids = np.arange(30,72)
+        data_ids = np.arange(30,30+42)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
                                           self.dropout_rate: 0.,
@@ -1013,18 +1014,17 @@ class WAE(object):
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
         if opts['encoder'][0]=='gauss':
-            data_ids = np.arange(53,54)
+            data_ids = np.arange(48,49)
             sampled_recon = self.sess.run(self.sampled_reconstructed,
                                    feed_dict={self.points:data.test_data[data_ids],
                                               self.dropout_rate: 0.,
                                               self.is_training: False})
 
-            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(20)]),] + sampled_recon
+            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(4)]),] + sampled_recon
         else:
             sampled_reconstructed = None
 
         # --- Encode anchors points and interpolate
-        # inter_anchors = None
         logging.error('Anchors interpolation..')
         encshape = list(np.shape(encoded[-1])[1:])
         #anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
@@ -1051,7 +1051,6 @@ class WAE(object):
 
         # --- Latent interpolation
         logging.error('Latent interpolation..')
-        # if opts['prior']!='implicit':
         if False:
             enc_mean = np.mean(encoded[-1],axis=0)
             enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
@@ -1073,7 +1072,7 @@ class WAE(object):
 
         # --- Samples generation
         logging.error('Samples generation..')
-        num_cols = 15
+        num_cols = 20
         npics = num_cols**2
         prior_noise = sample_pz(opts, self.pz_params, npics)
         samples = self.sess.run(self.decoded[-1],
@@ -1095,6 +1094,8 @@ class WAE(object):
         """
 
         opts = self.opts
+        # num_pics = opts['plot_num_pics']
+        num_pics = 16
 
         # --- Sampling fixed noise
         fixed_noise = []
@@ -1108,10 +1109,11 @@ class WAE(object):
         self.vlae_decoded = []
         for m in range(opts['nlatents']):
             if m==0:
-                decoded = tf.convert_to_tensor(sample_pz(opts,self.pz_params,opts['plot_num_pics']),
+                decoded = tf.convert_to_tensor(sample_pz(opts,self.pz_params,num_pics-1),
                                                 dtype=tf.float32)
+                decoded = tf.concat([tf.convert_to_tensor(fixed_noise[0],dtype=tf.float32),decoded],axis=0)
             else:
-                decoded = tf.concat([fixed_noise[0] for i in range(opts['plot_num_pics'])],axis=0)
+                decoded = tf.concat([fixed_noise[0] for i in range(num_pics)],axis=0)
             for n in range(opts['nlatents']-1,-1,-1):
                 # Output dim
                 if n==0:
