@@ -111,7 +111,7 @@ def main():
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents']#['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_resample'] = ['down',None,'down'] #None, up
+    opts['d_resample'] = ['up',None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [32,64,64] #[32,64,64,64,64,128,128,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh

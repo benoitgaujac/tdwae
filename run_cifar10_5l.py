@@ -61,8 +61,9 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 2008
     opts['print_every'] = 78125 #every 100 epochs
-    opts['lr'] = 0.0001
+    opts['lr'] = 0.0003
     opts['batch_size'] = 100
+    opts['dropout_rate'] = 0.2
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
@@ -111,7 +112,7 @@ def main():
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents']#['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_resample'] = ['down',None,'down',None,'down'] #None, up
+    opts['d_resample'] = ['up',None,'up',None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [32,64,64,128,128] #[32,64,64,64,64,128,128,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
