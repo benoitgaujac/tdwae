@@ -81,7 +81,8 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 5011
     opts['print_every'] = 187500
-    opts['lr'] = 0.001
+    opts['lr'] = 0.002
+    opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 5
@@ -90,6 +91,7 @@ def main():
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
+    opts['embedding'] = 'umap'
 
     # Model set up
     opts['nlatents'] = 5
@@ -103,10 +105,10 @@ def main():
     opts['lambda_pen_dec_sigma'] = 0.0005
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    baselambda_values = [0.01,0.5,0.1,0.5,1.,2.]
-    lambda_values = [10**i for i in range(-4,2)]
+    baselambda_values = [0.01,0.05,0.1,0.5,1.]
+    lambda_values = [10**i for i in range(-4,1)]
     params_list = list(itertools.product(baselambda_values, lambda_values))
-    base = params_list[FLAGS.param_idx-1][0]*32.
+    base = params_list[FLAGS.param_idx-1][0]
     lmba = params_list[FLAGS.param_idx-1][1]
     opts['lambda'] = [base**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmba)
@@ -117,7 +119,7 @@ def main():
     # NN set up
     opts['filter_size'] = [3,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
+    opts['e_nlatents'] = 1 #opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] #['gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['e_arch'] = ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down

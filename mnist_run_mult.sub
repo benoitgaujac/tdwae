@@ -5,10 +5,10 @@
 #$ -wd /home/bgaujac/tdwae
 
 #$ -l gpu=1
-#$ -l tmem=10G
+#$ -l tmem=5G
 #$ -l h_rt=200:00:00
 
-#$ -t 1-36
+#$ -t 1-25
 
 #$ -N mnist_gridsearch
 #$ -P gpu
