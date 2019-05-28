@@ -1,9 +1,5 @@
 import os
 import sys
-# Add PATHS to .bashrc
-sys.path.append('/usr/local/cuda/bin:/usr/local/cuda/NsightCompute-2019.1:$PATH')
-sys.path.append('/usr/local/cuda/lib64:$LD_LIBRARY_PATH')
-sys.path.append('/usr/bin/miniconda3/bin:$PATH')
 
 import logging
 import argparse
