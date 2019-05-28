@@ -1,5 +1,10 @@
 import os
 import sys
+# Add PATHS to .bashrc
+sys.path.append('/usr/local/cuda/bin:/usr/local/cuda/NsightCompute-2019.1:$PATH')
+sys.path.append('/usr/local/cuda/lib64:$LD_LIBRARY_PATH')
+sys.path.append('/usr/bin/miniconda3/bin:$PATH')
+
 import logging
 import argparse
 import configs
@@ -33,11 +38,6 @@ parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
 
 FLAGS = parser.parse_args()
-
-# Add PATHS to .bashrc
-export PATH='/usr/local/cuda/bin:/usr/local/cuda/NsightCompute-2019.1:$PATH'
-export LD_LIBRARY_PATH='/usr/local/cuda/lib64:$LD_LIBRARY_PATH'
-export PATH='/usr/bin/miniconda3/bin:$PATH'
 
 
 def main():
