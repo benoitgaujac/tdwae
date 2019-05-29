@@ -71,8 +71,8 @@ def main():
     opts['vizu_encSigma'] = True
 
     # Model set up
-    opts['nlatents'] = 10
-    opts['zdim'] = [44, 40, 36, 32, 28, 24, 20, 16, 12, 8] #[64,56,48,40,32,24,16,8]
+    opts['nlatents'] = 8
+    opts['zdim'] = [64,56,48,40,32,24,16,8]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -95,23 +95,23 @@ def main():
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_resample'] = ['down', None, None, None, None, 'down', None, None, None, 'down'] #None, down
+    opts['e_resample'] = ['down', None, None, None, 'down', None, None, 'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [64, 128, 128, 128, 128, 128, 128, 128, 128, 128]
+    opts['e_nfilters'] = [64, 64, 64, 64, 64, 128, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_resample'] = ['up', None, None, None, None, 'up', None, None, None, 'up'] #None, up
+    opts['d_resample'] = ['up', None, None, None, 'up', None, None, 'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [64, 128, 128, 128, 128, 128, 128, 128, 128, 128]
+    opts['d_nfilters'] = [64, 64, 64, 64, 64, 128, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
     # Verbose
     if opts['verbose']:
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+    logging.basicConfig(filename='outputs.log',level=logging.DEBUG, format='%(asctime)s - %(message)s')
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
@@ -130,23 +130,12 @@ def main():
     #Reset tf graph
     tf.reset_default_graph()
 
-    # build WAE/VAE
-    # if FLAGS.gpu_id=='cpu':
-    #     with tf.device('/cpu:0'):
     if opts['method']=='wae':
         wae = WAE(opts)
     elif opts['method']=='vae':
         wae = VAE(opts)
     else:
         assert False, 'Unknown methdo %s' % opts['method']
-    # else:
-    #     with tf.device('/GPU:0'):
-    #         if opts['method']=='wae':
-    #             wae = WAE(opts)
-    #         elif opts['method']=='vae':
-    #             wae = VAE(opts)
-    #         else:
-    #             assert False, 'Unknown methdo %s' % opts['method']
 
 
     # Training/testing/vizu
