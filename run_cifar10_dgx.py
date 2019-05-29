@@ -131,22 +131,22 @@ def main():
     tf.reset_default_graph()
 
     # build WAE/VAE
-    if FLAGS.gpu_id=='cpu':
-        with tf.device('/cpu:0'):
-            if opts['method']=='wae':
-                wae = WAE(opts)
-            elif opts['method']=='vae':
-                wae = VAE(opts)
-            else:
-                assert False, 'Unknown methdo %s' % opts['method']
+    # if FLAGS.gpu_id=='cpu':
+    #     with tf.device('/cpu:0'):
+    if opts['method']=='wae':
+        wae = WAE(opts)
+    elif opts['method']=='vae':
+        wae = VAE(opts)
     else:
-        with tf.device('/GPU:0'):
-            if opts['method']=='wae':
-                wae = WAE(opts)
-            elif opts['method']=='vae':
-                wae = VAE(opts)
-            else:
-                assert False, 'Unknown methdo %s' % opts['method']
+        assert False, 'Unknown methdo %s' % opts['method']
+    # else:
+    #     with tf.device('/GPU:0'):
+    #         if opts['method']=='wae':
+    #             wae = WAE(opts)
+    #         elif opts['method']=='vae':
+    #             wae = VAE(opts)
+    #         else:
+    #             assert False, 'Unknown methdo %s' % opts['method']
 
 
     # Training/testing/vizu
