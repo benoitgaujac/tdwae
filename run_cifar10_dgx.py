@@ -3,14 +3,6 @@ import sys
 
 import logging
 import argparse
-import configs
-from wae import WAE
-# from vae import VAE
-from vae_v2 import VAE
-from datahandler import DataHandler
-import utils
-
-import tensorflow as tf
 
 import pdb
 
@@ -34,6 +26,19 @@ parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
 
 FLAGS = parser.parse_args()
+
+if FLAGS.gpu_id!='cpu':
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_id
+
+import configs
+from wae import WAE
+# from vae import VAE
+from vae_v2 import VAE
+from datahandler import DataHandler
+import utils
+
+import tensorflow as tf
 
 
 def main():
@@ -135,7 +140,7 @@ def main():
             else:
                 assert False, 'Unknown methdo %s' % opts['method']
     else:
-        with tf.device('/GPU:%s' % FLAGS.gpu_id):
+        with tf.device('/GPU:0'):
             if opts['method']=='wae':
                 wae = WAE(opts)
             elif opts['method']=='vae':
