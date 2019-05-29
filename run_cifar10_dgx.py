@@ -135,7 +135,7 @@ def main():
             else:
                 assert False, 'Unknown methdo %s' % opts['method']
     else:
-        with tf.device('/GPU:0%s' % FLAGS.gpu_id):
+        with tf.device('/GPU:%s' % FLAGS.gpu_id):
             if opts['method']=='wae':
                 wae = WAE(opts)
             elif opts['method']=='vae':
