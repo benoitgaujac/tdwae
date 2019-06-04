@@ -72,7 +72,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [50,46,42,38,34,30,26,22,18,14,10] #[64,56,48,40,32,24,16,8]
+    opts['zdim'] = [46,42,38,34,30,26,22,18,14,10] #[64,56,48,40,32,24,16,8]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
