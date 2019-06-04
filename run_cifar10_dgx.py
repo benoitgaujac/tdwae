@@ -63,7 +63,7 @@ def main():
     opts['batch_size'] = 100
     opts['dropout_rate'] = 0.8
     opts['rec_loss_resamples'] = 'encoder'
-    opts['rec_loss_nsamples'] = 2
+    opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
     opts['save_final'] = True
     opts['save_train_data'] = True
@@ -71,8 +71,8 @@ def main():
     opts['vizu_encSigma'] = True
 
     # Model set up
-    opts['nlatents'] = 8
-    opts['zdim'] = [64,56,48,40,32,24,16,8]
+    opts['nlatents'] = 10
+    opts['zdim'] = [50,46,42,38,34,30,26,22,18,14,10] #[64,56,48,40,32,24,16,8]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -95,23 +95,18 @@ def main():
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_resample'] = ['down', None, None, None, 'down', None, None, 'down'] #None, down
+    opts['e_resample'] = ['down',None,None,None,None,'down',None,None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [64, 64, 64, 64, 64, 128, 128, 128]
+    opts['e_nfilters'] = [64,64,64,64,64,64,128,128,128,128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_resample'] = ['up', None, None, None, 'up', None, None, 'up'] #None, up
+    opts['d_resample'] = ['up',None,None,None,None,'up',None,None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [64, 64, 64, 64, 64, 128, 128, 128]
+    opts['d_nfilters'] = [64,64,64,64,64,64,128,128,128,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
-
-    # Verbose
-    if opts['verbose']:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(filename='outputs.log',level=logging.DEBUG, format='%(asctime)s - %(message)s')
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
@@ -122,6 +117,9 @@ def main():
         utils.create_dir(work_dir)
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
+    # Verbose
+    logging.basicConfig(filename=os.path.join(work_dir,'outputs.log'),
+        level=logging.error, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)
