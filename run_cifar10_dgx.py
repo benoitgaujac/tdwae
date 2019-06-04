@@ -119,7 +119,7 @@ def main():
 
     # Verbose
     logging.basicConfig(filename=os.path.join(work_dir,'outputs.log'),
-        level=logging.ERROR, format='%(asctime)s - %(message)s')
+        level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)
