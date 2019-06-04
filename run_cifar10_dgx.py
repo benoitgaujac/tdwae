@@ -65,7 +65,7 @@ def main():
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
-    opts['save_final'] = True
+    opts['save_final'] = False
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
@@ -119,7 +119,7 @@ def main():
 
     # Verbose
     logging.basicConfig(filename=os.path.join(work_dir,'outputs.log'),
-        level=logging.error, format='%(asctime)s - %(message)s')
+        level=logging.ERROR, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)
