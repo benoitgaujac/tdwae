@@ -59,7 +59,7 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 2008
     opts['print_every'] = 78125 #every 100 epochs
-    opts['lr'] = 0.0003
+    opts['lr'] = 0.0002
     opts['batch_size'] = 100
     opts['dropout_rate'] = 0.8
     opts['rec_loss_resamples'] = 'encoder'
@@ -72,7 +72,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [44, 40, 36, 32, 28, 24, 20, 16, 12, 8]
+    opts['zdim'] = [64, 60, 56, 52, 48, 44, 40, 36, 32, 28]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -97,14 +97,14 @@ def main():
     opts['e_arch'] = [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down']#['down',None,None,None,None,'down',None,None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [96,96,96,96,96,96,96,96,96,96,96,96,96,96,96]#[64,64,64,64,64,64,128,128,128,128]
+    opts['e_nfilters'] = [64,96,96,96,96,96,96,96,96,96,96,96,96,96,96]#[64,64,64,64,64,64,128,128,128,128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up']#['up',None,None,None,None,'up',None,None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [96,96,96,96,96,96,96,96,96,96,96,96,96,96,96]#[64,64,64,64,64,64,128,128,128,128]
+    opts['d_nfilters'] = [64,96,96,96,96,96,96,96,96,96,96,96,96,96,96]#[64,64,64,64,64,64,128,128,128,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
