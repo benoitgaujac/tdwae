@@ -79,7 +79,7 @@ def main():
     zdim_large = [64,60,56,52,48]
     if FLAGS.zdim=='small':
         opts['zdim'] = zdim_small
-    if FLAGS.zdim=='middle':
+    elif FLAGS.zdim=='middle':
         opts['zdim'] = zdim_middl
     elif FLAGS.zdim=='large':
         opts['zdim'] = zdim_large
