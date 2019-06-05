@@ -61,7 +61,7 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 2008
     opts['print_every'] = 78125 #every 100 epochs
-    opts['lr'] = 0.0003
+    opts['lr'] = 0.0002
     opts['batch_size'] = 100
     opts['dropout_rate'] = 0.8
     opts['rec_loss_resamples'] = 'encoder'
@@ -74,8 +74,9 @@ def main():
 
     # Model set up
     opts['nlatents'] = 5
-    zdim_small = [40,32,24,16,8]
-    zdim_large = [64,56,48,40,32]
+    zdim_small = [26,22,18,14,10]
+    zdim_middl = [46,42,38,34,30]
+    zdim_large = [64,60,56,52,48]
     if FLAGS.zdim=='small':
         opts['zdim'] = zdim_small
     elif FLAGS.zdim=='large':
@@ -93,7 +94,7 @@ def main():
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [FLAGS.base_lmba**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     # opts['lambda'] = [2**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'].append(2**opts['nlatents'] * FLAGS.lmba / opts['zdim'][-1])
@@ -107,14 +108,14 @@ def main():
     opts['e_arch'] = [FLAGS.net_archi,]*opts['nlatents']# ['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down',None,'down',None,'down'] #['down',None,None,None,'down',None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [32,64,64,128,128] #[32,64,64,64,64,128,128,128]
+    opts['e_nfilters'] = [64,96,96,96,96] #[32,64,64,64,64,128,128,128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents']#['mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_resample'] = ['up',None,'up',None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [32,64,64,128,128] #[32,64,64,64,64,128,128,128]
+    opts['d_nfilters'] = [64,96,96,96,96] #[32,64,64,64,64,128,128,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 

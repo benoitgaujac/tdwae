@@ -46,12 +46,15 @@ config_mnist['batch_norm_eps'] = 1e-05
 config_mnist['batch_norm_momentum'] = 0.99
 
 # Objective set up
-config_mnist['coef_rec'] = 1. # coef recon loss
-config_mnist['cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config_mnist['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config_mnist['latent_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
 config_mnist['penalty'] = 'mmd' #sinkhorn, mmd
 config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
 config_mnist['L'] = 30 #Sinkhorn iteration
 config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
+config_mnist['pen'] = 'wae' # wae, wae_mmd
+config_mnist['pen_enc_sigma'] = True # True, False
+config_mnist['lambda_pen_enc_sigma'] = 0.01
 
 # Model set up
 config_mnist['nlatents'] = 5
@@ -66,7 +69,7 @@ config_mnist['lambda'].append(0.0001*config_mnist['lambda_scalar']**5/config_mni
 config_mnist['lambda_schedule'] = 'adaptive' # adaptive, constant
 
 # NN set up
-config_mnist['init_std'] = 0.099999
+config_mnist['init_std'] = 0.99999
 config_mnist['init_bias'] = 0.0
 config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
