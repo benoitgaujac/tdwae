@@ -550,10 +550,6 @@ class DataHandler(object):
                 new_array[x] = chans
             return new_array
 
-        def convert_labels_to_one_hot(labels):
-            labels = (np.arange(NUM_LABELS) == labels[:, None]).astype(np.float32)
-            return labels
-
         # Extracting data
         data_dir = _data_dir(opts)
 
@@ -564,7 +560,7 @@ class DataHandler(object):
         imgs = data['X']
         labels = data['y'].flatten()
         labels[labels == 10] = 0  # Fix for weird labeling in dataset
-        tr_Y = convert_labels_to_one_hot(labels)
+        tr_Y = labels
         tr_X = convert_imgs_to_array(imgs)
         tr_X = tr_X / 255.
         file.close()
@@ -575,7 +571,7 @@ class DataHandler(object):
             imgs = data['X']
             labels = data['y'].flatten()
             labels[labels == 10] = 0  # Fix for weird labeling in dataset
-            extra_Y = convert_labels_to_one_hot(labels)
+            extra_Y = labels
             extra_X = convert_imgs_to_array(imgs)
             extra_X = extra_X / 255.
             file.close()
@@ -596,7 +592,7 @@ class DataHandler(object):
         imgs = data['X']
         labels = data['y'].flatten()
         labels[labels == 10] = 0  # Fix for weird labeling in dataset
-        te_Y = convert_labels_to_one_hot(labels)
+        te_Y = labels
         te_X = convert_imgs_to_array(imgs)
         te_X = te_X / 255.
         file.close()
@@ -606,7 +602,7 @@ class DataHandler(object):
         self.data = Data(opts, tr_X)
         self.labels = tr_Y
         self.test_data = Data(opts, te_X)
-        self.test_labels =te_Y
+        self.test_labels = te_Y
         self.num_points = len(self.data)
 
         logging.error('Loading Done: Train size: %d, Test size: %d' % (self.num_points,len(self.test_data)))
