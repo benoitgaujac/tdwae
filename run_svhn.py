@@ -58,7 +58,7 @@ def main():
     opts['epoch_num'] = 2008
     opts['print_every'] = 78125 #every 100 epochs
     opts['lr'] = 0.0002
-    opts['batch_size'] = 32
+    opts['batch_size'] = 100
     opts['dropout_rate'] = 0.7
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
