@@ -27,9 +27,14 @@ parser.add_argument("--etype", default='gauss',
 parser.add_argument("--net_archi", default='resnet',
                     help='networks architecture [mlp/dcgan_v2/resnet]')
 parser.add_argument("--weights_file")
-
+parser.add_argument('--gpu_id', default='cpu',
+                    help='gpu id for DGX box. Default is cpu')
 
 FLAGS = parser.parse_args()
+
+if FLAGS.gpu_id!='cpu':
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_id
 
 def main():
 
@@ -53,7 +58,7 @@ def main():
     opts['epoch_num'] = 2008
     opts['print_every'] = 78125 #every 100 epochs
     opts['lr'] = 0.0002
-    opts['batch_size'] = 128
+    opts['batch_size'] = 32
     opts['dropout_rate'] = 0.7
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
