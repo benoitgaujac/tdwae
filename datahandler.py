@@ -13,12 +13,12 @@ import gzip
 import tensorflow as tf
 import numpy as np
 from six.moves import cPickle, urllib
-import utils
-import PIL
-from utils import ArraySaver
+from scipy.io import loadmat
 from PIL import Image
 import sys
 import tarfile
+
+import utils
 
 import pdb
 
@@ -53,6 +53,11 @@ def maybe_download(opts):
         maybe_download_file(data_path,'train-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
         maybe_download_file(data_path,'t10k-images-idx3-ubyte.gz',opts['Zalando_data_source_url'])
         maybe_download_file(data_path,'t10k-labels-idx1-ubyte.gz',opts['Zalando_data_source_url'])
+    elif opts['dataset']=='svhn':
+        maybe_download_file(data_path,'train_32x32.mat',opts['SVHN_data_source_url'])
+        maybe_download_file(data_path,'test_32x32.mat',opts['SVHN_data_source_url'])
+        if opts['use_extra']:
+            maybe_download_file(data_path,'extra_32x32.mat',opts['SVHN_data_source_url'])
     elif opts['dataset']=='cifar10':
         maybe_download_file(data_path,'cifar-10-python.tar.gz',opts['cifar10_data_source_url'])
         tar = tarfile.open(os.path.join(data_path,'cifar-10-python.tar.gz'))
@@ -239,10 +244,10 @@ class Data(object):
             right = (width + new_width) / 2
             bottom = (height + new_height)/2
             im = im.crop((left, top, right, bottom))
-            im = im.resize((64, 64), PIL.Image.ANTIALIAS)
+            im = im.resize((64, 64), Image.ANTIALIAS)
         elif self.crop_style == 'resizecrop':
             # This method was used in ALI, AGE, ...
-            im = im.resize((64, 78), PIL.Image.ANTIALIAS)
+            im = im.resize((64, 78), Image.ANTIALIAS)
             im = im.crop((0, 7, 64, 64 + 7))
         else:
             raise Exception('Unknown crop style specified')
@@ -281,6 +286,8 @@ class DataHandler(object):
             self._load_mnist(opts, zalando=True)
         elif opts['dataset'] == 'mnist3':
             self._load_mnist3(opts)
+        elif opts['dataset'] == 'svhn':
+            self._load_svhn(opts)
         elif opts['dataset'] == 'gmm':
             self._load_gmm(opts)
         elif opts['dataset'] == 'circle_gmm':
@@ -300,6 +307,7 @@ class DataHandler(object):
                           'dsprites',
                           'mnist3',
                           'guitars',
+                          'svhn',
                           'cifar10',
                           'celebA',
                           'grassli']
@@ -520,6 +528,89 @@ class DataHandler(object):
 
         logging.error('Loading Done: Train size: %d, Test size: %d' % (self.num_points,len(self.test_data)))
 
+    def _load_svhn(self, opts):
+        """Load data from SVHN files.
+
+        """
+        NUM_LABELS = 10
+
+        # Helpers to process raw data
+        def convert_imgs_to_array(img_array):
+            rows = datashapes['svhn'][0]
+            cols = datashapes['svhn'][1]
+            chans = datashapes['svhn'][2]
+            num_imgs = img_array.shape[3]
+            # Note: not the most efficent way but can monitor what is happening
+            new_array = np.empty(shape=(num_imgs, rows, cols, chans), dtype=np.float32)
+            for x in range(0, num_imgs):
+                # TODO reuse normalize_img here
+                chans = img_array[:, :, :, x]
+                # # normalize pixels to 0 and 1. 0 is pure white, 1 is pure channel color
+                # norm_vec = (255-chans)*1.0/255.0
+                new_array[x] = chans
+            return new_array
+
+        def convert_labels_to_one_hot(labels):
+            labels = (np.arange(NUM_LABELS) == labels[:, None]).astype(np.float32)
+            return labels
+
+        # Extracting data
+        data_dir = _data_dir(opts)
+
+        # Training data
+        file_path = os.path.join(data_dir,'train_32x32.mat')
+        file = open(file_path, 'rb')
+        data = loadmat(file)
+        imgs = data['X']
+        labels = data['y'].flatten()
+        labels[labels == 10] = 0  # Fix for weird labeling in dataset
+        tr_Y = convert_labels_to_one_hot(labels)
+        tr_X = convert_imgs_to_array(imgs)
+        tr_X = tr_X / 255.
+        file.close()
+        if opts['use_extra']:
+            file_path = os.path.join(data_dir,'extra_32x32.mat')
+            file = open(file_path, 'rb')
+            data = loadmat(file)
+            imgs = data['X']
+            labels = data['y'].flatten()
+            labels[labels == 10] = 0  # Fix for weird labeling in dataset
+            extra_Y = convert_labels_to_one_hot(labels)
+            extra_X = convert_imgs_to_array(imgs)
+            extra_X = extra_X / 255.
+            file.close()
+            # concatenate training and extra
+            tr_X = np.concatenate((tr_X,extra_X), axis=0)
+            tr_Y = np.concatenate((tr_Y,extra_Y), axis=0)
+        seed = 123
+        np.random.seed(seed)
+        np.random.shuffle(tr_X)
+        np.random.seed(seed)
+        np.random.shuffle(tr_Y)
+        np.random.seed()
+
+        # Testing data
+        file_path = os.path.join(data_dir,'test_32x32.mat')
+        file = open(file_path, 'rb')
+        data = loadmat(file)
+        imgs = data['X']
+        labels = data['y'].flatten()
+        labels[labels == 10] = 0  # Fix for weird labeling in dataset
+        te_Y = convert_labels_to_one_hot(labels)
+        te_X = convert_imgs_to_array(imgs)
+        te_X = te_X / 255.
+        file.close()
+
+        self.data_shape = (32,32,3)
+
+        self.data = Data(opts, tr_X)
+        self.labels = tr_Y
+        self.test_data = Data(opts, te_X)
+        self.test_labels =te_Y
+        self.num_points = len(self.data)
+
+        logging.error('Loading Done: Train size: %d, Test size: %d' % (self.num_points,len(self.test_data)))
+
     def _load_mnist3(self, opts):
         """Load data from MNIST files.
 
@@ -651,7 +742,7 @@ class DataHandler(object):
         random.shuffle(datapoint_ids)
         random.seed()
 
-        saver = ArraySaver('disk', workdir=opts['work_dir'])
+        saver = utils.ArraySaver('disk', workdir=opts['work_dir'])
         saver.save('shuffled_training_ids', datapoint_ids)
 
         self.data_shape = (64, 64, 3)
