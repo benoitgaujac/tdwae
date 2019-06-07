@@ -61,7 +61,7 @@ def main():
     opts['print_every'] = 78125 #every 100 epochs
     opts['lr'] = 0.0002
     opts['batch_size'] = 100
-    opts['dropout_rate'] = 0.8
+    opts['dropout_rate'] = 0.7
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
@@ -72,7 +72,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [64, 60, 56, 52, 48, 44, 40, 36, 32, 28]
+    opts['zdim'] = [52, 48, 44, 40, 36, 32, 28, 24, 20, 16] #[46, 42, 38, 34, 30, 26, 22, 18, 14, 10]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
