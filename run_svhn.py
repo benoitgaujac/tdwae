@@ -103,11 +103,6 @@ def main():
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
-    # Verbose
-    if opts['verbose']:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
         utils.create_dir(opts['method'])
@@ -117,6 +112,9 @@ def main():
         utils.create_dir(work_dir)
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
+    # Verbose
+    logging.basicConfig(filename=os.path.join(work_dir,'outputs.log'),
+        level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)

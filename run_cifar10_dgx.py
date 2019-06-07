@@ -128,6 +128,7 @@ def main():
     #Reset tf graph
     tf.reset_default_graph()
 
+    # build WAE/VAE
     if opts['method']=='wae':
         wae = WAE(opts)
     elif opts['method']=='vae':
