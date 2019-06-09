@@ -29,6 +29,8 @@ parser.add_argument("--net_archi", default='resnet',
 parser.add_argument("--weights_file")
 parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
+parser.add_argument('--dataset', default='cropped',
+                    help='use original cropped or extra dataset')
 
 FLAGS = parser.parse_args()
 
@@ -117,6 +119,8 @@ def main():
         level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
+    if FLAGS.dataset=='extra':
+        opts['use_extra']=True
     data = DataHandler(opts)
     assert data.num_points >= opts['batch_size'], 'Training set too small'
 
