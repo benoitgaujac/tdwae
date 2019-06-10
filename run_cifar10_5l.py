@@ -75,12 +75,15 @@ def main():
     # Model set up
     opts['nlatents'] = 5
     zdim_small = [26,22,18,14,10]
+    zdim_small2 = [28,24,20,16,12]
     zdim_smallmiddl = [32,28,24,20,16]
     zdim_middl = [46,42,38,34,30]
     zdim_large = [64,60,56,52,48]
     if FLAGS.zdim=='small':
         opts['zdim'] = zdim_small
-    if FLAGS.zdim=='smallmiddl':
+    elif FLAGS.zdim=='small2':
+        opts['zdim'] = zdim_small2
+    elif FLAGS.zdim=='smallmiddl':
         opts['zdim'] = zdim_smallmiddl
     elif FLAGS.zdim=='middle':
         opts['zdim'] = zdim_middl
