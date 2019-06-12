@@ -235,6 +235,8 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
         cost = l2sq_cost(x1, x2)
     elif opts['latent_cost'] == 'l2sq_gauss':
         cost = l2sq_gauss_cost(x1, x2, mu, Sigma)
+    elif opts['latent_cost'] == 'quad_norm_1':
+        cost = quad_norm_1_cost(x1, x2, mu, Sigma)
     elif opts['latent_cost'] == 'l2sq_norm':
         cost = l2sq_norm_cost(x1, x2)
     elif opts['latent_cost'] == 'l1':
@@ -257,31 +259,26 @@ def l2_cost(x1, x2):
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     cost = tf.sqrt(1e-10 + cost)
     return cost
-    # if len(x2.get_shape().as_list())>2:
-    #     return tf.reduce_mean(cost,axis=1)
-    # else:
-    #     return cost
 
 
 def l2sq_cost(x1,x2):
     # c(x,y) = sum_i(||x - y||_2^2[:,i])
-    # pdb.set_trace()
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     return cost
-    # if len(x2.get_shape().as_list())>2:
-    #     return tf.reduce_mean(cost,axis=1)
-    # else:
-    #     return cost
 
 
 def l2sq_gauss_cost(x1, x2, mu, Sigma):
-    # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1))
+    # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1)^2)
     cost = tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
     return cost
-    # if len(x2.get_shape().as_list())>2:
-    #     return tf.reduce_mean(cost,axis=1)
-    # else:
-    #     return cost
+
+
+def quad_norm_1_cost(x1, x2, mu, Sigma):
+    # c(x,y) = sum_i( (Sigma[i]+(mu[i]-x1)^2)/(1+Sigma[i]) )
+    cost = Sigma + tf.square(mu-x1)
+    cost = tf.divide(cost, 1. + Sigma)
+    cost = tf.reduce_sum(cost,axis=-1)
+    return cost
 
 
 def mahalanobis_cost(x1, x2):
