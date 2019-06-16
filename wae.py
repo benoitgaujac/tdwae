@@ -129,7 +129,8 @@ class WAE(object):
 
             # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
             if n==0:
-                output_dim=2*np.prod(datashapes[opts['dataset']])
+                # output_dim=2*np.prod(datashapes[opts['dataset']])
+                output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
             else:
                 output_dim=2*opts['zdim'][n-1]
             recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
@@ -209,86 +210,7 @@ class WAE(object):
                                                 recon_mean,
                                                 recon_Sigma)
                 self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
-            #     if n==0:
-            #         if opts['decoder'][n]!='bernoulli':
-            #             if opts['input_normalize_sym']:
-            #                 reconstructed=tf.nn.tanh(reconstructed)
-            #             else:
-            #                 reconstructed=tf.nn.sigmoid(reconstructed)
-            #         if len(reconstructed.get_shape().as_list())>2:
-            #             reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
-            #             self.reconstructed.append(reconstructed[:,0])
-            #         else:
-            #             reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-            #             self.reconstructed.append(reconstructed)
-            #         loss_reconstruct = obs_reconstruction_loss(opts, self.points, reconstructed)
-            #         self.loss_reconstruct += loss_reconstruct
-            #     else:
-            #         loss_reconstruct = latent_reconstruction_loss(opts,
-            #                                         self.encoded[-2],
-            #                                         reconstructed,
-            #                                         recon_mean,
-            #                                         recon_Sigma)
-            #         self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
-            # elif opts['decoder'][n] == 'gauss':
-            #     # - gaussian decoder
-            #     if opts['encoder'][n] != 'det' and opts['rec_loss_resamples']=='encoder':
-            #         p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
-            #         reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
-            #         reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'])
-            #         reconstructed = tf.stack(reconstructed_list,axis=1)
-            #         recon_mean_list = tf.split(recon_mean,opts['rec_loss_nsamples'])
-            #         recon_mean = tf.stack(recon_mean_list,axis=1)
-            #         recon_Sigma_list = tf.split(recon_Sigma,opts['rec_loss_nsamples'])
-            #         recon_Sigma = tf.stack(recon_Sigma_list,axis=1)
-            #     elif opts['rec_loss_resamples']=='decoder':
-            #         p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
-            #         p_params = tf.stack([p_params for i in range(opts['rec_loss_nsamples'])],axis=1)
-            #         pdb.set_trace()
-            #         recon_mean, recon_Sigma = tf.split(p_params,num_or_size_splits=2,axis=-1)
-            #         reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
-            #         reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'],axis=1)
-            #         reconstructed = tf.squeeze(tf.stack(reconstructed_list,axis=2),[1])
-            #     if n==0:
-            #         if opts['decoder'][n]!='bernoulli':
-            #             if opts['input_normalize_sym']:
-            #                 reconstructed=tf.nn.tanh(reconstructed)
-            #             else:
-            #                 reconstructed=tf.nn.sigmoid(reconstructed)
-            #         if len(reconstructed.get_shape().as_list())>2:
-            #             reconstructed = tf.reshape(reconstructed,[-1,opts['rec_loss_nsamples']]+datashapes[opts['dataset']])
-            #             self.reconstructed.append(reconstructed[:,0])
-            #         else:
-            #             reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
-            #             self.reconstructed.append(reconstructed)
-            #         loss_reconstruct = obs_reconstruction_loss(opts, self.points, reconstructed)
-            #         self.loss_reconstruct += loss_reconstruct
-            #     else:
-            #         if len(reconstructed.get_shape().as_list())>2:
-            #             self.reconstructed.append(reconstructed[:,0])
-            #         else:
-            #             self.reconstructed.append(reconstructed)
-            #         loss_reconstruct = latent_reconstruction_loss(opts,
-            #                                         self.encoded[-2],
-            #                                         reconstructed,
-            #                                         recon_mean,
-            #                                         recon_Sigma)
-            #         self.loss_reconstruct += self.lmbd[n-1] * loss_reconstruct
-            #     # Dec Sigma penalty
-            #     if opts['pen_dec_sigma']:
-            #         pen_dec_sigma += opts['zdim'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(recon_Sigma)),axis=-1))
-            #     # Dec Sigma stats
-            #     if len(recon_Sigma.get_shape().as_list())>2:
-            #         Sigma_tr = tf.reduce_mean(tf.reduce_sum(recon_Sigma,axis=-1),axis=-1)
-            #     else:
-            #         Sigma_tr = tf.reduce_sum(recon_Sigma,axis=-1)
-            #     Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
-            #     Sstats = tf.stack([Smean,Svar],axis=-1)
-            #     decSigmas_stats.append(Sstats)
-            # else:
-            #     assert False, 'Unknown encoder %s' % opts['decoder'][n]
 
-            # pdb.set_trace()
             self.losses_reconstruct.append(loss_reconstruct)
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
         self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
@@ -297,12 +219,14 @@ class WAE(object):
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
             if n==0:
+                output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                 decoded_mean, decoded_Sigma = decoder(self.opts, input=decoded,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                # output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                output_dim =output_dim,
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -336,7 +260,8 @@ class WAE(object):
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*opts['zdim'][n-1],
+                                                # output_dim=2*opts['zdim'][n-1],
+                                                output_dim = [2*opts['zdim'][n-1],],
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -453,12 +378,14 @@ class WAE(object):
             reconstructed=self.encoded[m]
             for n in range(m,-1,-1):
                 if n==0:
+                    output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                # output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                output_dim = output_dim,
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -485,7 +412,8 @@ class WAE(object):
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*opts['zdim'][n-1],
+                                                # output_dim=2*opts['zdim'][n-1],
+                                                output_dim = [2*opts['zdim'][n-1],],
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -518,19 +446,21 @@ class WAE(object):
                                                 reuse=True,
                                                 is_training=False)
             qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-            qz_params = tf.concat([qz_params for i in range(4)],axis=0)
+            qz_params = tf.concat([qz_params for i in range(6)],axis=0)
             enc_samples = sample_gaussian(opts, qz_params, 'tensorflow')
             encoded_samples.append(enc_samples)
         for m in range(len(encoded_samples[1:])):
             reconstructed=encoded_samples[m+1]
             for n in range(m,-1,-1):
                 if n==0:
+                    output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                     recon_mean, recon_Sigma = decoder(self.opts, input=reconstructed,
                                                 archi=opts['d_arch'][n],
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                # output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                output_dim=output_dim,
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -557,7 +487,8 @@ class WAE(object):
                                                 num_layers=opts['d_nlayers'][n],
                                                 num_units=opts['d_nfilters'][n],
                                                 filter_size=opts['filter_size'][n],
-                                                output_dim=2*opts['zdim'][n-1],
+                                                # output_dim=2*opts['zdim'][n-1],
+                                                output_dim=[2*opts['zdim'][n-1],],
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['d_resample'][n],
                                                 scope='decoder/layer_%d' % n,
@@ -575,12 +506,14 @@ class WAE(object):
     def anchor_interpolation(self):
         # Anchor interpolation for 1-layer encoder
         opts = self.opts
+        output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
         anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
                                                 archi=opts['d_arch'][0],
                                                 num_layers=opts['d_nlayers'][0],
                                                 num_units=opts['d_nfilters'][0],
                                                 filter_size=opts['filter_size'][0],
-                                                output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                # output_dim=2*np.prod(datashapes[opts['dataset']]),
+                                                output_dim=output_dim,
                                                 features_dim=self.features_dim[0],
                                                 resample=opts['d_resample'][0],
                                                 scope='decoder/layer_0',
@@ -993,19 +926,18 @@ class WAE(object):
         self.saver.restore(self.sess, WEIGHTS_PATH)
         # Set up
         test_size = np.shape(data.test_data)[0]
-        num_steps = 20
+        num_steps = 14
         num_anchors = 20
         imshape = datashapes[opts['dataset']]
 
         # --- Reconstructions
         logging.error('Encoding test images..')
-        num_pics = 5000
-        # [encoded,reconstructed] = self.sess.run([self.encoded,self.reconstructed[0]],
-        encoded = self.sess.run(self.encoded,
+        num_pics = 3000
+        encoded, reconstructed = self.sess.run([self.encoded,
+                                self.full_reconstructed[-1]],
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.dropout_rate: 1.,
                                            self.is_training:False})
-        # data_ids = np.random.choice(num_pics,20,replace=False)
         data_ids = np.arange(30,30+42)
         full_recon = self.sess.run(self.full_reconstructed,
                                feed_dict={self.points:data.test_data[data_ids],
@@ -1014,13 +946,13 @@ class WAE(object):
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
         if opts['encoder'][0]=='gauss':
-            data_ids = np.arange(48,49)
+            data_ids = np.arange(36,37)
             sampled_recon = self.sess.run(self.sampled_reconstructed,
                                    feed_dict={self.points:data.test_data[data_ids],
                                               self.dropout_rate: 1.,
                                               self.is_training: False})
 
-            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(4)]),] + sampled_recon
+            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(6)]),] + sampled_recon
         else:
             sampled_reconstructed = None
 
@@ -1049,30 +981,33 @@ class WAE(object):
         inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
         inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
 
-        # --- Latent interpolation
-        logging.error('Latent interpolation..')
-        if False:
-            enc_mean = np.mean(encoded[-1],axis=0)
-            enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+        if opts['zdim'][-1]==2:
+            # --- Latent interpolation
+            logging.error('Latent interpolation..')
+            if False:
+                enc_mean = np.mean(encoded[-1],axis=0)
+                enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+            else:
+                enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
+                enc_var = np.ones(opts['zdim'][-1], dtype='float32')
+            mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
+            x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
+            xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
+            xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
+            latent_anchors = np.stack([xymin,xymax],axis=1)
+            grid_interpolation = linespace(opts, num_steps,
+                                    anchors=latent_anchors)
+            dec_latent = self.sess.run(self.decoded[-1],
+                                    feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
+                                               self.dropout_rate: 1.,
+                                               self.is_training: False})
+            inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
         else:
-            enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
-            enc_var = np.ones(opts['zdim'][-1], dtype='float32')
-        mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
-        x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
-        xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
-        xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
-        latent_anchors = np.stack([xymin,xymax],axis=1)
-        grid_interpolation = linespace(opts, num_steps,
-                                anchors=latent_anchors)
-        dec_latent = self.sess.run(self.decoded[-1],
-                                feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
-                                           self.dropout_rate: 1.,
-                                           self.is_training: False})
-        inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
+            inter_latent = None
 
         # --- Samples generation
         logging.error('Samples generation..')
-        num_cols = 20
+        num_cols = 14
         npics = num_cols**2
         prior_noise = sample_pz(opts, self.pz_params, npics)
         samples = self.sess.run(self.decoded[-1],
@@ -1082,7 +1017,7 @@ class WAE(object):
         # --- Making & saving plots
         logging.error('Saving images..')
         save_latent_interpolation(opts, data.test_data[:num_pics],data.test_labels[:num_pics], # data,labels
-                        encoded, #reconstructed, # encoded, reconstructed points
+                        encoded, reconstructed[:npics], # encoded, reconstructed points
                         full_reconstructed, sampled_reconstructed, # full & sampled recons
                         inter_anchors, inter_latent, # anchors and latents interpolation
                         samples, # samples
@@ -1117,7 +1052,8 @@ class WAE(object):
             for n in range(opts['nlatents']-1,-1,-1):
                 # Output dim
                 if n==0:
-                    output_dim = 2*np.prod(datashapes[opts['dataset']])
+                    # output_dim = 2*np.prod(datashapes[opts['dataset']])
+                    output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                 else:
                     output_dim = 2*opts['zdim'][n-1]
                 # Decoding
@@ -1139,8 +1075,7 @@ class WAE(object):
                         p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
                         decoded = sample_gaussian(opts, p_params, 'tensorflow')
                     else:
-                        decoded =  decoded_mean \
-                                + tf.multiply(fixed_noise[opts['nlatents']-n],tf.sqrt(1e-10+decoded_Sigma))
+                        decoded =  decoded_mean + tf.multiply(fixed_noise[opts['nlatents']-n],tf.sqrt(1e-10+decoded_Sigma))
                 else:
                     assert False, 'Unknown encoder %s' % opts['decoder'][n]
                 # reshape and normalize for last decoding

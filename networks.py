@@ -506,7 +506,7 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
             #     opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
         layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                output_dim, init=opts['mlp_init'], scope='hid_final')
+                np.prod(output_dim), init=opts['mlp_init'], scope='hid_final')
 
     return outputs
 
@@ -517,12 +517,12 @@ def  dcgan_decoder(opts, input, archi, num_layers, num_units,
                                                         is_training,
                                                         dropout_rate=1.):
 
-    if output_dim==2*np.prod(datashapes[opts['dataset']]):
+    if np.prod(output_dim)==2*np.prod(datashapes[opts['dataset']]):
         h_sqr = output_dim / (2*datashapes[opts['dataset']][-1])
         w_sqr = h_sqr
         output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2*datashapes[opts['dataset']][-1])
     else:
-        h_sqr = output_dim / 2
+        h_sqr = np.prod(output_dim) / 2
         w_sqr = h_sqr
         output_shape = (int(sqrt(h_sqr)),int(sqrt(w_sqr)),2)
     batch_size = tf.shape(input)[0]
@@ -632,7 +632,7 @@ def  dcgan_v2_decoder(opts, input, archi, num_layers, num_units,
                 filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
     # Final linear
     outputs = ops.linear.Linear(opts,layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                output_dim, scope='hid_final')
+                np.prod(output_dim), scope='hid_final')
 
     return outputs
 
@@ -693,7 +693,6 @@ def  resnet_decoder(opts, input, archi, num_layers, num_units,
         conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
         conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
                 filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
-    # pdb.set_trace()
     # -- Shortcut
     if resample=='up':
         shortcut = ops.deconv2d.Deconv2D(opts, layer_x, layer_x.get_shape().as_list()[-1], [batch_size,]+features_dim,
@@ -717,7 +716,7 @@ def  resnet_decoder(opts, input, archi, num_layers, num_units,
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
     outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
-                output_dim, scope='hid_final')
+                np.prod(output_dim), scope='hid_final')
 
     return outputs
 
@@ -794,7 +793,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
     outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
-                output_dim, scope='hid_final')
+                np.prod(output_dim), scope='hid_final')
 
     return outputs
 
@@ -870,13 +869,12 @@ def  resnet_v3_decoder(opts, input, archi, num_layers, num_units,
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
     outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
-
     if tf.shape(outputs)[1:2]==output_dim[1:2]:
         outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
                     1, stride=1, scope='hid_final', init=opts['conv_init'])
     else:
         outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
-                    output_dim, scope='hid_final')
+                    np.prod(output_dim), scope='hid_final')
 
     return outputs
 

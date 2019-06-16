@@ -108,7 +108,7 @@ def main():
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64,64,64,64,64,64,64,64,64,64,64,64,96,96,96]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
