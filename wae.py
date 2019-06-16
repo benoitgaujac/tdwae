@@ -132,7 +132,8 @@ class WAE(object):
                 # output_dim=2*np.prod(datashapes[opts['dataset']])
                 output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
             else:
-                output_dim=2*opts['zdim'][n-1]
+                # output_dim=2*opts['zdim'][n-1]
+                output_dim=[2*opts['zdim'][n-1],]
             recon_mean, recon_Sigma = decoder(self.opts, input=encoded,
                                             archi=opts['d_arch'][n],
                                             num_layers=opts['d_nlayers'][n],
@@ -1055,7 +1056,8 @@ class WAE(object):
                     # output_dim = 2*np.prod(datashapes[opts['dataset']])
                     output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                 else:
-                    output_dim = 2*opts['zdim'][n-1]
+                    # output_dim = 2*opts['zdim'][n-1]
+                    output_dim = [2*opts['zdim'][n-1],]
                 # Decoding
                 decoded_mean, decoded_Sigma = decoder(opts, input=decoded,
                                                 archi=opts['d_arch'][n],
