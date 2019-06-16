@@ -19,8 +19,10 @@ parser.add_argument("--base_lmba", type=float, default=1.,
                     help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
-parser.add_argument("--net_archi", default='resnet',
-                    help='networks architecture [mlp/dcgan_v2/resnet]')
+parser.add_argument("--enet_archi", default='resnet',
+                    help='encoder networks architecture [mlp/dcgan_v2/resnet]')
+parser.add_argument("--dnet_archi", default='resnet',
+                    help='decoder networks architecture [mlp/dcgan_v2/resnet]')
 parser.add_argument("--weights_file")
 parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
@@ -94,14 +96,14 @@ def main():
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
-    opts['e_arch'] = [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
+    opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down']#['down',None,None,None,None,'down',None,None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [64,64,64,64,64,64,64,64,64,64,64,64,96,96,96]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-    opts['d_arch'] =  [FLAGS.net_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
+    opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up']#['up',None,None,None,None,'up',None,None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64,64,64,64,64,64,64,64,64,64,64,64,96,96,96]
