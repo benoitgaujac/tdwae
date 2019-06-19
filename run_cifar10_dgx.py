@@ -62,8 +62,8 @@ def main():
     opts['epoch_num'] = 3008
     opts['print_every'] = 78125 #every 100 epochs
     opts['lr'] = 0.0002
-    opts['batch_size'] = 100
-    opts['dropout_rate'] = 0.7
+    opts['batch_size'] = 64
+    opts['dropout_rate'] = 0.8
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
@@ -74,7 +74,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [46, 42, 38, 34, 30, 26, 22, 18, 14, 10]
+    opts['zdim'] = [52, 48, 44, 40, 36, 32, 28, 24, 20, 16]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -82,7 +82,7 @@ def main():
     opts['lambda_pen_enc_sigma'] = 0.0005
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = 0.0005
-    opts['obs_cost'] = 'l1' #l2, l2sq, l2sq_norm, l1
+    opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i+1] for i in range(opts['nlatents']-1)]
     opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
@@ -93,20 +93,20 @@ def main():
 
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
-    opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down']#['down',None,None,None,None,'down',None,None,None,'down'] #None, down
+    opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [64,64,64,64,64,64,64,64,64,64,64,64,96,96,96]
+    opts['e_nfilters'] = [96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up']#['up',None,None,None,None,'up',None,None,None,'up'] #None, up
+    opts['dconv_1x1'] = False
+    opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [64,64,64,64,64,64,64,64,64,64,64,64,96,96,96]
+    opts['d_nfilters'] = [96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96, 96]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
