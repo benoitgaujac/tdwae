@@ -101,7 +101,7 @@ def main():
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['dconv_1x1'] = False
-    opts['d_resample'] = []'up', None, 'up', None, 'up'] #None, up
+    opts['d_resample'] = ['up', None, 'up', None, 'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [96, 96, 96, 96, 96]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
