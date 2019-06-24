@@ -936,7 +936,7 @@ def  resnet_v3_decoder(opts, input, archi, num_layers, num_units,
             conv = ops.layernorm.Layernorm(
                         opts, conv, 'hid%d/bn' % (i+1), reuse)
         conv = ops._ops.non_linear(conv,opts['d_nonlinearity'])
-        conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
+        # conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
         conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
                 filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
     # -- Shortcut
@@ -960,7 +960,7 @@ def  resnet_v3_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.layernorm.Layernorm(
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
-    outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
+    # outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     # -- 1x1 conv
     outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
                 1, stride=1, scope='hid_final', init=opts['conv_init'])
