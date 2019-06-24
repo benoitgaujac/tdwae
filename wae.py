@@ -361,7 +361,7 @@ class WAE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
-        if opts['d_arch'][0]=='resnet_v3':
+        if opts['d_arch'][0]=='resnet_v3' and opts['nlatents']!=1:
             if opts['e_resample'][0]=='down':
                 self.anchors_points = tf.placeholder(tf.float32,
                                             [None] + [int(self.data_shape[0]/2)*int(self.data_shape[1]/2)*opts['zdim'][0],],
@@ -1008,6 +1008,7 @@ class WAE(object):
         data_anchors = np.reshape(data_anchors,[-1,2]+imshape)
         inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
         inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
+
 
         if opts['zdim'][-1]==2:
             # --- Latent interpolation
