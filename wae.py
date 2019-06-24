@@ -535,7 +535,6 @@ class WAE(object):
             features_dim=self.features_dim[1]
         else:
             features_dim=self.features_dim[0]
-        # pdb.set_trace()
         output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
         anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
                                                 archi=opts['d_arch'][0],

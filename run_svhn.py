@@ -59,22 +59,22 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 2008
+    opts['epoch_num'] = 219
     opts['print_every'] = 78125 #every 100 epochs
-    opts['lr'] = 0.0002
+    opts['lr'] = 0.0001
     opts['batch_size'] = 100
-    opts['dropout_rate'] = 0.7
+    opts['dropout_rate'] = 0.8
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
     opts['save_final'] = True
-    opts['save_train_data'] = True
+    opts['save_train_data'] = False
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
 
     # Model set up
     opts['nlatents'] = 6
-    opts['zdim'] = [48,40,32,24,16,8]
+    opts['zdim'] = [16, 14, 12, 10, 8, 16]
 
     # Penalty
     opts['pen'] = 'wae'
@@ -101,6 +101,7 @@ def main():
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
+    opts['dconv_1x1'] = False
     opts['d_resample'] = ['up',None,None,None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64,64,64,64,64,64]

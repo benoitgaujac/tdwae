@@ -349,6 +349,11 @@ def resnet_v2_encoder(opts, input, num_layers, num_units, filter_size,
                                                         reuse=False,
                                                         is_training=False,
                                                         dropout_rate=1.):
+    """
+    output_dim:     dim of output latent
+    features_dim:   shape of input features [w,h,c]
+    """
+
     layer_x = input
     # -- Reshapping to features_dim if needed
     if layer_x.get_shape().as_list()[1:-1]!=features_dim[:-1]:
@@ -413,6 +418,11 @@ def resnet_v3_encoder(opts, input, num_layers, num_units, filter_size,
                                                         reuse=False,
                                                         is_training=False,
                                                         dropout_rate=1.):
+    """
+    output_dim:     dim of output latent / number of output channels
+    features_dim:   shape of input [w,h,c]
+    """
+
     # batch_size
     batch_size = tf.shape(input)[0]
     # -- Reshapping to if needed features dim
@@ -806,6 +816,11 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
                                                         reuse,
                                                         is_training,
                                                         dropout_rate=1.):
+    """
+    output_dim:     shape/dim of output latent
+    features_dim:   shape of ouput features [w,h,c]
+    """
+
     # batch_size
     batch_size = tf.shape(input)[0]
     # -- Reshapping to features dim
@@ -887,6 +902,11 @@ def  resnet_v3_decoder(opts, input, archi, num_layers, num_units,
                                                         reuse,
                                                         is_training,
                                                         dropout_rate=1.):
+    """
+    output_dim:     number of output channels
+    features_dim:   shape of input latent [w,h,c]
+    """
+
     # batch_size
     batch_size = tf.shape(input)[0]
     # -- Reshapping to features dim
