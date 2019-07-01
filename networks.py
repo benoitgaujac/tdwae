@@ -46,8 +46,6 @@ def one_layer_encoder(opts, input, output_dim, norm, scope, reuse=False,
     mean, logSigma = tf.split(outputs,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -50, 500)
     Sigma = tf.nn.softplus(logSigma)
-    # logSigma = tf.clip_by_value(logSigma, -20, 20)
-    # Sigma = tf.exp(logSigma)
     return mean, Sigma
 
 def one_layer_decoder(opts, input, output_dim, norm, scope, reuse=False,
@@ -860,7 +858,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
             conv = ops.layernorm.Layernorm(
                         opts, conv, 'hid%d/bn' % (i+1), reuse)
         conv = ops._ops.non_linear(conv,opts['d_nonlinearity'])
-        conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
+        # conv = tf.nn.dropout(conv, keep_prob=dropout_rate)
         conv = ops.conv2d.Conv2d(opts, conv,conv.get_shape().as_list()[-1], num_units,
                 filter_size, stride=1, scope='hid%d/deconv' % (i+1), init=opts['conv_init'])
     # -- Shortcut
@@ -884,7 +882,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.layernorm.Layernorm(
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
-    outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
+    # outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
     if len(output_dim)>2 and opts['dconv_1x1']:
         outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
                     1, stride=1, scope='hid_final', init=opts['conv_init'])
