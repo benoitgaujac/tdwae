@@ -961,16 +961,19 @@ class WAE(object):
         # --- Reconstructions
         logging.error('Encoding test images..')
         num_pics = 2000
-        encoded, reconstructed = self.sess.run([self.encoded,
+        encoded, full_recons = self.sess.run([self.encoded,
                                 self.full_reconstructed[-1]],
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.dropout_rate: 1.,
                                            self.is_training:False})
+        reconstructed = full_recons[-1]
         data_ids = np.arange(30,30+42)
-        full_recon = self.sess.run(self.full_reconstructed,
-                               feed_dict={self.points:data.test_data[data_ids],
-                                          self.dropout_rate: 1.,
-                                          self.is_training: False})
+        full_recon = full_recons[data_ids]
+        data_ids = np.arange(30,30+42)
+        # full_recon = self.sess.run(self.full_reconstructed,
+        #                        feed_dict={self.points:data.test_data[data_ids],
+        #                                   self.dropout_rate: 1.,
+        #                                   self.is_training: False})
 
         full_reconstructed = [data.test_data[data_ids],] + full_recon
         if opts['encoder'][0]=='gauss':
