@@ -60,7 +60,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 219
-    opts['print_every'] = 78125 #every 100 epochs
+    opts['print_every'] =  1000 #78125 #every 100 epochs
     opts['lr'] = 0.0001
     opts['batch_size'] = 100
     opts['dropout_rate'] = 0.8
@@ -74,7 +74,8 @@ def main():
 
     # Model set up
     opts['nlatents'] = 6
-    opts['zdim'] = [16, 14, 12, 10, 8, 16]
+    # opts['zdim'] = [36, 32, 28, 24, 20, 16]
+    opts['zdim'] = [12, 10, 8, 6, 4, 16]
 
     # Penalty
     opts['pen'] = 'wae'
@@ -96,7 +97,7 @@ def main():
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_resample'] = ['down',None,None,None,None,'down'] # None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [64,64,64,64,64,64]
+    opts['e_nfilters'] = [64, 64, 64, 64, 64, 64]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -104,7 +105,7 @@ def main():
     opts['dconv_1x1'] = False
     opts['d_resample'] = ['up',None,None,None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [64,64,64,64,64,64]
+    opts['d_nfilters'] = [64, 64, 64, 64, 64, 64]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
@@ -148,6 +149,7 @@ def main():
         wae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
         opts['rec_loss_nsamples'] = 1
+        opts['sample_recons'] = False
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="fid":
         wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
