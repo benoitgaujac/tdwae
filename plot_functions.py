@@ -279,8 +279,8 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     num_pics = np.shape(encoded[0])[0]
     embeds = []
     for i in range(len(encoded)):
-        # encods = np.concatenate([encoded[i],decoded[i]],axis=0)
-        encods = encoded[i]
+        encods = np.concatenate([encoded[i],decoded[i]],axis=0)
+        # encods = encoded[i]
         if np.shape(encods)[-1]==2:
             embedding = encods
         else:
