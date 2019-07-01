@@ -960,7 +960,7 @@ class WAE(object):
 
         # --- Reconstructions
         logging.error('Encoding test images..')
-        num_pics = 2000
+        num_pics = 3000
         encoded, full_recons = self.sess.run([self.encoded,
                                 # self.full_reconstructed[-1]],
                                 self.full_reconstructed],
@@ -969,22 +969,24 @@ class WAE(object):
                                            self.is_training:False})
         reconstructed = full_recons[-1]
         data_ids = np.arange(30,30+42,dtype='int32')
-        full_recon = full_recons[data_ids]
-        data_ids = np.arange(30,30+42)
+        full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
         # full_recon = self.sess.run(self.full_reconstructed,
         #                        feed_dict={self.points:data.test_data[data_ids],
         #                                   self.dropout_rate: 1.,
         #                                   self.is_training: False})
-
         full_reconstructed = [data.test_data[data_ids],] + full_recon
-        if opts['encoder'][0]=='gauss':
-            data_ids = np.arange(36,37)
-            sampled_recon = self.sess.run(self.sampled_reconstructed,
-                                   feed_dict={self.points:data.test_data[data_ids],
-                                              self.dropout_rate: 1.,
-                                              self.is_training: False})
 
-            sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(6)]),] + sampled_recon
+        if opts['sample_recons']:
+            if opts['encoder'][0]=='gauss':
+                data_ids = np.arange(36,37)
+                sampled_recon = self.sess.run(self.sampled_reconstructed,
+                                       feed_dict={self.points:data.test_data[data_ids],
+                                                  self.dropout_rate: 1.,
+                                                  self.is_training: False})
+
+                sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(6)]),] + sampled_recon
+            else:
+                sampled_reconstructed = None
         else:
             sampled_reconstructed = None
 

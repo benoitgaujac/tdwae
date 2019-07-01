@@ -526,7 +526,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
             plt.close()
 
     # --- sampled reconstruction plots
-    if opts['encoder'][0]=='gauss':
+    if opts['encoder'][0]=='gauss' and sampled_reconstructed is not None:
         num_cols = len(sampled_reconstructed)
         num_rows = np.shape(sampled_reconstructed[0])[0]
         # padding inut image
@@ -577,9 +577,13 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
             if opts['embedding']=='pca':
                 embedding = PCA(n_components=2).fit_transform(encods)
             elif opts['embedding']=='umap':
-                embedding = umap.UMAP(n_neighbors=10,
-                                        min_dist=0.1,
-                                        metric='euclidean').fit_transform(encods)
+                embedding = umap.UMAP(n_neighbors=15,
+                                        min_dist=0.2,
+                                        metric='correlation',
+                                        # n_neighbors=10,
+                                        # min_dist=0.1,
+                                        # metric='euclidean'
+                                        ).fit_transform(encods)
             elif opts['embedding']=='tsne':
                 embedding = TSNE(n_components=2,
                                 perplexity=40,
@@ -600,7 +604,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     for i in range(len(embeds)):
         # ax = plt.subplot(gs[0, i])
         ax = fig.add_subplot(1, len(embeds), i+1)
-        plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.8,
+        plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.6,
                     c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=label_test, s=40, edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         xmin = np.amin(embeds[i][:,0])
