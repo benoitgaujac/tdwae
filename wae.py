@@ -962,7 +962,8 @@ class WAE(object):
         logging.error('Encoding test images..')
         num_pics = 2000
         encoded, full_recons = self.sess.run([self.encoded,
-                                self.full_reconstructed[-1]],
+                                # self.full_reconstructed[-1]],
+                                self.full_reconstructed],
                                 feed_dict={self.points:data.test_data[:num_pics],
                                            self.dropout_rate: 1.,
                                            self.is_training:False})
