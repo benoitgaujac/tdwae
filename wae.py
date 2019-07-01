@@ -960,7 +960,7 @@ class WAE(object):
 
         # --- Reconstructions
         logging.error('Encoding test images..')
-        num_pics = 3000
+        num_pics = 2000
         encoded, reconstructed = self.sess.run([self.encoded,
                                 self.full_reconstructed[-1]],
                                 feed_dict={self.points:data.test_data[:num_pics],
