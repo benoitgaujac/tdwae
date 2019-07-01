@@ -968,7 +968,7 @@ class WAE(object):
                                            self.dropout_rate: 1.,
                                            self.is_training:False})
         reconstructed = full_recons[-1]
-        data_ids = np.arange(30,30+42)
+        data_ids = np.arange(30,30+42,dtype='int32')
         full_recon = full_recons[data_ids]
         data_ids = np.arange(30,30+42)
         # full_recon = self.sess.run(self.full_reconstructed,
