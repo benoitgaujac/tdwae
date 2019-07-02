@@ -712,7 +712,7 @@ class WAE(object):
         enc_Sigmas, dec_Sigmas = [], []
         mean_blurr, fid_scores = [], [],
         decay, counter = 1., 0
-        decay_steps, decay_rate = 10000, 0.96
+        decay_steps, decay_rate = 25000, 0.99
         wait, wait_lambda = 0, 0
         wae_lambda = opts['lambda']
         self.start_time = time.time()
