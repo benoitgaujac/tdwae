@@ -712,6 +712,7 @@ class WAE(object):
         enc_Sigmas, dec_Sigmas = [], []
         mean_blurr, fid_scores = [], [],
         decay, counter = 1., 0
+        decay_steps, decay_rate = 10000, 0.96
         wait, wait_lambda = 0, 0
         wae_lambda = opts['lambda']
         self.start_time = time.time()
@@ -884,8 +885,11 @@ class WAE(object):
                                      'res_e%04d_mb%05d.png' % (epoch, it))  # filename
 
                 # Update learning rate if necessary and counter
-                # First 20 epochs do nothing
-                if epoch >= 10000:
+                # First 150 epochs do nothing
+                if epoch >= 100 and counter % decay_steps == 0:
+                    decay = decay_rate ** (int(counter / decay_steps))
+                    logging.error('Reduction in lr: %f\n' % decay)
+                    """
                     # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
                     if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
@@ -897,6 +901,7 @@ class WAE(object):
                         logging.error('Reduction in lr: %f\n' % decay)
                         print('')
                         wait = 0
+                    """
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
