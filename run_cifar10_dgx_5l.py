@@ -10,8 +10,8 @@ parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
                     help='mode to run [train/vizu/fid/test]')
-parser.add_argument("--penalty", default='wae',
-                    help='penalty type [wae/wae_mmd]')
+parser.add_argument("--penalty", default='mmd',
+                    help='top latent penaltye [mmd/sinkhorn]')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -60,10 +60,11 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 3008
-    opts['print_every'] = int(781255) #every 100 epochs
-    opts['lr'] = 0.0002
+    opts['print_every'] = 2500 #every 10 epochs
+    # opts['print_every'] = 100000  #every 200 epochs
+    opts['lr'] = 0.0001
     opts['batch_size'] = 100
-    opts['dropout_rate'] = 0.8
+    opts['dropout_rate'] = 0.9
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every_epoch'] = 2008
@@ -75,13 +76,13 @@ def main():
     # Model set up
     opts['nlatents'] = 5
     opts['zdim'] = [32,24,16,8,128]
-
+    #opts['zdim'] = [16,14,12,10,128]
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['pen_enc_sigma'] = False
-    opts['lambda_pen_enc_sigma'] = 0.0005
+    opts['lambda_pen_enc_sigma'] = [0.00001,0.00001,0.00001,0.00001,0.0000001]
     opts['pen_dec_sigma'] = False
-    opts['lambda_pen_dec_sigma'] = 0.0005
+    opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     opts['lambda'] = [FLAGS.base_lmba**(i+1)/opts['zdim'][i] for i in range(opts['nlatents']-1)]
