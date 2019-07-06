@@ -78,7 +78,7 @@ def main():
     opts['zdim'] = [32,24,16,8,128]
     #opts['zdim'] = [16,14,12,10,128]
     # Penalty
-    opts['pen'] = FLAGS.penalty
+    opts['penalty'] = FLAGS.penalty
     opts['pen_enc_sigma'] = False
     opts['lambda_pen_enc_sigma'] = [0.00001,0.00001,0.00001,0.00001,0.0000001]
     opts['pen_dec_sigma'] = False
