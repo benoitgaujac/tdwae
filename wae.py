@@ -125,7 +125,7 @@ class WAE(object):
                     self.encoded.append(encoded)
                 # Enc Sigma penalty
                 if opts['pen_enc_sigma']:
-                    pen_enc_sigma += opts['lambda_pen_enc_sigma']*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
+                    pen_enc_sigma += opts['lambda_pen_enc_sigma'][n]*tf.reduce_mean(tf.reduce_sum(tf.abs(tf.log(enc_Sigma)),axis=-1))
                 # Enc Sigma stats
                 Sigma_tr = tf.reduce_mean(enc_Sigma,axis=-1)
                 Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
@@ -314,11 +314,11 @@ class WAE(object):
         # Enc Sigma penalty
         if opts['pen_enc_sigma']:
             # self.objective += opts['lambda_pen_enc_sigma']*pen_enc_sigma
-            self.objective += opts['lambda_pen_enc_sigma']*pen_enc_sigma
+            self.objective += pen_enc_sigma
         # Dec Sigma penalty
         if opts['pen_dec_sigma']:
             # self.objective += opts['lambda_pen_dec_sigma']*pen_dec_sigma
-            self.objective += opts['lambda_pen_dec_sigma']*pen_dec_sigma
+            self.objective += pen_dec_sigma
         # Implicit losses
         if opts['nlatents']>1:
             self.imp_match_penalty = matching_penalty(opts, self.decoded[-2], self.encoded[0])
