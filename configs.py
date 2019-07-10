@@ -5,7 +5,7 @@ from math import pow, sqrt
 config_mnist = {}
 # Outputs set up
 config_mnist['verbose'] = False
-config_mnist['save_every_epoch'] = 10000
+config_mnist['save_every'] = 10000
 config_mnist['save_final'] = True
 config_mnist['save_train_data'] = True
 config_mnist['print_every'] = 100
@@ -95,7 +95,7 @@ config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 config_svhn = {}
 # Outputs set up
 config_svhn['verbose'] = False
-config_svhn['save_every_epoch'] = 2000
+config_svhn['save_every'] = 2000
 config_svhn['print_every'] = 200000
 config_svhn['save_final'] = True
 config_svhn['save_train_data'] = False
@@ -183,7 +183,7 @@ config_svhn['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 config_cifar10 = {}
 # Outputs set up
 config_cifar10['verbose'] = False
-config_cifar10['save_every_epoch'] = 2000
+config_cifar10['save_every'] = 2000
 config_cifar10['print_every'] = 200000
 config_cifar10['save_final'] = True
 config_cifar10['save_train_data'] = False

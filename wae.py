@@ -720,7 +720,8 @@ class WAE(object):
         self.start_time = time.time()
         for epoch in range(opts['epoch_num']):
             # Saver
-            if epoch > 0 and epoch % opts['save_every_epoch'] == 0:
+            # if epoch > 0 and epoch % opts['save_every_epoch'] == 0:
+            if counter>0 and counter % opts['save_every'] == 0:
                 self.saver.save(self.sess, os.path.join(
                                                 work_dir,'checkpoints',
                                                 'trained-wae'),
@@ -945,6 +946,7 @@ class WAE(object):
                         loss_rec_test=np.array(Loss_rec_test),
                         losses_rec=np.array(Losses_rec))
 
+
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
         Plot and save different latent interpolation
@@ -1064,6 +1066,7 @@ class WAE(object):
                         inter_anchors, inter_latent, # anchors and latents interpolation
                         samples, # samples
                         MODEL_PATH) # working directory
+
 
     def vlae_experiment(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
