@@ -567,7 +567,7 @@ class WAE(object):
 
     def add_savers(self):
         opts = self.opts
-        saver = tf.train.Saver(max_to_keep=2)
+        saver = tf.train.Saver(max_to_keep=10)
         self.saver = saver
 
     def optimizer(self, lr, decay=1.):
