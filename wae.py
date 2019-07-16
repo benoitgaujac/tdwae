@@ -73,10 +73,7 @@ class WAE(object):
         encSigmas_stats = []
         decSigmas_stats = []
         pen_enc_sigma, pen_dec_sigma = 0., 0.
-        if opts['e_arch'][0]=='resnet_v3':
-            self.features_dim = [self.data_shape,]
-        else:
-            self.features_dim = [[self.data_shape[0],self.data_shape[1],opts['e_nfilters'][0]],]
+        self.features_dim = [self.data_shape,]
         self.encoded, self.reconstructed = [], []
         self.decoded = []
         self.losses_reconstruct = []
@@ -89,10 +86,6 @@ class WAE(object):
                 input = self.points
             else:
                 input = self.encoded[-1]
-            if n==opts['e_nlatents']-1:
-                top_latent=True
-            else:
-                top_latent=False
             enc_mean, enc_Sigma, out_shape = encoder(self.opts, input=input,
                                                 archi=opts['e_arch'][n],
                                                 num_layers=opts['e_nlayers'][n],
@@ -101,7 +94,8 @@ class WAE(object):
                                                 output_dim=2*opts['zdim'][n],
                                                 features_dim=self.features_dim[-1],
                                                 resample=opts['e_resample'][n],
-                                                top_latent=top_latent,
+                                                last_archi=opts['last_archi'][n],
+                                                top_latent=n==(opts['e_nlatents']-1),
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=False,
                                                 is_training=self.is_training,
@@ -139,7 +133,7 @@ class WAE(object):
                 output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
             else:
                 output_dim=[2*opts['zdim'][n-1],]
-            if opts['d_arch'][n]=='resnet_v3':
+            if opts['d_arch'][n]=='resnet_v2':
                 features_dim=self.features_dim[-1]
             else:
                 features_dim=self.features_dim[-2]
@@ -151,6 +145,7 @@ class WAE(object):
                                             output_dim=output_dim,
                                             features_dim=features_dim,
                                             resample=opts['d_resample'][n],
+                                            last_archi=opts['last_archi'][n],
                                             scope='decoder/layer_%d' % n,
                                             reuse=False,
                                             is_training=self.is_training,
@@ -164,7 +159,7 @@ class WAE(object):
                     reconstructed = tf.stack(reconstructed_list,axis=1)
             elif opts['decoder'][n] == 'gauss':
                 # - gaussian decoder
-                if opts['encoder'][n] != 'det' and opts['rec_loss_resamples']=='encoder':
+                if opts['encoder'][n]!='det' and opts['rec_loss_resamples']=='encoder':
                     p_params = tf.concat((recon_mean,recon_Sigma),axis=-1)
                     reconstructed = sample_gaussian(opts, p_params, 'tensorflow')
                     reconstructed_list = tf.split(reconstructed,opts['rec_loss_nsamples'])
@@ -224,10 +219,11 @@ class WAE(object):
         self.encSigmas_stats = tf.stack(encSigmas_stats,axis=0)
         self.decSigmas_stats = tf.stack(decSigmas_stats,axis=0)
 
+        # pdb.set_trace()
         # --- Sampling from model (only for generation)
         decoded = self.samples
         for n in range(opts['nlatents']-1,-1,-1):
-            if opts['d_arch'][n]=='resnet_v3':
+            if opts['d_arch'][n]=='resnet_v2':
                 features_dim=self.features_dim[n+1]
             else:
                 features_dim=self.features_dim[n]
@@ -241,6 +237,7 @@ class WAE(object):
                                                 output_dim =output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=self.is_training)
@@ -273,6 +270,7 @@ class WAE(object):
                                                 output_dim = [2*opts['zdim'][n-1],],
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=reuse,
                                                 is_training=self.is_training)
@@ -363,7 +361,7 @@ class WAE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
-        if opts['d_arch'][0]=='resnet_v3' and opts['nlatents']!=1:
+        if opts['d_arch'][0]=='resnet_v2' and opts['nlatents']!=1:
             if opts['e_resample'][0]=='down':
                 self.anchors_points = tf.placeholder(tf.float32,
                                             [None] + [int(self.data_shape[0]/2)*int(self.data_shape[1]/2)*opts['zdim'][0],],
@@ -395,7 +393,7 @@ class WAE(object):
         for m in range(len(self.encoded)):
             reconstructed=self.encoded[m]
             for n in range(m,-1,-1):
-                if opts['d_arch'][n]=='resnet_v3':
+                if opts['d_arch'][n]=='resnet_v2':
                     features_dim=self.features_dim[n+1]
                 else:
                     features_dim=self.features_dim[n]
@@ -409,6 +407,7 @@ class WAE(object):
                                                 output_dim = output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -436,6 +435,7 @@ class WAE(object):
                                                 output_dim = [2*opts['zdim'][n-1],],
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -466,7 +466,8 @@ class WAE(object):
                                                 output_dim=2*opts['zdim'][n],
                                                 features_dim=self.features_dim[n],
                                                 resample=opts['e_resample'][n],
-                                                top_latent=top_latent,
+                                                last_archi=opts['last_archi'][n],
+                                                top_latent=n==(opts['e_nlatents']-1),
                                                 scope='encoder/layer_%d' % (n+1),
                                                 reuse=True,
                                                 is_training=False)
@@ -477,7 +478,7 @@ class WAE(object):
         for m in range(len(encoded_samples[1:])):
             reconstructed=encoded_samples[m+1]
             for n in range(m,-1,-1):
-                if opts['d_arch'][n]=='resnet_v3':
+                if opts['d_arch'][n]=='resnet_v2':
                     features_dim=self.features_dim[n+1]
                 else:
                     features_dim=self.features_dim[n]
@@ -491,6 +492,7 @@ class WAE(object):
                                                 output_dim=output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -518,6 +520,7 @@ class WAE(object):
                                                 output_dim=[2*opts['zdim'][n-1],],
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -533,7 +536,7 @@ class WAE(object):
     def anchor_interpolation(self):
         # Anchor interpolation for 1-layer encoder
         opts = self.opts
-        if opts['d_arch'][0]=='resnet_v3':
+        if opts['d_arch'][0]=='resnet_v2':
             features_dim=self.features_dim[1]
         else:
             features_dim=self.features_dim[0]
@@ -546,6 +549,7 @@ class WAE(object):
                                                 output_dim=output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][0],
+                                                last_archi=opts['last_archi'][0],
                                                 scope='decoder/layer_0',
                                                 reuse=True,
                                                 is_training=False)
@@ -1100,7 +1104,7 @@ class WAE(object):
                     output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
                 else:
                     output_dim = [2*opts['zdim'][n-1],]
-                if opts['d_arch'][n]=='resnet_v3':
+                if opts['d_arch'][n]=='resnet_v2':
                     features_dim=self.features_dim[n+1]
                 else:
                     features_dim=self.features_dim[n]
@@ -1113,6 +1117,7 @@ class WAE(object):
                                                 output_dim=output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
+                                                last_archi=opts['last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)

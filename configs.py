@@ -75,6 +75,8 @@ config_mnist['init_bias'] = 0.0
 config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 config_mnist['filter_size'] = [5,3,3,3,3,3,3,3]
+config_mnist['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
+
 
 config_mnist['e_nlatents'] = 5
 config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -85,7 +87,6 @@ config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tan
 
 config_mnist['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
 config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-config_mnist['dconv_1x1'] = True #False, True
 config_mnist['d_nlayers'] = [2,2,2,2,2,2,2]
 config_mnist['d_nfilters'] = [512,256,128,64,32,16]
 config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
@@ -162,6 +163,8 @@ config_svhn['init_bias'] = 0.0
 config_svhn['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_svhn['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 config_svhn['filter_size'] = [5,3,3,3,3,3,3,3]
+config_svhn['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
+
 
 config_svhn['e_nlatents'] = config_svhn['nlatents'] #config_mnist['nlatents']
 config_svhn['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -173,7 +176,6 @@ config_svhn['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
 
 config_svhn['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
 config_svhn['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod, ali, began
-config_svhn['dconv_1x1'] = True #False, True
 config_svhn['d_nlayers'] = [2,2,2,2,2,2,2,2]
 config_svhn['d_nfilters'] = [96,96,64,64,32,32,32,32]
 config_svhn['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
@@ -249,6 +251,8 @@ config_cifar10['init_bias'] = 0.0
 config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
 config_cifar10['filter_size'] = [5,3,3,3,3,3,3,3]
+config_cifar10['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
+
 
 config_cifar10['e_nlatents'] = config_cifar10['nlatents'] #config_mnist['nlatents']
 config_cifar10['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
@@ -260,7 +264,6 @@ config_cifar10['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, t
 
 config_cifar10['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
 config_cifar10['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod, ali, began
-config_cifar10['dconv_1x1'] = True #False, True
 config_cifar10['d_nlayers'] = [2,2,2,2,2,2,2,2]
 config_cifar10['d_nfilters'] = [96,96,64,64,32,32,32,32]
 config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
