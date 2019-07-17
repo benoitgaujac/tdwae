@@ -17,6 +17,8 @@ parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
                     help='mode to run [train/vizu/fid/test]')
+parser.add_argument("--penalty", default='wae',
+                    help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
 parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
@@ -59,14 +61,14 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 219
-    opts['print_every'] =  1000 #78125 #every 100 epochs
+    opts['epoch_num'] = 2010
+    opts['print_every'] =  2000 #78125 #every 100 epochs
     opts['lr'] = 0.0001
     opts['batch_size'] = 100
-    opts['dropout_rate'] = 0.8
+    opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every_epoch'] = 2008
+    opts['save_every'] = 2000*500
     opts['save_final'] = True
     opts['save_train_data'] = False
     opts['use_trained'] = False
@@ -74,24 +76,26 @@ def main():
 
     # Model set up
     opts['nlatents'] = 6
-    # opts['zdim'] = [36, 32, 28, 24, 20, 16]
-    opts['zdim'] = [12, 10, 8, 6, 4, 16]
+    opts['zdim'] = [12, 10, 8, 6, 4, 49*2]
 
     # Penalty
-    opts['pen'] = 'wae'
-    opts['pen_enc_sigma'] = False
-    opts['lambda_pen_enc_sigma'] = 0.0005
+    opts['pen'] = FLAGS.penalty
+    opts['pen_enc_sigma'] = True
+    opts['lambda_pen_enc_sigma'] = [0.000001,]*(opts['nlatents']-1)
+    opts['lambda_pen_enc_sigma'].append(0.000000001)
     opts['pen_dec_sigma'] = False
-    opts['lambda_pen_dec_sigma'] = 0.0005
+    opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
+    # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
 
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+    opts['last_archi'] = ['conv1x1',]*opts['nlatents'] # dense, conv1x1, conv    
     opts['e_nlatents'] = opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
