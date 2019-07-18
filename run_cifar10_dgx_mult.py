@@ -122,7 +122,7 @@ def main():
             if not tf.gfile.IsDirectory(opts['method']):
                 utils.create_dir(opts['method'])
             work_dir = os.path.join(opts['method'],opts['work_dir'])
-            word_dir += '_lb' + str(i) +'_l0' + str(j)
+            work_dir += '_lb' + str(i) +'_l0' + str(j)
             opts['work_dir'] = work_dir
             if not tf.gfile.IsDirectory(work_dir):
                 utils.create_dir(work_dir)
