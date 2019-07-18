@@ -115,7 +115,7 @@ def main():
     # Experiment loop
     for i in range(len(base_lmba)):
         for j in range(len(lmba)):
-            opts['lambda'] = [base_lmba[i]**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
+            opts['lambda'] = [base_lmba[i]**(k/opts['nlatents']+1) for k in range(opts['nlatents']-1)]
             opts['lambda'].append(lmba[j])
 
             # Create directories
