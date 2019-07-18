@@ -61,7 +61,7 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 10
     opts['print_every'] = 5*500 #every 100 epochs
-    opts['lr'] = 0.0001
+    opts['lr'] = 0.0002
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -111,7 +111,7 @@ def main():
 
     # Experiments set up
     base_lmba = [0.01, 0.005, 0.001, 0.0005, 0.0001]
-    lmba = [10^-i for i in range(1,6)]
+    lmba = [10**i for i in range(-1,-6,-1)]
     # Experiment loop
     for i in range(len(base_lmba)):
         for j in range(len(lmba)):
