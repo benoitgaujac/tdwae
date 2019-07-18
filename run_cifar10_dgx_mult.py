@@ -48,10 +48,6 @@ def main():
     # Select dataset to use
     opts = configs.config_cifar10
 
-    # Working directory
-    if FLAGS.work_dir:
-        opts['work_dir'] = FLAGS.work_dir
-
     # Mode
     if FLAGS.mode=='fid':
         opts['fid'] = True
@@ -59,8 +55,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 5
-    opts['print_every'] = 2*500 #every 100 epochs
+    opts['epoch_num'] = 2001
+    opts['print_every'] = 200*500 #every 100 epochs
     opts['lr'] = 0.0002
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
@@ -109,6 +105,10 @@ def main():
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
+    # Create directories
+    if not tf.gfile.IsDirectory(opts['method']):
+        utils.create_dir(opts['method'])
+
     # Experiments set up
     base_lmba = [0.01, 0.005, 0.001, 0.0005, 0.0001]
     lmba = [10**i for i in range(-1,-6,-1)]
@@ -119,10 +119,8 @@ def main():
             opts['lambda'].append(lmba[j])
 
             # Create directories
-            if not tf.gfile.IsDirectory(opts['method']):
-                utils.create_dir(opts['method'])
-            work_dir = os.path.join(opts['method'],opts['work_dir'])
-            work_dir += '_lb' + str(i) +'_l0' + str(j)
+            work_dir = FLAGS.work_dir + '_lb' + str(i) +'_l0' + str(j)
+            work_dir = os.path.join(opts['method'],work_dir)
             opts['work_dir'] = work_dir
             if not tf.gfile.IsDirectory(work_dir):
                 utils.create_dir(work_dir)
