@@ -156,6 +156,17 @@ def mmd_penalty(opts, sample_qz, sample_pz):
             res2 = C / (C + distances)
             res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
             stat += res1 - res2
+    elif opts['mmd_kernel'] == 'RQ':
+        stat = 0.
+        for scale in [.1, .2, .5, 1., 2., 5., 10.]:
+            res1 = (1. + distances_qz / (2.*scale)) ** (-scale)
+            res1 += (1. + distances_pz / (2.*scale)) ** (-scale)
+            res1 = tf.multiply(res1, 1. - tf.eye(n))
+            res1 = tf.reduce_sum(res1) / (nf * nf - nf)
+            res2 = (1. + distances / (2.*scale)) ** (-scale)
+            res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
+            stat += res1 - res2
+
     return stat
 
 
