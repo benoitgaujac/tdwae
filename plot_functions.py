@@ -53,7 +53,7 @@ def save_train(opts, data_train, data_test,
     images = []
     ### Reconstruction plots
     for pair in [(data_train, rec_train),
-                 (data_test, rec_test[-1][num_pics:])]:
+                 (data_test, rec_test[-1][:num_pics])]:
         # Arrange pics and reconstructions in a proper way
         sample, recon = pair
         assert len(sample) == num_pics
@@ -697,7 +697,6 @@ def save_vlae_experiment(opts, decoded, work_dir):
             else:
                 pics.append(samples[idx, :, :, :])
         # Figuring out a layout
-        # pdb.set_trace()
         pics = np.array(pics)
         if n==0:
             npad = 1
