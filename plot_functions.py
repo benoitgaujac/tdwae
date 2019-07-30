@@ -53,7 +53,7 @@ def save_train(opts, data_train, data_test,
     images = []
     ### Reconstruction plots
     for pair in [(data_train, rec_train),
-                 (data_test, rec_test[-1])]:
+                 (data_test, rec_test[-1][num_pics:])]:
         # Arrange pics and reconstructions in a proper way
         sample, recon = pair
         assert len(sample) == num_pics
@@ -228,7 +228,10 @@ def save_train(opts, data_train, data_test,
 
     ### Full reconstruction plots
     num_rows = len(rec_test)
-    num_cols = np.shape(rec_test[0])[0]
+    # num_cols = np.shape(rec_test[0])[0]
+    num_cols = 15
+    for n in range(len(rec_test)):
+        rec_test[0] = rec_test[0][:num_cols]
     npad = 1
     pad_0 = ((npad,0),(0,0),(0,0))
     pad_1 = ((0,npad),(0,0),(0,0))
