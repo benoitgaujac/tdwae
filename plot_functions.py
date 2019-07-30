@@ -139,7 +139,7 @@ def save_train(opts, data_train, data_test,
     #     y = np.log(imp_loss[::x_step])
     #     plt.plot(x, y, linewidth=2, linestyle = '--',color='black', label='non-hierarchical loss')
     plt.grid(axis='y')
-    plt.legend(loc='lower left')
+    plt.legend(loc='upper right')
     plt.text(0.47, 1., 'Loss curves', ha="center", va="bottom",
                                 size=20, transform=ax.transAxes)
 
@@ -173,7 +173,7 @@ def save_train(opts, data_train, data_test,
         y = np.log(np.abs(l[::x_step]))
         plt.plot(x, y, linewidth=2, color=color_list[-1], label='|match|')
     plt.grid(axis='y')
-    plt.legend(loc='lower left')
+    plt.legend(loc='upper right')
     plt.text(0.47, 1., 'Rec loss curves', ha="center", va="bottom",
                                 size=20, transform=ax.transAxes)
 
