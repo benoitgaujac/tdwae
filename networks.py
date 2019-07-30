@@ -361,10 +361,6 @@ def resnet_v2_encoder(opts, input, num_layers, num_units, filter_size,
     batch_size = tf.shape(input)[0]
     # -- Reshapping to if needed features dim
     layer_x = tf.reshape(input,[-1,]+features_dim)
-    # if input.get_shape().as_list()[1:2]!=features_dim:
-    #     layer_x = tf.reshape(input,[-1,]+features_dim)
-    # else:
-    #     layer_x = input
     # -- Conv block
     conv = layer_x
     for i in range(num_layers-1):
@@ -409,7 +405,7 @@ def resnet_v2_encoder(opts, input, num_layers, num_units, filter_size,
             opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['e_nonlinearity'])
     outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
-    out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]/2),]
+    out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]),]
     # last hidden layer
     if last_archi=='dense':
         # -- dense layer
@@ -422,13 +418,13 @@ def resnet_v2_encoder(opts, input, num_layers, num_units, filter_size,
         outputs = ops.conv2d.Conv2d(opts, outputs,outputs.get_shape().as_list()[-1],output_dim,
                 1,stride=1,scope='hid_final',init=opts['conv_init'])
         out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]/2),]
-    elif last_archi=='conv':
-        # -- conv with "big kernel". output_shape: [output_dim,output_dim,1]
-        out_shape = outputs.get_shape().as_list()[1:-1]
-        W_size = out_shape[0] - int(output_dim/2) + 1
-        outputs = ops.conv2d.Conv2d(opts,outputs,out_shape,2,
-                W_size,stride=1,padding='VALID',scope='hid_final',init=opts['conv_init'])
-        out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]/2),]
+    # elif last_archi=='conv':
+    #     # -- conv with "big kernel". output_shape: [output_dim,output_dim,1]
+    #     out_shape = outputs.get_shape().as_list()[1:-1]
+    #     W_size = out_shape[0] - int(output_dim/2) + 1
+    #     outputs = ops.conv2d.Conv2d(opts,outputs,out_shape,2,
+    #             W_size,stride=1,padding='VALID',scope='hid_final',init=opts['conv_init'])
+    #     out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]/2),]
     else:
         assert False, 'Unknown last_archi %s ' % out_shape
 
@@ -822,6 +818,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.layernorm.Layernorm(
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
+    """
     if last_archi=='dense':
         # -- dense
         ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),np.prod(output_dim), scope='hid_final')
@@ -837,6 +834,9 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
                 W_size,stride=1,padding='VALID',scope='hid_final',init=opts['conv_init'])
     else:
         assert False, 'Unknown last_archi %s ' % out_shape
-
+    """
+    # -- 1x1 conv
+    outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
+                1, stride=1, scope='hid_final', init=opts['conv_init'])
 
     return outputs

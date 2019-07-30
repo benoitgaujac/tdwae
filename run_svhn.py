@@ -62,7 +62,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 2010
-    opts['print_every'] =  2000 #78125 #every 100 epochs
+    opts['print_every'] =  5*732 #78125 #every 100 epochs
     opts['lr'] = 0.0001
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
@@ -76,11 +76,12 @@ def main():
 
     # Model set up
     opts['nlatents'] = 6
-    opts['zdim'] = [12, 10, 8, 6, 4, 49*2]
+    opts['zdim'] = [1, 2, 1, 2, 1, 8]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
-    opts['pen_enc_sigma'] = True
+    opts['mmd_kernel'] = 'RQ'
+    opts['pen_enc_sigma'] = False
     opts['lambda_pen_enc_sigma'] = [0.000001,]*(opts['nlatents']-1)
     opts['lambda_pen_enc_sigma'].append(0.000000001)
     opts['pen_dec_sigma'] = False
@@ -95,11 +96,12 @@ def main():
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['last_archi'] = ['conv1x1',]*opts['nlatents'] # dense, conv1x1, conv    
+    opts['last_archi'] = ['conv1x1',]*(opts['nlatents']-1) # dense, conv1x1, conv
+    opts['last_archi'].append('dense')
     opts['e_nlatents'] = opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_resample'] = ['down',None,None,None,None,'down'] # None, down
+    opts['e_resample'] = ['down','down',None,'down',None,None] # None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [64, 64, 64, 64, 64, 64]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
@@ -107,7 +109,7 @@ def main():
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['dconv_1x1'] = False
-    opts['d_resample'] = ['up',None,None,None,None,'up'] #None, up
+    opts['d_resample'] = ['up','up',None,'up',None,None] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64, 64, 64, 64, 64, 64]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh

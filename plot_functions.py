@@ -46,13 +46,14 @@ def save_train(opts, data_train, data_test,
         data_train = data_train / 2. + 0.5
         data_test = data_test / 2. + 0.5
         rec_train = rec_train / 2. + 0.5
-        rec_test = rec_test / 2. + 0.5
+        for i in range(len(rec_test)):
+            rec_test[i] = rec_test[i] / 2. + 0.5
         samples = samples / 2. + 0.5
 
     images = []
     ### Reconstruction plots
     for pair in [(data_train, rec_train),
-                 (data_test, rec_test)]:
+                 (data_test, rec_test[-1])]:
         # Arrange pics and reconstructions in a proper way
         sample, recon = pair
         assert len(sample) == num_pics
@@ -103,6 +104,7 @@ def save_train(opts, data_train, data_test,
     gs = matplotlib.gridspec.GridSpec(2, 3)
 
     # Filling in separate parts of the plot
+
     # First samples and reconstructions
     for img, (gi, gj, title) in zip([img1, img2, img3],
                              [(0, 0, 'Train reconstruction'),
@@ -223,6 +225,30 @@ def save_train(opts, data_train, data_test,
     fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
                 dpi=dpi, format='png')
     plt.close()
+
+    ### Full reconstruction plots
+    num_rows = len(rec_test)
+    num_cols = np.shape(rec_test[0])[0]
+    npad = 1
+    pad_0 = ((npad,0),(0,0),(0,0))
+    pad_1 = ((0,npad),(0,0),(0,0))
+    for n in range(num_cols):
+        rec_test[0][n] = np.pad(rec_test[0][n,npad:], pad_0, mode='constant', constant_values=1.0)
+        rec_test[1][n] = np.pad(rec_test[1][n,:-npad], pad_1, mode='constant', constant_values=1.0)
+    rec_test = np.split(np.array(rec_test[::-1]),num_cols,axis=1)
+    pics = np.concatenate(rec_test,axis=-2)
+    pics = np.concatenate(np.split(pics,num_rows),axis=-3)
+    pics = pics[0,0]
+    if greyscale:
+        pics = 1. - pics
+    else:
+        pics = pics
+
+    # Saving
+    fig.savefig(utils.o_gfile((save_path, 'rec' + filename[3]), 'wb'),
+                dpi=dpi, format='png')
+    plt.close()
+
 
 
 def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
