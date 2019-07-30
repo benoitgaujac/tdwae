@@ -228,7 +228,6 @@ def save_train(opts, data_train, data_test,
 
     ### Full reconstruction plots
     num_rows = len(rec_test)
-    # num_cols = np.shape(rec_test[0])[0]
     num_cols = 15
     for n in range(len(rec_test)):
         rec_test[n] = rec_test[n][:num_cols]
@@ -238,19 +237,32 @@ def save_train(opts, data_train, data_test,
     for n in range(num_cols):
         rec_test[0][n] = np.pad(rec_test[0][n,npad:], pad_0, mode='constant', constant_values=1.0)
         rec_test[1][n] = np.pad(rec_test[1][n,:-npad], pad_1, mode='constant', constant_values=1.0)
-    pdb.set_trace()
     rec_test = np.split(np.array(rec_test[::-1]),num_cols,axis=1)
-    pics = np.concatenate(rec_test,axis=-2)
-    pics = np.concatenate(np.split(pics,num_rows),axis=-3)
-    pics = pics[0,0]
+    image = np.concatenate(rec_test,axis=-2)
+    image = np.concatenate(np.split(image,num_rows),axis=-3)
+    image = image[0,0]
     if greyscale:
-        pics = 1. - pics
+        image = 1. - image
     else:
-        pics = pics
+        image = image
 
     # Saving
-    fig.savefig(utils.o_gfile((save_path, 'rec' + filename[3]), 'wb'),
-                dpi=dpi, format='png')
+    height_pic = image.shape[0]
+    width_pic = image.shape[1]
+    fig_height = height_pic / 20
+    fig_width = width_pic / 20
+    fig = plt.figure(figsize=(fig_width, fig_height))
+    if greyscale:
+        image = image[:, :, 0]
+        # in Greys higher values correspond to darker colors
+        plt.imshow(image, cmap='Greys',
+                        interpolation='none', vmin=0., vmax=1.)
+    else:
+        plt.imshow(image, interpolation='none', vmin=0., vmax=1.)
+    # Removing axes, ticks, labels
+    plt.axis('off')
+    fig.savefig(utils.o_gfile((save_path, 'rec' + filename[3:]), 'wb'),
+                dpi=dpi, format='png',box_inches='tight', pad_inches=0.0)
     plt.close()
 
 
