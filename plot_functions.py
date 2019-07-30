@@ -231,13 +231,14 @@ def save_train(opts, data_train, data_test,
     # num_cols = np.shape(rec_test[0])[0]
     num_cols = 15
     for n in range(len(rec_test)):
-        rec_test[0] = rec_test[0][:num_cols]
+        rec_test[n] = rec_test[n][:num_cols]
     npad = 1
     pad_0 = ((npad,0),(0,0),(0,0))
     pad_1 = ((0,npad),(0,0),(0,0))
     for n in range(num_cols):
         rec_test[0][n] = np.pad(rec_test[0][n,npad:], pad_0, mode='constant', constant_values=1.0)
         rec_test[1][n] = np.pad(rec_test[1][n,:-npad], pad_1, mode='constant', constant_values=1.0)
+    pdb.set_trace()
     rec_test = np.split(np.array(rec_test[::-1]),num_cols,axis=1)
     pics = np.concatenate(rec_test,axis=-2)
     pics = np.concatenate(np.split(pics,num_rows),axis=-3)
