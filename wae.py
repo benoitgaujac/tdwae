@@ -895,7 +895,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 150 epochs do nothing
-                if epoch >= 200 and counter % decay_steps == 0:
+                if epoch >= 300 and counter % decay_steps == 0:
                     decay = decay_rate ** (int(counter / decay_steps))
                     logging.error('Reduction in lr: %f\n' % decay)
                     """
