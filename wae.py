@@ -915,7 +915,7 @@ class WAE(object):
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
                     if epoch >= .0 and len(Loss_rec) > 0:
-                        if wait_lambda > 200 * batches_num + 1:
+                        if wait_lambda > 1000 * batches_num + 1:
                             # opts['lambda'] = list(2*np.array(opts['lambda']))
                             opts['lambda'][-1] = 2*opts['lambda'][-1]
                             wae_lambda = opts['lambda']
