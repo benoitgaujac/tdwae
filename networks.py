@@ -768,7 +768,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
     # batch_size
     batch_size = tf.shape(input)[0]
     # -- Reshapping to features dim
-    if np.prod(features_dim)==input.get_shape().as_list()[1:]:
+    if last_archi=='conv1x1' and np.prod(features_dim)==input.get_shape().as_list()[1:]:
         layer_x = tf.reshape(input,[-1,]+features_dim)
     else:
         layer_x = ops.linear.Linear(opts,input,np.prod(input.get_shape().as_list()[1:]),np.prod(features_dim), scope='hid_init')
