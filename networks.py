@@ -783,7 +783,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
     conv = layer_x
     # First deconv resampling
     if resample=='up':
-        output_shape = [batch_size,2*features_dim[0],2*features_dim[1],num_units]
+        output_shape = [batch_size,2*features_dim[0],2*features_dim[1],int(num_units/2)]
         conv = ops.deconv2d.Deconv2D(opts, conv, conv.get_shape().as_list()[-1], output_shape,
                     filter_size, stride=2, scope='hid0/deconv', init=opts['conv_init'])
     elif resample==None:
@@ -824,25 +824,15 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.layernorm.Layernorm(
                     opts, outputs, 'hid%d/bn' % (i+2), reuse)
     outputs = ops._ops.non_linear(outputs,opts['d_nonlinearity'])
-    """
-    if last_archi=='dense':
-        # -- dense
-        ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),np.prod(output_dim), scope='hid_final')
-    elif last_archi=='conv1x1':
+
+    if opts['fully_conv_decoder']==True:
         # -- 1x1 conv
         outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
                     1, stride=1, scope='hid_final', init=opts['conv_init'])
-    elif last_archi=='conv':
-        # -- conv with "big kernel". output_shape: [output_dim,output_dim,1]
-        out_shape = outputs.get_shape().as_list()[1:-1]
-        W_size = out_shape[0] - int(output_dim/2) + 1
-        outputs = ops.conv2d.Conv2d(opts,outputs,out_shape,2,
-                W_size,stride=1,padding='VALID',scope='hid_final',init=opts['conv_init'])
     else:
-        assert False, 'Unknown last_archi %s ' % out_shape
-    """
-    # -- 1x1 conv
-    outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
-                1, stride=1, scope='hid_final', init=opts['conv_init'])
+        # -- dense
+        output_shape = [outputs.get_shape().as_list()[1],outputs.get_shape().as_list()[1],output_dim[-1]]
+        outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
+                    np.prod(output_shape), scope='hid_final')
 
     return outputs
