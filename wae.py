@@ -717,7 +717,7 @@ class WAE(object):
         enc_Sigmas, dec_Sigmas = [], []
         mean_blurr, fid_scores = [], [],
         decay, counter = 1., 0
-        decay_steps, decay_rate = 400*batches_num, 0.98
+        decay_steps, decay_rate = int(batches_num * opts['epoch_num'] / 10), 0.98
         wait, wait_lambda = 0, 0
         wae_lambda = opts['lambda']
         self.start_time = time.time()
@@ -895,7 +895,7 @@ class WAE(object):
 
                 # Update learning rate if necessary and counter
                 # First 150 epochs do nothing
-                if epoch >= 400 and counter % decay_steps == 0:
+                if counter >= batches_num * opts['epoch_num'] / 10 and counter % decay_steps == 0:
                     decay = decay_rate ** (int(counter / decay_steps))
                     logging.error('Reduction in lr: %f\n' % decay)
                     """
