@@ -14,71 +14,52 @@ from datahandler import datashapes
 import logging
 import pdb
 
-def one_layer_encoder(opts, input, output_dim, norm, scope, reuse=False,
-                                                        is_training=False):
-    with tf.variable_scope(scope, reuse=reuse):
+def one_layer_encoder(opts, input, reuse=False, is_training=False):
+    with tf.variable_scope('encoder', reuse=reuse):
         layer_x = input
+        # -- looping over the latent layers
         for i in range(len(opts['zdim'])):
-            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                        opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
-            if norm == 'batchnorm':
-                layer_x = ops.batchnorm.Batchnorm_layers(
-                    opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
-            elif norm == 'layernorm':
-                layer_x = ops.layernorm.Layernorm(
-                    opts, layer_x, 'hid{}/bn_0'.format(i), reuse)
-            layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                        opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
-            if norm == 'batchnorm':
-                layer_x = ops.batchnorm.Batchnorm_layers(
-                    opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
-            elif norm == 'layernorm':
-                layer_x = ops.layernorm.Layernorm(
-                    opts, layer_x, 'hid{}/bn_1'.format(i), reuse)
-            layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
-            if i<len(opts['zdim'])-1:
-                layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                            opts['zdim'][i], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
-        outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                    output_dim, init=opts['mlp_init'], scope='hid_final')
+            with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
+                # -- looping over the hidden layers within latent layer i
+                for j in range(opts['e_nlayers'][i]):
+                    layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin'.format(j))
+                    layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid{}/bn'.format(j), is_training, reuse)
+                    layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+                    layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
+                    # -- last hidden layer of latent layer i
+                    if j==opts['d_nlayers'][i]-1:
+                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                    2*opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
+                    else:
+                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                    opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
 
-    mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -50, 500)
+    mean, logSigma = tf.split(layer_x,2,axis=-1)
+    logSigma = tf.clip_by_value(logSigma, -20, 500)
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
-def one_layer_decoder(opts, input, output_dim, norm, scope, reuse=False,
-                                                        is_training=False):
-    # Architecture with only fully connected layers and ReLUs
-    with tf.variable_scope(scope, reuse=reuse):
+def one_layer_decoder(opts, input, reuse=False, is_training=False):
+    with tf.variable_scope('decoder', reuse=reuse):
         layer_x = input
+        # -- looping over the latent layers
         for i in range(len(opts['zdim'])-1,-1,-1):
-            layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                        opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_0'.format(i))
-            layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-            if norm == 'batchnorm':
-                layer_x = ops.batchnorm.Batchnorm_layers(
-                    opts, layer_x, 'hid{}/bn_0'.format(i), is_training, reuse)
-            elif norm == 'layernorm':
-                layer_x = ops.layernorm.Layernorm(
-                    opts, layer_x, 'hid{}/bn_0'.format(i), reuse)
-            layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                        opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin_1'.format(i))
-            layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
-            if norm == 'batchnorm':
-                layer_x = ops.batchnorm.Batchnorm_layers(
-                    opts, layer_x, 'hid{}/bn_1'.format(i), is_training, reuse)
-            elif norm == 'layernorm':
-                layer_x = ops.layernorm.Layernorm(
-                    opts, layer_x, 'hid{}/bn_1'.format(i), reuse)
-            if i>0:
-                layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                            opts['zdim'][i-1], init=opts['mlp_init'], scope='hid{}/hid_final'.format(i))
-        outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
-                    output_dim, init=opts['mlp_init'], scope='hid_final')
+            with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
+                # -- looping over the hidden layers within latent layer i
+                for j in range(opts['d_nlayers'][i]):
+                    layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin'.format(j))
+                    layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid[]/bn'.format(j), is_training, reuse)
+                    layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+                    layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
+                    # -- last hidden layer of latent layer i
+                    layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
 
-    return tf.nn.sigmoid(outputs)
+    return tf.nn.sigmoid(layer_x)
 
 
 def encoder(opts, input, archi, num_layers, num_units, filter_size,
@@ -852,14 +833,5 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
     else:
         assert False, 'Unknown last_archi %s ' % last_archi
 
-    # if opts['fully_conv_decoder']==True:
-    #     # -- 1x1 conv
-    #     outputs = ops.conv2d.Conv2d(opts, outputs, outputs.get_shape().as_list()[-1], output_dim[-1],
-    #                 1, stride=1, scope='hid_final', init=opts['conv_init'])
-    # else:
-    #     # -- dense
-    #     output_shape = [outputs.get_shape().as_list()[1],outputs.get_shape().as_list()[1],output_dim[-1]]
-    #     outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
-    #                 np.prod(output_shape), scope='hid_final')
 
     return outputs
