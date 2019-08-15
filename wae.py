@@ -676,7 +676,6 @@ class WAE(object):
 
         opts = self.opts
         logging.error('Training WAE %d latent layers\n' % opts['nlatents'])
-        #print('')
         work_dir = opts['work_dir']
 
         # Init sess and load trained weights if needed
