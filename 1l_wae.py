@@ -18,8 +18,8 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
-from loss_functions import kl_penalty, matching_penalty, vae_reconstruction_loss, reconstruction_loss, moments_loss
-from plot_functions import save_train, save_latent_interpolation
+from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss, moments_loss
+from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation, save_vlae_experiment
 from networks import one_layer_encoder, one_layer_decoder
 from datahandler import datashapes
 
@@ -35,7 +35,7 @@ layername = 'FID_Inception_Net/pool_3:0'
 
 import pdb
 
-class one_layer_AE(object):
+class 1l_wae(object):
 
     def __init__(self, opts):
 
@@ -64,32 +64,25 @@ class one_layer_AE(object):
         # --- Encoding & decoding Loop
         # - Encoding points
         enc_mean, enc_Sigma = one_layer_encoder(self.opts, input=self.points,
-                                            output_dim=2*opts['zdim'][-1],
-                                            batch_norm = opts['batch_norm'],
-                                            scope='encoder/layer_1',
                                             reuse=False,
-                                            is_training=self.is_training)
-        if opts['method']=='vae':
+                                            is_training=self.is_training,
+                                            dropout_rate=self.dropout_rate)
+        if opts['encoder'][0] == 'gauss' or opts['method']=='vae':
             qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
             self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
-        elif opts['method']=='wae':
-            if opts['encoder'][0] == 'det':
-                self.encoded = enc_mean
-            elif opts['encoder'][0] == 'gauss':
-                qz_params = tf.concat((enc_mean,enc_Sigma),axis=-1)
-                self.encoded = sample_gaussian(opts, qz_params, 'tensorflow')
-            else:
-                assert False, 'Unknown encoder %s for wae' % opts['encoder']
+            # Enc Sigma stats
+            Sigma_tr = tf.reduce_mean(enc_Sigma,axis=-1)
+            Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
+            self.encSigmas_stats = tf.stack([Smean,Svar],axis=-1)
         else:
-            assert False, 'Unknown training method %s' % opts['method']
+            self.encoded = enc_mean
+            self.encSigmas_stats = []
 
         # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
         recon_mean = one_layer_decoder(self.opts, input=self.encoded,
-                                            output_dim=np.prod(datashapes[opts['dataset']]),
-                                            batch_norm = opts['batch_norm'],
-                                            scope='decoder/layer_1',
                                             reuse=False,
-                                            is_training=self.is_training)
+                                            is_training=self.is_training,
+                                            dropout_rate=self.dropout_rate)
         if opts['method']=='vae':
             reconstructed = sample_bernoulli(recon_mean)
             self.reconstructed = tf.reshape(reconstructed,[-1]+datashapes[opts['dataset']])
@@ -101,20 +94,8 @@ class one_layer_AE(object):
         else:
             assert False, 'Unknown training method %s' % opts['method']
 
-        # # Debuging
-        # enc_scopes, dec_scopes = [], []
-        # for i in range(len(opts['zdim'])):
-        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='encoder/layer_1/hid{}'.format(i))
-        #     enc_scopes.append(scope)
-        # for i in range(len(opts['zdim'])-1,-1,-1):
-        #     scope=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='decoder/layer_1/hid{}'.format(i))
-        #     dec_scopes.append(scope)
-
         # --- Sampling from model (only for generation)
         decoded_mean = one_layer_decoder(self.opts, input=self.samples,
-                                            output_dim=np.prod(datashapes[opts['dataset']]),
-                                            batch_norm = opts['batch_norm'],
-                                            scope='decoder/layer_1',
                                             reuse=True,
                                             is_training=self.is_training)
         if opts['method']=='vae':
@@ -124,7 +105,6 @@ class one_layer_AE(object):
         else:
             assert False, 'Unknown training method %s' % opts['method']
         self.decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
-
 
         # --- Objectives, penalties, pretraining, FID
         if opts['method']=='vae':
@@ -136,11 +116,11 @@ class one_layer_AE(object):
                                             enc_mean, enc_Sigma)
         elif opts['method']=='wae':
             # Compute reconstruction loss
-            self.loss_reconstruct = reconstruction_loss(opts, self.points,
+            self.loss_reconstruct = obs_reconstruction_loss(opts, self.points,
                                             self.reconstructed)
             # Compute matching penalty cost
             self.match_penalty = matching_penalty(opts, self.samples, self.encoded)
-            self.match_penalty *= opts['lambda'][-1]
+            self.match_penalty *= self.lmbd[-1]
         else:
             assert False, 'Unknown training method %s' % opts['method']
 
@@ -149,16 +129,6 @@ class one_layer_AE(object):
 
         # Pre Training
         self.pretrain_loss()
-
-        """
-        # FID score
-        self.blurriness = self.compute_blurriness()
-        self.inception_graph = tf.Graph()
-        self.inception_sess = tf.Session(graph=self.inception_graph)
-        with self.inception_graph.as_default():
-            self.create_inception_graph()
-        self.inception_layer = self._get_inception_layer()
-        """
 
         # --- Optimizers, savers, etc
         self.add_optimizers()
@@ -172,17 +142,16 @@ class one_layer_AE(object):
                                                 name='points_ph')
         self.samples = tf.placeholder(tf.float32, [None] + [opts['zdim'][-1],],
                                                 name='noise_ph')
-        self.anchors_points = tf.placeholder(tf.float32,
-                                    [None] + [datashapes[opts['dataset']][-1]*opts['zdim'][0],],
-                                    name='anchors_ph')
 
     def add_training_placeholders(self):
         opts = self.opts
         decay = tf.placeholder(tf.float32, name='rate_decay_ph')
         is_training = tf.placeholder(tf.bool, name='is_training_ph')
-        lmbda = tf.placeholder(tf.float32, name='lambda')
+        lmbda = tf.placeholder(tf.float32, name='lambda_ph')
         self.lr_decay = decay
         self.is_training = is_training
+        self.lmbd = lmbda
+        self.dropout_rate = dropout
 
     def add_savers(self):
         opts = self.opts
@@ -292,7 +261,6 @@ class one_layer_AE(object):
 
         opts = self.opts
         logging.error('Training VAE %d latent layers\n' % opts['nlatents'])
-        #print('')
         work_dir = opts['work_dir']
 
         # Init sess and load trained weights if needed
@@ -313,32 +281,18 @@ class one_layer_AE(object):
         npics = opts['plot_num_pics']
         fixed_noise = sample_pz(opts, self.pz_params, npics)
 
-        """
-        # Load inception mean samples for train set
-        trained_stats = os.path.join(inception_path, 'fid_stats.npz')
-        # Load trained stats
-        f = np.load(trained_stats)
-        self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
-        f.close()
-        # Compute bluriness of real data
-        real_blurr = self.sess.run(self.blurriness, feed_dict={
-                                                self.points: data.data[:npics]})
-        logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
-        print('')
-        """
-
         # Init all monitoring variables
-        Loss = []
-        Loss_rec, Loss_rec_test = [], []
-        Loss_match = []
-        """
-        mean_blurr, fid_scores = [], [],
-        """
+        Loss, Loss_rec, Loss_rec_test, Loss_match = [], [], [], []
+        enc_Sigmas = []
         decay, counter = 1., 0
+        decay_steps, decay_rate = int(batches_num * opts['epoch_num'] / 5), 0.98
+        wait, wait_lambda = 0, 0
+        wae_lambda = opts['lambda']
         self.start_time = time.time()
         for epoch in range(opts['epoch_num']):
             # Saver
-            if epoch > 0 and epoch % opts['save_every_epoch'] == 0:
+            # if epoch > 0 and epoch % opts['save_every_epoch'] == 0:
+            if counter>0 and counter % opts['save_every'] == 0:
                 self.saver.save(self.sess, os.path.join(
                                                 work_dir,'checkpoints',
                                                 'trained-wae'),
@@ -355,7 +309,9 @@ class one_layer_AE(object):
                 feed_dict={self.points: batch_images,
                            self.samples: batch_samples,
                            self.lr_decay: decay,
-                           self.is_training: True}
+                           self.lmbd: wae_lambda,
+                           self.is_training: True,
+                           self.dropout_rate: opts['dropout_rate']}
                 # Update encoder and decoder
                 [_, loss, loss_rec, loss_match] = self.sess.run([
                                                 self.wae_opt,
@@ -381,8 +337,10 @@ class one_layer_AE(object):
                                                 replace=True)
                         batch_images = data.test_data[data_ids].astype(np.float32)
                         l = self.sess.run(self.loss_reconstruct,
-                                            feed_dict={self.points:batch_images,
-                                                       self.is_training:False})
+                                                feed_dict={self.points:batch_images,
+                                                           self.lmbd: wae_lambda,
+                                                           self.dropout_rate: 1.,
+                                                           self.is_training:False})
                         loss_rec_test += l / batches_num_te
                     Loss_rec_test.append(loss_rec_test)
 
@@ -393,34 +351,24 @@ class one_layer_AE(object):
                                                  self.decoded],
                                                 feed_dict={self.points:data.test_data[:30*npics],
                                                            self.samples: fixed_noise,
+                                                           self.dropout_rate: 1.,
                                                            self.is_training:False})
+                    reconstructed_test = [data.test_data[:30*npics],reconstructed_test]
+
+                    if opts['vizu_embedded'] and counter>1:
+                        plot_embedded(opts,[encoded,],[fixed_noise,],
+                                                data.test_labels[:30*npics],
+                                                work_dir,'embedded_e%04d_mb%05d.png' % (epoch, it))
+                    if opts['vizu_encSigma'] and counter>1:
+                        plot_encSigma(opts, enc_Sigmas, dec_Sigmas,
+                                                work_dir,
+                                                'encSigma_e%04d_mb%05d.png' % (epoch, it))
 
                     # Auto-encoding training images
                     reconstructed_train = self.sess.run(self.reconstructed,
                                                 feed_dict={self.points:data.data[200:200+npics],
-                                                           self.is_training:False})
-
-                    """
-                    # Compute FID score
-                    gen_blurr = self.sess.run(self.blurriness,
-                                                feed_dict={self.points: samples})
-                    mean_blurr.append(np.min(gen_blurr))
-                    # First convert to RGB
-                    if np.shape(flat_samples)[-1] == 1:
-                        # We have greyscale
-                        flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
-                    preds_incep = self.inception_sess.run(self.inception_layer,
-                                  feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
-                    preds_incep = preds_incep.reshape((npics,-1))
-                    mu_gen = np.mean(preds_incep, axis=0)
-                    sigma_gen = np.cov(preds_incep, rowvar=False)
-                    fid_score = fid.calculate_frechet_distance(mu_gen,
-                                                sigma_gen,
-                                                self.mu_train,
-                                                self.sigma_train,
-                                                eps=1e-6)
-                    fid_scores.append(fid_score)
-                    """
+                                                           self.is_training:False},
+                                                           self.dropout_rate: 1.)
 
                     # Printing various loss values
                     debug_str = 'EPOCH: %d/%d, BATCH:%d/%d' % (
@@ -434,14 +382,8 @@ class one_layer_AE(object):
                                                 Loss_rec_test[-1],
                                                 Loss_match[-1])
                     logging.error(debug_str)
-
-                    """
-                    debug_str = 'FID=%.3f, BLUR=%10.4e' % (
-                                                fid_scores[-1],
-                                                mean_blurr[-1])
-                    logging.error(debug_str)
-                    """
                     print('')
+
                     # Making plots
                     if opts['save_train_data'] and epoch>=opts['epoch_num']-1:
                         save_train_data = True
@@ -449,7 +391,7 @@ class one_layer_AE(object):
                         save_train_data = False
                     save_train(opts, data.data[200:200+npics], data.test_data[:npics],  # images
                                      data.test_labels[:30*npics],    # labels
-                                     reconstructed_train, reconstructed_test[:npics], # reconstructions
+                                     reconstructed_train, [reconstructed_test,], # reconstructions
                                      encoded,   # encoded points (bottom)
                                      fixed_noise, samples,  # prior samples, model samples
                                      Loss, None, Loss_match, None,  # losses
@@ -460,8 +402,11 @@ class one_layer_AE(object):
                                      save_train_data) # save training data
 
                 # Update learning rate if necessary and counter
-                # First 20 epochs do nothing
-                if epoch >= 10000:
+                # First 150 epochs do nothing
+                if counter >= batches_num * opts['epoch_num'] / 5 and counter % decay_steps == 0:
+                    decay = decay_rate ** (int(counter / decay_steps))
+                    logging.error('Reduction in lr: %f\n' % decay)
+                    """
                     # If no significant progress was made in last 20 epochs
                     # then decrease the learning rate.
                     if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
@@ -473,6 +418,19 @@ class one_layer_AE(object):
                         logging.error('Reduction in lr: %f\n' % decay)
                         print('')
                         wait = 0
+                    """
+                # Update regularizer if necessary
+                if opts['lambda_schedule'] == 'adaptive':
+                    if epoch >= .0 and len(Loss_rec) > 0:
+                        if wait_lambda > 1000 * batches_num + 1:
+                            # opts['lambda'] = list(2*np.array(opts['lambda']))
+                            opts['lambda'][-1] = 2*opts['lambda'][-1]
+                            wae_lambda = opts['lambda']
+                            logging.error('Lambda updated to %s\n' % wae_lambda)
+                            print('')
+                            wait_lambda = 0
+                        else:
+                            wait_lambda+=1
 
                 counter += 1
 

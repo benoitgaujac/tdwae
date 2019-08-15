@@ -14,7 +14,7 @@ from datahandler import datashapes
 import logging
 import pdb
 
-def one_layer_encoder(opts, input, reuse=False, is_training=False):
+def one_layer_encoder(opts, input, reuse=False, is_training=False,dropout_rate=1.):
     with tf.variable_scope('encoder', reuse=reuse):
         layer_x = input
         # -- looping over the latent layers
@@ -41,7 +41,7 @@ def one_layer_encoder(opts, input, reuse=False, is_training=False):
     Sigma = tf.nn.softplus(logSigma)
     return mean, Sigma
 
-def one_layer_decoder(opts, input, reuse=False, is_training=False):
+def one_layer_decoder(opts, input, reuse=False, is_training=False, dropout_rate=1.):
     with tf.variable_scope('decoder', reuse=reuse):
         layer_x = input
         # -- looping over the latent layers
@@ -56,8 +56,12 @@ def one_layer_decoder(opts, input, reuse=False, is_training=False):
                     layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
                     layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
                     # -- last hidden layer of latent layer i
-                    layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                                opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
+                    if i==0:
+                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                    opts['zdim'][i-1], init=opts['mlp_init'], scope='hid_final')
+                    else:
+                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                                    np.prod(datashapes[opts['dataset']]), init=opts['mlp_init'], scope='hid_final')
 
     return tf.nn.sigmoid(layer_x)
 
