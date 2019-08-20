@@ -188,7 +188,6 @@ class WAE(object):
                 decSigmas_stats.append(Sstats)
             else:
                 assert False, 'Unknown encoder %s' % opts['decoder'][n]
-            # pdb.set_trace()
             # - reconstruction loss
             if n==0:
                 if opts['decoder'][n]!='bernoulli':
