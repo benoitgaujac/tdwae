@@ -18,23 +18,20 @@ def one_layer_encoder(opts, input, reuse=False, is_training=False,dropout_rate=1
     with tf.variable_scope('encoder', reuse=reuse):
         layer_x = input
         # -- looping over the latent layers
-        for i in range(len(opts['zdim'])):
+        for i in range(opts['nlatents']):
             with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
                 # -- looping over the hidden layers within latent layer i
-                for j in range(opts['e_nlayers'][i]):
+                for j in range(opts['e_nlayers'][i]-1):
                     layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                                 opts['e_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin'.format(j))
                     layer_x = ops.batchnorm.Batchnorm_layers(
                         opts, layer_x, 'hid{}/bn'.format(j), is_training, reuse)
                     layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
                     layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
-                    # -- last hidden layer of latent layer i
-                    if j==opts['d_nlayers'][i]-1:
-                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                                    2*opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
-                    else:
-                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                                    opts['zdim'][i], init=opts['mlp_init'], scope='hid_final')
+        # -- last hidden layer of latent layer
+        with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
+            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        2*opts['zdim'][i], init=opts['mlp_init'], scope='final')
 
     mean, logSigma = tf.split(layer_x,2,axis=-1)
     logSigma = tf.clip_by_value(logSigma, -20, 500)
@@ -45,23 +42,20 @@ def one_layer_decoder(opts, input, reuse=False, is_training=False, dropout_rate=
     with tf.variable_scope('decoder', reuse=reuse):
         layer_x = input
         # -- looping over the latent layers
-        for i in range(len(opts['zdim'])-1,-1,-1):
+        for i in range(opts['nlatents']-1,-1,-1):
             with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
                 # -- looping over the hidden layers within latent layer i
                 for j in range(opts['d_nlayers'][i]):
                     layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                                 opts['d_nfilters'][i], init=opts['mlp_init'], scope='hid{}/lin'.format(j))
                     layer_x = ops.batchnorm.Batchnorm_layers(
-                        opts, layer_x, 'hid[]/bn'.format(j), is_training, reuse)
+                        opts, layer_x, 'hid{}/bn'.format(j), is_training, reuse)
                     layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
                     layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
-                    # -- last hidden layer of latent layer i
-                    if i==0:
-                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                                    opts['zdim'][i-1], init=opts['mlp_init'], scope='hid_final')
-                    else:
-                        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                                    np.prod(datashapes[opts['dataset']]), init=opts['mlp_init'], scope='hid_final')
+        # -- last hidden layer of latent layer
+        with tf.variable_scope('layer_{}'.format(i+1), reuse=reuse):
+            layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        np.prod(datashapes[opts['dataset']]), init=opts['mlp_init'], scope='final')
 
     return tf.nn.sigmoid(layer_x)
 
@@ -82,6 +76,16 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
             outputs = mlp_encoder(opts, input, num_layers,
                                                         num_units,
                                                         output_dim,
+                                                        reuse,
+                                                        is_training,
+                                                        dropout_rate)
+            out_shape = None
+        if archi == 'mlp_one_layer':
+            # Encoder uses only fully connected layers with ReLus
+            outputs = mlp_encoder_one_layer(opts, input, num_layers,
+                                                        num_units,
+                                                        output_dim,
+                                                        top_latent,
                                                         reuse,
                                                         is_training,
                                                         dropout_rate)
@@ -158,6 +162,38 @@ def mlp_encoder(opts, input, num_layers, num_units, output_dim,
         layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
                 output_dim, init=opts['mlp_init'], scope='hid_final')
+
+    return outputs
+
+def mlp_encoder_one_layer(opts, input, num_layers, num_units, output_dim,
+                                                        top_latent=False,
+                                                        reuse=False,
+                                                        is_training=False,
+                                                        dropout_rate=1.):
+    layer_x = input
+    for i in range(num_layers-1):
+        # first latent layer
+        if input.get_shape().as_list()[1:]==datashapes[opts['dataset']]:
+            layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+            layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+        layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
+    layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid%d/bn' % (i+1), is_training, reuse)
+    layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+    # top latent layer
+    if top_latent:
+        layer_x = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        num_units, init=opts['mlp_init'], scope='hid%d/lin' % (i+1))
+        layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid_final_bn', is_training, reuse)
+        layer_x = ops._ops.non_linear(layer_x,opts['e_nonlinearity'])
+        outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        output_dim, init=opts['mlp_init'], scope='hid_final')
+    else:
+        outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                        output_dim, init=opts['mlp_init'], scope='hid_final')
 
     return outputs
 
@@ -438,6 +474,14 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         reuse,
                                                         is_training,
                                                         dropout_rate)
+        if archi == 'mlp_one_layer':
+            # Encoder uses only fully connected layers with ReLus for one layer exp
+            outputs = mlp_decoder_one_layer(opts, input, num_layers,
+                                                        num_units,
+                                                        output_dim,
+                                                        reuse,
+                                                        is_training,
+                                                        dropout_rate)
         elif archi == 'dcgan' or opts['d_arch'] == 'dcgan_mod':
             # Fully convolutional architecture similar to DCGAN
             outputs = dcgan_decoder(opts, input, archi, num_layers,
@@ -512,6 +556,31 @@ def mlp_decoder(opts, input, num_layers, num_units, output_dim,
         layer_x = tf.nn.dropout(layer_x, keep_prob=dropout_rate)
     outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
                 np.prod(output_dim), init=opts['mlp_init'], scope='hid_final')
+
+    return outputs
+
+def mlp_decoder_one_layer(opts, input, num_layers, num_units, output_dim,
+                                                        reuse,
+                                                        is_training,
+                                                        dropout_rate=1.):
+    # Architecture with only fully connected layers and ReLUs
+    layer_x = input
+    # if top latent layer
+    if np.prod(layer_x.get_shape().as_list()[1:])==opts['zdim'][-1]:
+        layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        num_units, init=opts['mlp_init'], scope='hid_top_lin')
+    for i in range(num_layers-1):
+        layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
+        layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid%d/bn' % i, is_training, reuse)
+        layer_x = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        num_units, init=opts['mlp_init'], scope='hid%d/lin' % i)
+    # -- last hidden layer of latent layer
+    layer_x = ops._ops.non_linear(layer_x,opts['d_nonlinearity'])
+    layer_x = ops.batchnorm.Batchnorm_layers(
+                        opts, layer_x, 'hid%d/bn' % (i+1), is_training, reuse)
+    outputs = ops.linear.Linear(opts, layer_x,np.prod(layer_x.get_shape().as_list()[1:]),
+                        np.prod(output_dim), init=opts['mlp_init'], scope='hid_final')
 
     return outputs
 
