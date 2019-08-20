@@ -519,7 +519,7 @@ class WAE(object):
                                                 output_dim=[2*opts['zdim'][n-1],],
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
-                                                last_archi=opts['last_archi'][n],
+                                                last_archi=opts['d_last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
@@ -548,7 +548,7 @@ class WAE(object):
                                                 output_dim=output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][0],
-                                                last_archi=opts['last_archi'][0],
+                                                last_archi=opts['d_last_archi'][0],
                                                 scope='decoder/layer_0',
                                                 reuse=True,
                                                 is_training=False)
@@ -1118,7 +1118,7 @@ class WAE(object):
                                                 output_dim=output_dim,
                                                 features_dim=features_dim,
                                                 resample=opts['d_resample'][n],
-                                                last_archi=opts['last_archi'][n],
+                                                last_archi=opts['d_last_archi'][n],
                                                 scope='decoder/layer_%d' % n,
                                                 reuse=True,
                                                 is_training=False)
