@@ -74,7 +74,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [6, 5, 4, 3, 2, 3, 2, 1, 32]
+    opts['zdim'] = [6, 5, 4, 3, 2, 1, 3, 2, 1, 32]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -94,10 +94,10 @@ def main():
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
+    opts['e_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
     opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down'] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [96,]*opts['nlatents']
@@ -105,6 +105,7 @@ def main():
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
+    opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
     opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [96,]*opts['nlatents']
