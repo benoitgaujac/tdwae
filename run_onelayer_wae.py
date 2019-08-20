@@ -3,14 +3,11 @@ import sys
 import logging
 import argparse
 import configs
-from wae import WAE
-# from vae import VAE
-from vae_v2 import VAE
+from onelayer_wae import onelayer_WAE
 from datahandler import DataHandler
 import utils
 
 import tensorflow as tf
-import itertools
 
 import pdb
 
@@ -18,82 +15,49 @@ parser = argparse.ArgumentParser()
 # Args for experiment
 parser.add_argument("--mode", default='train',
                     help='mode to run [train/vizu/fid/test]')
-parser.add_argument("--exp", default='mnist',
-                    help='dataset [mnist/cifar10/].'\
-                    ' celebA/dsprites Not implemented yet')
-parser.add_argument("--method", default='wae')
 parser.add_argument("--penalty", default='wae',
                     help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
-parser.add_argument("--lmba", type=float, default=0.0001,
+parser.add_argument("--lmba", type=float, default=100.,
                     help='lambda')
-parser.add_argument("--base_lmba", type=float, default=0.01,
+parser.add_argument("--base_lmba", type=float, default=1.,
                     help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
-parser.add_argument("--enet_archi", default='resnet',
-                    help='encoder networks architecture [mlp/dcgan_v2/resnet]')
-parser.add_argument("--dnet_archi", default='resnet',
-                    help='decoder networks architecture [mlp/dcgan_v2/resnet]')
 parser.add_argument("--weights_file")
-parser.add_argument('--gpu_id', default='cpu',
-                    help='gpu id for DGX box. Default is cpu')
 
 FLAGS = parser.parse_args()
+
 
 def main():
 
     # Select dataset to use
-    if FLAGS.exp == 'celebA':
-        opts = configs.config_celebA
-    elif FLAGS.exp == 'celebA_small':
-        opts = configs.config_celebA_small
-    elif FLAGS.exp == 'mnist':
-        opts = configs.config_mnist
-    elif FLAGS.exp == 'mnist_small':
-        opts = configs.config_mnist_small
-    elif FLAGS.exp == 'cifar10':
-        opts = configs.config_cifar10
-    elif FLAGS.exp == 'dsprites':
-        opts = configs.config_dsprites
-    elif FLAGS.exp == 'grassli':
-        opts = configs.config_grassli
-    elif FLAGS.exp == 'grassli_small':
-        opts = configs.config_grassli_small
-    else:
-        assert False, 'Unknown experiment dataset'
+    opts = configs.config_mnist
 
     # Select training method
-    if FLAGS.method:
-        opts['method'] = FLAGS.method
+    opts['method'] = 'wae'
 
     # Working directory
     if FLAGS.work_dir:
         opts['work_dir'] = FLAGS.work_dir
 
-    # Mode
-    if FLAGS.mode=='fid':
-        opts['fid'] = True
-    else:
-        opts['fid'] = False
-
     # Experiemnts set up
-    opts['epoch_num'] = 5011
-    opts['print_every'] = 1*469
-    opts['lr'] = 0.003
-    opts['dropout_rate'] = 1.
+    opts['epoch_num'] = 2010
+    opts['print_every'] =  2*469
+    opts['lr'] = 0.0002
     opts['batch_size'] = 128
+    opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every_epoch'] = 6005
+    opts['save_every'] = 2000*500
     opts['save_final'] = True
-    opts['save_train_data'] = True
+    opts['save_train_data'] = False
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
 
     # Model set up
-    opts['nlatents'] = 4
-    opts['zdim'] = [512,128,32,4]
+    opts['nlatents'] = 5
+    opts['zdim'] = [32, 16, 8, 4, 2]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -102,33 +66,29 @@ def main():
     opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-6,-(6+opts['nlatents']),-1)]
     opts['lambda_pen_enc_sigma'].append(0.)
     opts['pen_dec_sigma'] = False
-    opts['lambda_pen_dec_sigma'] = 0.0005
+    opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
-    opts['lambda_schedule'] = 'constant'
 
     # NN set up
-    opts['filter_size'] = [3,3,3,3,3,3,3,3,3,3]
+    opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
-    opts['encoder'] =  ['det','det','det','gauss'] # deterministic, gaussian
-    opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down
-    opts['e_nlayers'] = [2,]*opts['nlatents']
-    opts['e_nfilters'] = [512,128,32,8]
+    opts['last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
+    opts['e_nlatents'] = opts['nlatents']
+    opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
+    opts['e_resample'] = ['down',None,None,None,'down','down'] # None, down
+    opts['e_nlayers'] = [3,]*opts['nlatents']
+    opts['e_nfilters'] = [2048,1024,512,256,128]
     opts['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-    opts['decoder'] = ['det',]*opts['nlatents'] # deterministic, gaussian
-    opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
-    opts['d_nlayers'] = [2,]*opts['nlatents']
-    opts['d_nfilters'] = [512,128,32,8]
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+    opts['d_resample'] = ['up',None,None,None,'up','up'] #None, up
+    opts['d_nlayers'] = [3,]*opts['nlatents']
+    opts['d_nfilters'] = [2048,1024,512,256,128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
@@ -142,9 +102,8 @@ def main():
         utils.create_dir(os.path.join(work_dir, 'checkpoints'))
 
     # Verbose
-    if opts['verbose']:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+    logging.basicConfig(filename=os.path.join(work_dir,'outputs.log'),
+        level=logging.INFO, format='%(asctime)s - %(message)s')
 
     # Loading the dataset
     data = DataHandler(opts)
@@ -154,12 +113,7 @@ def main():
     tf.reset_default_graph()
 
     # build WAE/VAE
-    if opts['method']=='wae':
-        wae = WAE(opts)
-    elif opts['method']=='vae':
-        wae = VAE(opts)
-    else:
-        assert False, 'Unknown methdo %s' % opts['method']
+    wae = onelayer_WAE(opts)
 
     # Training/testing/vizu
     if FLAGS.mode=="train":
