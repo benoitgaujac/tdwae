@@ -73,10 +73,10 @@ class onelayer_WAE(object):
             # Enc Sigma stats
             Sigma_tr = tf.reduce_mean(enc_Sigma,axis=-1)
             Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
-            self.encSigmas_stats = [tf.stack([Smean,Svar],axis=-1),]
+            self.encSigmas_stats = tf.stack([Smean,Svar],axis=-1)
         else:
             self.encoded = enc_mean
-            self.encSigmas_stats = []
+            self.encSigmas_stats = None
 
         # - Decoding encoded points (i.e. reconstruct) & reconstruction cost
         recon_mean = one_layer_decoder(self.opts, input=self.encoded,
@@ -325,8 +325,8 @@ class onelayer_WAE(object):
                 Loss_rec.append(loss_rec)
                 Loss_match.append(loss_match)
                 if opts['vizu_encSigma']:
-                    [enc_sigmastats,] = self.sess.run(
-                                                [self.encSigmas_stats,],
+                    enc_sigmastats = self.sess.run(
+                                                self.encSigmas_stats,
                                                 feed_dict=feed_dict)
                     enc_Sigmas.append(enc_sigmastats)
 
