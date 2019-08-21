@@ -93,7 +93,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 4
-    opts['zdim'] = [512,128,32,8]
+    opts['zdim'] = [256,128,64,4]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -105,7 +105,7 @@ def main():
     opts['lambda_pen_dec_sigma'] = 0.0005
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    #opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
+    # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
     opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
@@ -120,7 +120,7 @@ def main():
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
     opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down
     opts['e_nlayers'] = [2,]*opts['nlatents']
-    opts['e_nfilters'] = [512,128,32,8]
+    opts['e_nfilters'] = [256,128,64,32] #[512,128,32,8]
     opts['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det',]*opts['nlatents'] # deterministic, gaussian
@@ -128,7 +128,7 @@ def main():
     opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
     opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
     opts['d_nlayers'] = [2,]*opts['nlatents']
-    opts['d_nfilters'] = [512,128,32,8]
+    opts['d_nfilters'] = [256,128,64,32] #[512,128,32,8]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
