@@ -431,24 +431,21 @@ def resnet_v2_encoder(opts, input, num_layers, num_units, filter_size,
     outputs = tf.nn.dropout(outputs, keep_prob=dropout_rate)
 
     # Shape
-    # out_shape = outputs.get_shape().as_list()[1:-1] + [int(outputs.get_shape().as_list()[-1]),]
     if top_latent:
         output_dim = int(output_dim / outputs.get_shape().as_list()[1] / outputs.get_shape().as_list()[2])
     out_shape = outputs.get_shape().as_list()[1:-1] + [int(output_dim/2),]
     # last hidden layer
     if last_archi=='dense':
         # -- dense layer
-        # outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
-        #             output_dim, scope='hid_final')
         outputs = ops.linear.Linear(opts,outputs,np.prod(outputs.get_shape().as_list()[1:]),
                     2*np.prod(out_shape), scope='hid_final')
     elif last_archi=='conv1x1':
         # -- 1x1 conv
-        outputs = ops.conv2d.Conv2d(opts, outputs,outputs.get_shape().as_list()[-1],output_dim,
+        outputs = ops.conv2d.Conv2d(opts,outputs,outputs.get_shape().as_list()[-1],output_dim,
                 1,stride=1,scope='hid_final',init=opts['conv_init'])
     elif last_archi=='conv':
-        # -- 1x1 conv
-        outputs = ops.conv2d.Conv2d(opts, outputs,outputs.get_shape().as_list()[-1],output_dim,
+        # -- conv
+        outputs = ops.conv2d.Conv2d(opts,outputs,outputs.get_shape().as_list()[-1],output_dim,
                 filter_size,stride=1,scope='hid_final',init=opts['conv_init'])
     else:
         assert False, 'Unknown last_archi %s ' % last_archi
@@ -900,7 +897,7 @@ def  resnet_v2_decoder(opts, input, archi, num_layers, num_units,
         outputs = ops.conv2d.Conv2d(opts, outputs,outputs.get_shape().as_list()[-1],output_dim[-1],
                 1,stride=1,scope='hid_final',init=opts['conv_init'])
     elif last_archi=='conv':
-        # -- 1x1 conv
+        # -- conv
         outputs = ops.conv2d.Conv2d(opts, outputs,outputs.get_shape().as_list()[-1],output_dim[-1],
                 filter_size,stride=1,scope='hid_final',init=opts['conv_init'])
     else:
