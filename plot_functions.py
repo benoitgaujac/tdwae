@@ -289,7 +289,8 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
 def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     fig = plt.figure()
     encSig = np.stack(enc_Sigmas,axis=0)
-    decSig = np.stack(dec_Sigmas,axis=0)
+    if dec_Sigmas:
+        decSig = np.stack(dec_Sigmas,axis=0)
     shape = np.shape(encSig)
     # base = plt.cm.get_cmap('Vega10')
     base = plt.cm.get_cmap('tab10')
@@ -297,7 +298,7 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
     x = np.arange(1, total_num + 1, x_step)
-    for i in range(opts['e_nlatents']):
+    for i in range(np.shape(encSig)[1]):
         mean, var = encSig[::x_step,i,0], encSig[::x_step,i,1]
         y = np.log(mean)
         plt.plot(x, y, linewidth=1, color=color_list[i], label=r'e$\Sigma_%d$' % i)
