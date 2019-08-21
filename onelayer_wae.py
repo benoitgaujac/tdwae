@@ -73,7 +73,7 @@ class onelayer_WAE(object):
             # Enc Sigma stats
             Sigma_tr = tf.reduce_mean(enc_Sigma,axis=-1)
             Smean, Svar = tf.nn.moments(Sigma_tr,axes=[0])
-            self.encSigmas_stats = tf.stack([Smean,Svar],axis=-1)
+            self.encSigmas_stats = tf.expand_dims(tf.stack([Smean,Svar],axis=-1),0)
         else:
             self.encoded = enc_mean
             self.encSigmas_stats = None
