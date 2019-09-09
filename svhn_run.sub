@@ -6,12 +6,14 @@
 
 #$ -l gpu=1
 #$ -l tmem=20G
-#$ -l h_rt=10:00:00
+#$ -l h_rt=100:00:00
 
+#$ -t 1-4
 
 #$ -N svhn_6l_test
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
-python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_test_custer --lmba  0.0001 --base_lmba 0.1 --dataset extra
+# python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_$SGE_TASK_ID --lmba  0.0001 --base_lmba 0.1 --dataset extra --exp_id $SGE_TASK_ID
+python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_$SGE_TASK_ID --dataset extra --exp_id $SGE_TASK_ID 
