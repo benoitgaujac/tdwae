@@ -60,13 +60,13 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 2003
-    opts['print_every'] = 5*500 #every 100 epochs
-    opts['lr'] = 0.0003
+    opts['print_every'] = 10*500 #every 100 epochs
+    opts['lr'] = 0.0002
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every'] = 2000*500
+    opts['save_every'] = 100*500
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
@@ -80,13 +80,13 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-6,-(6+opts['nlatents']),-1)]
+    opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)]
     opts['lambda_pen_enc_sigma'].append(0.)
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [FLAGS.base_lmba**(i/4.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(FLAGS.lmba)
     opts['lambda_schedule'] = 'constant'
@@ -98,7 +98,7 @@ def main():
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down',None,None,None,None,None,'down',None,None,'down'] #None, down
+    opts['e_resample'] = ['down', None, None, None, 'down', None, None, 'down', None, None] #None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [96,]*opts['nlatents']
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
@@ -106,7 +106,7 @@ def main():
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up',None,None,None,None,None,'up',None,None,'up'] #None, up
+    opts['d_resample'] = ['up', None, None, None, 'up', None, None, 'up', None, None] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [96,]*opts['nlatents']
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
@@ -151,6 +151,7 @@ def main():
         wae.train(data, FLAGS.weights_file)
     elif FLAGS.mode=="vizu":
         opts['rec_loss_nsamples'] = 1
+        opts['sample_recons'] = False
         wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
     elif FLAGS.mode=="fid":
         wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
