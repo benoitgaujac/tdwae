@@ -11,9 +11,6 @@
 
 #$ -N cifar10_10l
 
-source /share/apps/examples/python/python-3.6.5.source
-source /share/apps/examples/cuda/cuda-9.0.source
-
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
