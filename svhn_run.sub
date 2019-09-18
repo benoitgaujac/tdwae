@@ -8,12 +8,12 @@
 #$ -l tmem=20G
 #$ -l h_rt=200:00:00
 
-#$ -t 1-4
+#$ -t 1-1
 
-#$ -N svhn_6l_v2
+#$ -N svhn_6l_v3
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
 # python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_$SGE_TASK_ID --lmba  0.0001 --base_lmba 0.1 --dataset extra --exp_id $SGE_TASK_ID
-python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_cluster_$SGE_TASK_ID --dataset extra --exp_id $SGE_TASK_ID
+python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_cluster_v3_$SGE_TASK_ID --dataset extra --exp_id $SGE_TASK_ID
