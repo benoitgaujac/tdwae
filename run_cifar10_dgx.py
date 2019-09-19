@@ -59,9 +59,9 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 2003
-    opts['print_every'] = 10*500 #every 100 epochs
-    opts['lr'] = 0.0002
+    opts['epoch_num'] = 3003
+    opts['print_every'] = 100*500 #every 100 epochs
+    opts['lr'] = 0.0001
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
