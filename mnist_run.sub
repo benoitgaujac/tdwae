@@ -11,7 +11,7 @@
 #$ -t 1-3
 
 
-#$ -N mnist_4ldet_wae
+#$ -N fashionmnist_6l
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
