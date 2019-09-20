@@ -25,8 +25,10 @@ parser.add_argument("--method", default='wae')
 parser.add_argument("--penalty", default='wae',
                     help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
-parser.add_argument("--params", type=int, default=1,
-                    help='params setup')
+# parser.add_argument("--lmba", type=float, default=0.0001,
+#                     help='lambda')
+# parser.add_argument("--base_lmba", type=float, default=0.01,
+#                     help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
 parser.add_argument("--enet_archi", default='resnet',
@@ -36,6 +38,9 @@ parser.add_argument("--dnet_archi", default='resnet',
 parser.add_argument("--weights_file")
 parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
+parser.add_argument('--exp_id', type=int, default=1,
+                    help='experiment id')
+
 
 FLAGS = parser.parse_args()
 
@@ -48,6 +53,10 @@ def main():
         opts = configs.config_celebA_small
     elif FLAGS.exp == 'mnist':
         opts = configs.config_mnist
+    elif FLAGS.exp == 'fashion_mnist':
+        opts = configs.config_mnist
+        opts['dataset'] = 'zalando'
+        opts['data_dir'] = 'zalando'
     elif FLAGS.exp == 'mnist_small':
         opts = configs.config_mnist_small
     elif FLAGS.exp == 'cifar10':
@@ -76,22 +85,22 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 4011
-    opts['print_every'] = 200*469
-    opts['lr'] = 0.0001
+    opts['epoch_num'] = 3011
+    opts['print_every'] = 100*469
+    opts['lr'] = 0.001
     opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every_epoch'] = 6005
+    opts['save_every_epoch'] = 500*469
     opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
 
     # Model set up
-    opts['nlatents'] = 4
-    opts['zdim'] = [32,16,8,2]
+    opts['nlatents'] = 6
+    opts['zdim'] = [64,32,16,8,4,2]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -104,11 +113,13 @@ def main():
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    base_lmbda = [10**-i for i in range(-1,5)]
-    lmbda = [10**-i for i in range(1,7)]
-    lmbdas = [[base_lmbda[i],lmbda[j]] for i in range(len(base_lmbda)) for j in range(len(lmbda))]
-    opts['lambda'] = [lmbdas[FLAGS.params-1][0]**(i+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(lmbdas[FLAGS.params-1][1])
+    # opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
+    # opts['lambda'].append(FLAGS.lmba)
+    base_lmbda = [10**-i for i in range(1,4)]
+    lmbda = [10**-(2*i+3) for i in range(3)]
+    # opts['lambda'] = [base_lmba[FLAGS.exp_id-1][0]**(i+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/2.+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(lmba[FLAGS.exp_id-1])
     opts['lambda_schedule'] = 'constant'
     opts['lambda_schedule'] = 'constant'
 
@@ -116,20 +127,20 @@ def main():
     opts['filter_size'] = [3,3,3,3,3,3,3,3,3,3]
     opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
     opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
-    opts['encoder'] =  ['det','det','det','gauss'] # deterministic, gaussian
+    opts['encoder'] =  ['gauss',]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down
+    opts['e_resample'] = [None,]*opts['nlatents'] #['down', None,'down', None, 'down'] #None, down
     opts['e_nlayers'] = [2,]*opts['nlatents']
-    opts['e_nfilters'] = [32,16,8,4]
+    opts['e_nfilters'] = [4096,2048,1024,512,128,64]
     opts['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-    opts['decoder'] = ['det',]*opts['nlatents'] # deterministic, gaussian
+    opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
+    opts['d_resample'] = [None,]*opts['nlatents'] #['up', None,'up', None, 'up'] #None, up
     opts['d_nlayers'] = [2,]*opts['nlatents']
-    opts['d_nfilters'] = [32,16,8,4]
+    opts['d_nfilters'] = [4096,2048,1024,512,128,64]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
