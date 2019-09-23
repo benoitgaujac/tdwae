@@ -80,7 +80,7 @@ def encoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         is_training,
                                                         dropout_rate)
             out_shape = None
-        if archi == 'mlp_one_layer':
+        elif archi == 'mlp_one_layer':
             # Encoder uses only fully connected layers with ReLus
             outputs = mlp_encoder_one_layer(opts, input, num_layers,
                                                         num_units,
@@ -471,7 +471,7 @@ def decoder(opts, input, archi, num_layers, num_units, filter_size,
                                                         reuse,
                                                         is_training,
                                                         dropout_rate)
-        if archi == 'mlp_one_layer':
+        elif archi == 'mlp_one_layer':
             # Encoder uses only fully connected layers with ReLus for one layer exp
             outputs = mlp_decoder_one_layer(opts, input, num_layers,
                                                         num_units,
