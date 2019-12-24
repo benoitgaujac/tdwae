@@ -100,7 +100,7 @@ def main():
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    base_lmba = [1,5,10,20]
+    base_lmba = [1,2,5,10,20]
     opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/4+1) for i in range(opts['nlatents'])]
     # opts['lambda'].append(FLAGS.lmba)
     # lmba = [0.000001,0.0000001,0.0001,0.0001]
