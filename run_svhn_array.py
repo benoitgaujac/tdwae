@@ -64,8 +64,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 50
-    opts['print_every'] =  5*6043 #78125 #every 25 epochs
+    opts['epoch_num'] = 100
+    opts['print_every'] =  10*6043 #78125 #every 25 epochs
     opts['lr'] = 0.0004
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
@@ -100,8 +100,8 @@ def main():
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    base_lmba = [1,2,5,10,20, 0.1, 0.5]
-    opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/4+1) for i in range(opts['nlatents'])]
+    base_lmba = [2,3,4,5]
+    opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/1+1) for i in range(opts['nlatents'])]
     # opts['lambda'].append(FLAGS.lmba)
     # lmba = [0.000001,0.0000001,0.0001,0.0001]
     # opts['lambda'].append(lmba[FLAGS.exp_id-1])
