@@ -64,24 +64,24 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 1000
-    opts['print_every'] =  25*6043 #78125 #every 25 epochs
-    opts['lr'] = 0.0003
+    opts['epoch_num'] = 50
+    opts['print_every'] =  10*6043 #78125 #every 25 epochs
+    opts['lr'] = 0.0004
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every'] = 50*6043
-    opts['save_final'] = True
+    opts['save_every'] = 100*6043
+    opts['save_final'] = False True
     opts['save_train_data'] = False
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
 
     # Model set up
     opts['nlatents'] = 6
-    # opts['zdim'] = [2, 1, 2, 1, 2, 16]
-    zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
-    opts['zdim'] = zdims[FLAGS.exp_id-1]
+    opts['zdim'] = [1, 2, 4, 2, 1, 8]
+    # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
+    # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
     # Penalty
     opts['pen'] = FLAGS.penalty
@@ -89,22 +89,23 @@ def main():
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-4,-(4+opts['nlatents']-1),-1)]
     # opts['lambda_pen_enc_sigma'].append(0.)
-    l_pen = [[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)]]
-    l_pen[2].append(0.)
-    l_pen[3].append(0.)
-    opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
+    # l_pen = [[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)]]
+    # l_pen[2].append(0.)
+    # l_pen[3].append(0.)
+    # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
+    opts['lambda_pen_enc_sigma'] = [1.,]**opts['nlatents']
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    base_lmba = [0.01,0.005,0.1,0.1]
-    opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/2+1) for i in range(opts['nlatents']-1)]
+    base_lmba = [1,5,10,20]
+    opts['lambda'] = [base_lmba[FLAGS.exp_id-1]**(i/4+1) for i in range(opts['nlatents'])]
     # opts['lambda'].append(FLAGS.lmba)
-    lmba = [0.000001,0.0000001,0.0001,0.0001]
-    opts['lambda'].append(lmba[FLAGS.exp_id-1])
-    opts['lambda_schedule'] = 'constant'
+    # lmba = [0.000001,0.0000001,0.0001,0.0001]
+    # opts['lambda'].append(lmba[FLAGS.exp_id-1])
+    # opts['lambda_schedule'] = 'constant'
 
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]

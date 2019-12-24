@@ -105,7 +105,7 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
-    opts['pen_enc_sigma'] = False
+    opts['pen_enc_sigma'] = True
     opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-6,-(6+opts['nlatents']),-1)]
     opts['lambda_pen_enc_sigma'].append(0.)
     opts['pen_dec_sigma'] = False
