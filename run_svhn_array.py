@@ -65,7 +65,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 50
-    opts['print_every'] =  10*6043 #78125 #every 25 epochs
+    opts['print_every'] =  5*6043 #78125 #every 25 epochs
     opts['lr'] = 0.0004
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
