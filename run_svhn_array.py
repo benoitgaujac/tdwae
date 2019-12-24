@@ -93,7 +93,7 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    opts['lambda_pen_enc_sigma'] = [1.,]**opts['nlatents']
+    opts['lambda_pen_enc_sigma'] = [1.,]*opts['nlatents']
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
