@@ -105,7 +105,7 @@ def main():
     base_lmba = [2, 3, 4, 5]
     lmba = [0.1, 1, 10, 100]
     lmbas = list(itertools.product(base_lmba,lmba))
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents'])-1]
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     # lmba = [0.000001,0.0000001,0.0001,0.0001]
     # opts['lambda'].append(lmba[FLAGS.exp_id-1])
