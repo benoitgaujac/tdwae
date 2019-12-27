@@ -95,16 +95,17 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    opts['lambda_pen_enc_sigma'] = [1.,]*opts['nlatents']
+    base_lmba = [0.05, 0.1]
+    lmba = [0.0001, 0.0005, 0.001, 0.005, 0.01]
+    pen_lmba = [0.5,1,1.5,2]
+    lmbas = list(itertools.product(base_lmba,lmba,pen_lmba))
+    opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1],]*opts['nlatents']
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    base_lmba = [0.01, 0.05, 0.1, 0.5, 1]
-    lmba = [0.0001, 0.001, 0.01, 1]
-    lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     # lmba = [0.000001,0.0000001,0.0001,0.0001]

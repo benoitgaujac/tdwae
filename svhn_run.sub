@@ -5,10 +5,10 @@
 #$ -wd /home/bgaujac/tdwae
 
 #$ -l gpu=1
-#$ -l tmem=10G
-#$ -l h_rt=100:00:00
+#$ -l tmem=5G
+#$ -l h_rt=24:00:00
 
-#$ -t 1-20
+#$ -t 1-40
 
 #$ -N svhn_icml
 
