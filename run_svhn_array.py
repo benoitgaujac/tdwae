@@ -95,11 +95,12 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    base_lmba = [0.05, 0.1]
-    lmba = [0.0001, 0.0005, 0.001, 0.005, 0.01]
-    pen_lmba = [0.5,1,1.5,2]
+    base_lmba = [0.001, 0.05, 0.1]
+    lmba = [0.00005, 0.0001, 0.0005, 0.001, 0.005]
+    pen_lmba = [0.5, 1.5]
     lmbas = list(itertools.product(base_lmba,lmba,pen_lmba))
-    opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1],]*opts['nlatents']
+    opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1],]*(opts['nlatents']-1)
+    opts['lambda_pen_enc_sigma'].append(0.1)
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
