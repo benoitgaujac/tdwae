@@ -4,7 +4,7 @@
 
 #$ -wd /home/bgaujac/tdwae
 
-#$ -l gpu=1
+#$ -l gpu=True
 #$ -l tmem=5G
 #$ -l h_rt=30:00:00
 
