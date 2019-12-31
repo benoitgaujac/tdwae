@@ -64,6 +64,26 @@ def maybe_download(opts):
         tar.extractall(path=data_path)
         tar.close()
         data_path = os.path.join(data_path,'cifar-10-batches-py')
+    elif opts['dataset']=='celebA':
+        filename = 'img_align_celeba'
+        # data_path = os.path.join(data_path,'file_name')
+        file_path = os.path.join(data_path, filename)
+        if not tf.gfile.Exists(file_path):
+            filename = 'img_align_celeba.zip'
+            file_path = os.path.join(data_path, filename)
+            if not tf.gfile.Exists(file_path):
+                assert False, '{} dataset does not exist'.format(opts['dataset'])
+                download_file_from_google_drive(file_path,filename,opts['celebA_data_source_url'])
+            # Unzipping
+            print('Unzipping celebA...')
+            zip_dir = ''
+            with zipfile.ZipFile(file_path) as zf:
+                zip_dir = zf.namelist()[0]
+                zf.extractall()
+            print('Unzipping done.')
+            os.remove(file_path)
+            os.rename(os.path.join(data_path, zip_dir), os.path.join(data_path, 'img_align_celeba'))
+        data_path = os.path.join(data_path,'img_align_celeba')
     else:
         assert False, 'Unknow dataset'
 
@@ -730,24 +750,25 @@ class DataHandler(object):
 
         num_samples = 202599
 
-        datapoint_ids = range(1, num_samples + 1)
-        paths = ['%.6d.jpg' % i for i in range(1, num_samples + 1)]
+        paths = np.array(['%.6d.jpg' % i for i in range(1, num_samples + 1)])
+        # Creating shuffling mask
         seed = 123
-        random.seed(seed)
-        random.shuffle(paths)
-        random.shuffle(datapoint_ids)
-        random.seed()
-
-        saver = utils.ArraySaver('disk', workdir=opts['work_dir'])
-        saver.save('shuffled_training_ids', datapoint_ids)
+        np.random.seed(seed)
+        np.random.shuffle(paths)
+        np.random.seed()
 
         self.data_shape = (64, 64, 3)
-        test_size = 512
-        self.data = Data(opts, None, paths[:-test_size])
+        test_size = 10000
+
+        if opts['train_dataset_size']==-1:
+            self.data = Data(opts, None, paths[:-test_size])
+        else:
+            self.data = Data(opts, None, paths[:opts['train_dataset_size']])
         self.test_data = Data(opts, None, paths[-test_size:])
-        self.num_points = num_samples - test_size
+        self.num_points = len(self.data)
         self.labels = np.array(self.num_points * [0])
         self.test_labels = np.array(test_size * [0])
+        opts['vizu_embedded'] = False
 
         logging.error('Loading Done.')
 

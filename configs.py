@@ -92,7 +92,7 @@ config_mnist['d_nfilters'] = [512,256,128,64,32,16]
 config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
 
 
-### CIFAR 10 config
+### SVHN 10 config
 config_svhn = {}
 # Outputs set up
 config_svhn['verbose'] = False
@@ -107,7 +107,7 @@ config_svhn['vizu_encSigma'] = False
 config_svhn['fid'] = False
 config_svhn['work_dir'] = 'results_svhn'
 config_svhn['plot_num_pics'] = 100
-config_svhn['plot_num_cols'] = 10
+config_svhn['plot_num_cols'] = 15
 
 # Data set up
 config_svhn['dataset'] = 'svhn'
@@ -231,7 +231,7 @@ config_cifar10['penalty'] = 'mmd' #sinkhorn, mmd
 config_cifar10['pen'] = 'wae' #wae, wae_mmd
 config_cifar10['epsilon'] = 0.1 #Sinkhorn regularization parameters
 config_cifar10['L'] = 30 #Sinkhorn iteration
-config_cifar10['mmd_kernel'] = 'IMQ' # RBF, IMQ
+config_cifar10['mmd_kernel'] = 'RQ' # RBF, IMQ, RQ
 
 # Model set up
 config_cifar10['nlatents'] = 8
@@ -267,3 +267,91 @@ config_cifar10['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcg
 config_cifar10['d_nlayers'] = [2,2,2,2,2,2,2,2]
 config_cifar10['d_nfilters'] = [96,96,64,64,32,32,32,32]
 config_cifar10['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+
+### CelebA config
+config_celebA = {}
+# Outputs set up
+config_celebA['verbose'] = False
+config_celebA['save_every'] = 2000
+config_celebA['print_every'] = 200000
+config_celebA['save_final'] = True
+config_celebA['save_train_data'] = False
+config_celebA['vizu_sinkhorn'] = False
+config_celebA['vizu_embedded'] = True
+config_celebA['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
+config_celebA['vizu_encSigma'] = False
+config_celebA['fid'] = False
+config_celebA['work_dir'] = 'results_celebA'
+config_celebA['plot_num_pics'] = 100
+config_celebA['plot_num_cols'] = 15
+
+# Data set up
+config_celebA['dataset'] = 'celebA'
+config_celebA['data_dir'] = 'celebA'
+config_celebA['input_normalize_sym'] = True
+config_celebA['celebA_data_source_url'] = 'https://docs.google.com/uc?export=download'
+config_celebA['celebA_crop'] = 'closecrop' # closecrop, resizecrop
+
+# Experiment set up
+config_celebA['train_dataset_size'] = -1
+config_celebA['batch_size'] = 128
+config_celebA['epoch_num'] = 4120
+config_celebA['method'] = 'wae' #vae, wae
+config_celebA['use_trained'] = False #train from pre-trained model
+config_celebA['e_pretrain'] = False #pretrained the encoder parameters
+config_celebA['e_pretrain_sample_size'] = 200
+config_celebA['e_pretrain_it'] = 1000
+
+# Opt set up
+config_celebA['optimizer'] = 'adam' # adam, sgd
+config_celebA['adam_beta1'] = 0.5
+config_celebA['lr'] = 0.0002
+config_celebA['lr_adv'] = 0.0008
+config_celebA['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+config_celebA['d_norm'] = 'layernorm' #batchnorm, layernorm, none
+config_celebA['batch_norm_eps'] = 1e-05
+config_celebA['batch_norm_momentum'] = 0.99
+
+# Objective set up
+config_celebA['coef_rec'] = 1. # coef recon loss
+config_celebA['cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config_celebA['penalty'] = 'mmd' #sinkhorn, mmd
+config_celebA['pen'] = 'wae' #wae, wae_mmd
+config_celebA['epsilon'] = 0.1 #Sinkhorn regularization parameters
+config_celebA['L'] = 30 #Sinkhorn iteration
+config_celebA['mmd_kernel'] = 'IMQ' # RBF, IMQ
+
+# Model set up
+config_celebA['nlatents'] = 8
+config_celebA['zdim'] = [64,49,36,25,16,9,4,2]
+config_celebA['pz_scale'] = 1.
+config_celebA['prior'] = 'gaussian' # dirichlet or gaussian
+
+# lambda set up
+config_celebA['lambda_scalar'] = 10.
+config_celebA['lambda'] = [1/config_celebA['zdim'][i] for i in range(config_celebA['nlatents'])]
+config_celebA['lambda'].append(0.0001/config_celebA['zdim'][-1])
+config_celebA['lambda_schedule'] = 'constant' # adaptive, constant
+
+# NN set up
+config_celebA['init_std'] = 0.0099999
+config_celebA['init_bias'] = 0.0
+config_celebA['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+config_celebA['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+config_celebA['filter_size'] = [5,3,3,3,3,3,3,3]
+config_celebA['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
+
+
+config_celebA['e_nlatents'] = config_celebA['nlatents'] #config_mnist['nlatents']
+config_celebA['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+config_celebA['e_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, ali, began
+config_celebA['e_nlayers'] = [2,2,2,2,2,2,2,2]
+config_celebA['e_nfilters'] = [96,96,64,64,32,32,32,32]
+config_celebA['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
+
+
+config_celebA['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
+config_celebA['d_arch'] = ['dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan','dcgan'] # mlp, dcgan, dcgan_mod, ali, began
+config_celebA['d_nlayers'] = [2,2,2,2,2,2,2,2]
+config_celebA['d_nfilters'] = [96,96,64,64,32,32,32,32]
+config_celebA['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh

@@ -144,8 +144,8 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     ### The reconstruction loss curves
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     ax = plt.subplot(gs[1, 1])
     # total_num = len(losses_rec)
@@ -178,44 +178,45 @@ def save_train(opts, data_train, data_test,
                                 size=20, transform=ax.transAxes)
 
     # ###UMAP visualization of the embedings
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, 10))
-    num_pics = np.shape(encoded)[0]
-    ax = plt.subplot(gs[1, 2])
-    if np.shape(encoded)[1]==2:
-        embedding = np.concatenate((encoded,samples_prior),axis=0)
-    else:
-        if opts['embedding']=='pca':
-            embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
-        elif opts['embedding']=='umap':
-            embedding = umap.UMAP(n_neighbors=15,
-                                    min_dist=0.2,
-                                    metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+    if opts['vizu_embedded']:
+        base = plt.cm.get_cmap('Vega10')
+        # base = plt.cm.get_cmap('tab10')
+        color_list = base(np.linspace(0, 1, 10))
+        num_pics = np.shape(encoded)[0]
+        ax = plt.subplot(gs[1, 2])
+        if np.shape(encoded)[1]==2:
+            embedding = np.concatenate((encoded,samples_prior),axis=0)
         else:
-            assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
-    plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
-                c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
-    plt.colorbar()
-    plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
-                            color='navy', s=50, marker='*',label='Pz')
-    xmin = np.amin(embedding[:,0])
-    xmax = np.amax(embedding[:,0])
-    magnify = 0.3
-    width = abs(xmax - xmin)
-    xmin = xmin - width * magnify
-    xmax = xmax + width * magnify
-    ymin = np.amin(embedding[:,1])
-    ymax = np.amax(embedding[:,1])
-    width = abs(ymin - ymax)
-    ymin = ymin - width * magnify
-    ymax = ymax + width * magnify
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
-    plt.legend(loc='upper left')
-    plt.text(0.47, 1., 'UMAP latents', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
+            if opts['embedding']=='pca':
+                embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+            elif opts['embedding']=='umap':
+                embedding = umap.UMAP(n_neighbors=15,
+                                        min_dist=0.2,
+                                        metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+            else:
+                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
+        plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
+                    # c=label_test[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=label_test[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
+        plt.colorbar()
+        plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
+                                color='navy', s=50, marker='*',label='Pz')
+        xmin = np.amin(embedding[:,0])
+        xmax = np.amax(embedding[:,0])
+        magnify = 0.3
+        width = abs(xmax - xmin)
+        xmin = xmin - width * magnify
+        xmax = xmax + width * magnify
+        ymin = np.amin(embedding[:,1])
+        ymax = np.amax(embedding[:,1])
+        width = abs(ymin - ymax)
+        ymin = ymin - width * magnify
+        ymax = ymax + width * magnify
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.legend(loc='upper left')
+        plt.text(0.47, 1., 'UMAP latents', ha="center", va="bottom",
+                                    size=20, transform=ax.transAxes)
 
     ### Saving plots and data
     # Plot
@@ -292,8 +293,8 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     if dec_Sigmas:
         decSig = np.stack(dec_Sigmas,axis=0)
     shape = np.shape(encSig)
-    # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap('Vega10')
+    # base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, opts['nlatents']+1))
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
@@ -349,8 +350,8 @@ def plot_embedded(opts, encoded, decoded, labels, work_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:num_pics, 0], embeds[i][:num_pics, 1], alpha=0.7,
-                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         if i==len(embeds)-1:
             plt.colorbar()
         plt.scatter(embeds[i][num_pics:, 0], embeds[i][num_pics:, 1],
@@ -436,7 +437,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
 
     # --- Sample plots
     num_pics = np.shape(samples)[0]
-    num_cols = np.sqrt(num_pics)
+    num_cols = 15 #np.sqrt(num_pics)
     pics = []
     for idx in range(num_pics):
         if greyscale:
@@ -449,14 +450,18 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     images.append(image)
 
     # -- Reconstruction plots
+    num_cols = 14
+    num_pics = num_cols**2
     # Arrange pics and reconstructions in a proper way
-    sample, recon = (data_test[:int(num_pics/2)],reconstructed[:int(num_pics/2)])
+    # sample, recon = (data_test[:int(num_pics/2)],reconstructed[:int(num_pics/2)])
     pics = []
     for n in range(int(num_pics)):
         if n%2==0:
-            pics.append(sample[int(n/2)])
+            # pics.append(sample[int(n/2)])
+            pics.append(data_test[int(n/2)])
         else:
-            pics.append(recon[int(n/2)])
+            # pics.append(recon[int(n/2)])
+            pics.append(reconstructed[int(n/2)])
     # Figuring out a layout
     pics = np.array(pics)
     pics = np.split(pics,num_cols,axis=0)
@@ -621,8 +626,8 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
             if opts['embedding']=='pca':
                 embedding = PCA(n_components=2).fit_transform(encods)
             elif opts['embedding']=='umap':
-                embedding = umap.UMAP(n_neighbors=15,
-                                        min_dist=0.2,
+                embedding = umap.UMAP(n_neighbors=30,
+                                        min_dist=0.15,
                                         metric='correlation',
                                         # n_neighbors=10,
                                         # min_dist=0.1,
@@ -649,8 +654,8 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         # ax = plt.subplot(gs[0, i])
         ax = fig.add_subplot(1, len(embeds), i+1)
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.6,
-                    c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=label_test, s=40, edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+                    # c=label_test, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=label_test, s=40, edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
