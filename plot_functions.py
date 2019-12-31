@@ -310,7 +310,7 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
         # y = np.log(mean+np.sqrt(var))
         # plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
     plt.grid(axis='y')
-    plt.legend(loc='lower left')
+    plt.legend(loc='lower left',ncol=2)
     plt.title(r'log norm_Tr$(\Sigma)$ curves')
     ### Saving plot
     plots_dir = 'train_plots'

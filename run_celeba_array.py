@@ -65,7 +65,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 50
-    opts['print_every'] =  1000 #1*3010 #1 epoch= 3010it
+    opts['print_every'] =  5*3010 #1 epoch= 3010it
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -75,7 +75,7 @@ def main():
     opts['save_final'] = True #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
-    opts['vizu_encSigma'] = False
+    opts['vizu_encSigma'] = True
 
     # Model set up
     opts['nlatents'] = 10
@@ -87,8 +87,8 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.0001, 0.001, 0.01]
-    lmba = [0.001, 0.01, 0.1]
+    base_lmba = [0.0001, 0.001, 0.01, 0.1]
+    lmba = [0.001, 0.01, 0.1, 1.]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [1.5,]*(opts['nlatents']-1)
     opts['lambda_pen_enc_sigma'].append(0.2)
