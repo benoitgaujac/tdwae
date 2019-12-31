@@ -10,6 +10,7 @@ import os
 import random
 import logging
 import gzip
+import zipfile
 import tensorflow as tf
 import numpy as np
 from six.moves import cPickle, urllib
