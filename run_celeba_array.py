@@ -91,7 +91,7 @@ def main():
     lmba = [0.001, 0.01, 0.1, 1.]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [1.5,]*(opts['nlatents']-1)
-    opts['lambda_pen_enc_sigma'].append(0.2)
+    opts['lambda_pen_enc_sigma'].append(0.5)
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
