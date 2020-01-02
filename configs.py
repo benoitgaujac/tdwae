@@ -107,7 +107,7 @@ config_svhn['vizu_encSigma'] = False
 config_svhn['fid'] = False
 config_svhn['work_dir'] = 'results_svhn'
 config_svhn['plot_num_pics'] = 100
-config_svhn['plot_num_cols'] = 15
+config_svhn['plot_num_cols'] = 10
 
 # Data set up
 config_svhn['dataset'] = 'svhn'
@@ -283,7 +283,7 @@ config_celebA['vizu_encSigma'] = False
 config_celebA['fid'] = False
 config_celebA['work_dir'] = 'results_celebA'
 config_celebA['plot_num_pics'] = 100
-config_celebA['plot_num_cols'] = 15
+config_celebA['plot_num_cols'] = 10
 
 # Data set up
 config_celebA['dataset'] = 'celebA'
