@@ -77,13 +77,12 @@ def maybe_download(opts):
                 download_file_from_google_drive(file_path,filename,opts['celebA_data_source_url'])
             # Unzipping
             print('Unzipping celebA...')
-            zip_dir = ''
             with zipfile.ZipFile(file_path) as zf:
                 zip_dir = zf.namelist()[0]
-                zf.extractall()
+                zf.extractall(data_path)
             print('Unzipping done.')
             os.remove(file_path)
-            os.rename(os.path.join(data_path, zip_dir), os.path.join(data_path, 'img_align_celeba'))
+            # os.rename(os.path.join(data_path, zip_dir), os.path.join(data_path, 'img_align_celeba'))
         data_path = os.path.join(data_path,'img_align_celeba')
     else:
         assert False, 'Unknow dataset'
