@@ -76,6 +76,7 @@ def main():
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
+    opts['vizu_embedded'] = False
 
     # Model set up
     opts['nlatents'] = 10
