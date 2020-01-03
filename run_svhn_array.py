@@ -81,7 +81,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 6
-    opts['zdim'] = [1, 2, 4, 2, 1, 8]
+    opts['zdim'] = [2, 1, 2, 1, 2, 16] #[1, 2, 4, 2, 1, 8]
     # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
     # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
@@ -95,9 +95,9 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    base_lmba1 = [0.001, 0.05,]
-    lmba1 = [0.0005, 0.001, 0.005, 0.01]
-    pen_lmba = [0.5, 1.5, 2.5]
+    base_lmba1 = [0.0005, 0.001, 0.05]
+    lmba1 = [0.0001, 0.0005, 0.001, 0.005]
+    pen_lmba = [0.5, 1.5]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
     # base_lmba2 = [0.001,]
     # lmba2 = [0.005, 0.01, 0.05]
@@ -124,17 +124,21 @@ def main():
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down', 'down', 'down', None, None, 'down'] # None, down
+    opts['e_resample'] = ['down', None, 'down', None, 'down', None]#['down', 'down', 'down', None, None, 'down'] # None, down
+    # opts['e_resample'] = ['down', 'down', 'down', None, None, 'down'] # None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
-    opts['e_nfilters'] = [64, 64, 64, 128, 128, 128]
+    # opts['e_nfilters'] = [64, 64, 64, 128, 128, 128]
+    opts['e_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up', 'up', 'up', None, None, 'up'] #None, up
+    # opts['d_resample'] = ['up', 'up', 'up', None, None, 'up'] #None, up
+    opts['d_resample'] = ['up', None, 'up', None, 'up', None] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
-    opts['d_nfilters'] = [64, 64, 64, 128, 128, 128]
+    # opts['d_nfilters'] = [64, 64, 64, 128, 128, 128]
+    opts['d_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
