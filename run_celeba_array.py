@@ -64,8 +64,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 50
-    opts['print_every'] = 5*3010 #3010 it/epoch
+    opts['epoch_num'] = 200
+    opts['print_every'] = 20*3010 #3010 it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -88,8 +88,8 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.0001, 0.001, 0.01, 0.1]
-    lmba = [0.0001, 0.001, 0.01, 0.1]
+    base_lmba = [0.001, 0.01, 0.1]
+    lmba = [0.00001, 0.0001, 0.001, 0.01, 0.1]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [1.5,]*(opts['nlatents']-1)
     opts['lambda_pen_enc_sigma'].append(0.5)
@@ -99,7 +99,7 @@ def main():
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
     # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/4+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/3+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     # lmba = [0.000001,0.0000001,0.0001,0.0001]
     # opts['lambda'].append(lmba[FLAGS.exp_id-1])
