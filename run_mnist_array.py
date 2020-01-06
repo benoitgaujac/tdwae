@@ -49,7 +49,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4011
-    opts['print_every'] = 100*469
+    opts['print_every'] = 100*369
     opts['lr'] = 0.0005
     opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
