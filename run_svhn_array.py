@@ -22,10 +22,6 @@ parser.add_argument("--mode", default='train',
 parser.add_argument("--penalty", default='wae',
                     help='penalty type [wae/wae_mmd]')
 parser.add_argument("--work_dir")
-parser.add_argument("--lmba", type=float, default=100.,
-                    help='lambda')
-parser.add_argument("--base_lmba", type=float, default=1.,
-                    help='base lambda')
 parser.add_argument("--etype", default='gauss',
                     help='encoder type')
 parser.add_argument("--enet_archi", default='resnet',

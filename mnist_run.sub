@@ -4,18 +4,17 @@
 
 #$ -wd /home/bgaujac/tdwae
 
-#$ -l gpu=1
+#$ -l gpu=True
 #$ -l tmem=4G
-#$ -l h_rt=100:00:00
+#$ -l h_rt=50:00:00
 
-#$ -t 1-3
+#$ -t 1-36
 
-
-#$ -N fashionmnist_6l
+#$ -N mnist_icml
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
 
-# python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
-python3 run_array.py --enet_archi mlp --dnet_archi mlp --exp_id $SGE_TASK_ID --work_dir 6l_fashionmnist_$SGE_TASK_ID --exp fashion_mnist
+#python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
+python3 run_mnist_array.py --work_dir 6l_svhn_mnist_$SGE_TASK_ID --exp_id $SGE_TASK_ID
