@@ -49,7 +49,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 4011
-    opts['print_every'] = 100*469
+    opts['print_every'] = 500*469
     opts['lr'] = 0.0005
     opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
@@ -68,9 +68,9 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
-    base_lmba1 = [0.005, 0.01, 0.05, 0.1]
-    lmba1 = [0.00001, 0.0001, 0.001]
-    pen_lmba = [0., 0.5, 1.5]
+    base_lmba1 = [0.01, 0.05, 0.1, 0.5]
+    lmba1 = [0.001, 0.01. 0.1]
+    pen_lmba = [0.5, 1.5]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
 
     opts['pen_enc_sigma'] = True
