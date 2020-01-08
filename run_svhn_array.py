@@ -62,9 +62,9 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 505
-    opts['print_every'] =  100*6043 #78125 #every 25 epochs
-    opts['lr'] = 0.0003
+    opts['epoch_num'] = 105
+    opts['print_every'] =  10*6043 #78125 #every 25 epochs
+    opts['lr'] = 0.0005
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -91,8 +91,8 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    base_lmba1 = [0.05, 0.1]
-    lmba1 = [0.0005, 0.001, 0.005, 0.01, 0.05]
+    base_lmba1 = [0.01, 0.05, 0.1]
+    lmba1 = [0.005, 0.01, 0.05, 0.1]
     pen_lmba = [0.5, 1.5]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
     # base_lmba2 = [0.001,]
