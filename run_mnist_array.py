@@ -68,18 +68,19 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
-    base_lmba1 = [0.001, 0.01, 0.1]
-    lmba1 = [0.001, 0.01, 0.1]
+    base_lmba1 = [0.05, 0.1, 0.5]
+    lmba1 = [0.1, 0.5, 1.]
     pen_enc_lmba = [0.5, 1.5]
     pen_dec_lmba = [0.001, 0.01]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_enc_lmba,pen_dec_lmba))
 
     opts['pen_enc_sigma'] = True
     opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-2],]*(opts['nlatents']-1)
-    if lmbas[FLAGS.exp_id-1][-1] == 0. :
-        opts['lambda_pen_enc_sigma'].append(0.)
-    else:
-        opts['lambda_pen_enc_sigma'].append(0.1)
+    # if lmbas[FLAGS.exp_id-1][-1] == 0. :
+    #     opts['lambda_pen_enc_sigma'].append(0.)
+    # else:
+    #     opts['lambda_pen_enc_sigma'].append(0.1)
+    opts['lambda_pen_enc_sigma'].append(0.)
     opts['pen_dec_sigma'] = True
     opts['lambda_pen_dec_sigma'] = [lmbas[FLAGS.exp_id-1][-1],]*(opts['nlatents'])
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
