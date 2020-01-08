@@ -69,7 +69,7 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     base_lmba1 = [0.01, 0.05, 0.1, 0.5]
-    lmba1 = [0.001, 0.01. 0.1]
+    lmba1 = [0.001, 0.01, 0.1]
     pen_lmba = [0.5, 1.5]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
 
