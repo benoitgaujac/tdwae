@@ -6,9 +6,9 @@
 
 #$ -l gpu=True
 #$ -l tmem=8G
-#$ -l h_rt=30:00:00
+#$ -l h_rt=60:00:00
 
-#$ -t 1-24
+#$ -t 1-16
 
 #$ -N svhn_icml
 
