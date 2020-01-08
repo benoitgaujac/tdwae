@@ -141,7 +141,10 @@ def main():
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
         utils.create_dir(opts['method'])
-    work_dir = os.path.join(opts['method'],opts['work_dir'])
+    out_dir = os.path.join(opts['method'],opts['dataset'])
+    if not tf.gfile.IsDirectory(out_dir):
+        utils.create_dir(out_dir)
+    work_dir = os.path.join(out_dir,opts['work_dir'])
     opts['work_dir'] = work_dir
     if not tf.gfile.IsDirectory(work_dir):
         utils.create_dir(work_dir)
