@@ -8,7 +8,7 @@
 #$ -l tmem=4G
 #$ -l h_rt=20:00:00
 
-#$ -t 1-36
+#$ -t 1-27
 
 #$ -N mnist_icml
 
@@ -17,4 +17,4 @@ source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
 
 #python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
-python3 run_mnist_array.py --work_dir 5l_mnist_v3_$SGE_TASK_ID --exp_id $SGE_TASK_ID
+python3 run_mnist_array.py --work_dir 5l_mnist_v4_$SGE_TASK_ID --exp_id $SGE_TASK_ID
