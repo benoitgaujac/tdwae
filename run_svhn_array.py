@@ -63,7 +63,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] =  2*6043 #78125 #every 25 epochs
+    opts['print_every'] =  10*6043 #78125 #every 25 epochs
     opts['lr'] = 0.0003
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
@@ -77,7 +77,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 6
-    opts['zdim'] = [6, 5, 4, 3, 2, 64] #[1, 2, 4, 2, 1, 8]
+    opts['zdim'] = [2, 1, 2, 1, 2, 16] #[1, 2, 4, 2, 1, 8]
     # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
     # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
@@ -85,33 +85,16 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    # opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-4,-(4+opts['nlatents']-1),-1)]
-    # opts['lambda_pen_enc_sigma'].append(0.)
-    # l_pen = [[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-4,-(4+opts['nlatents']),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)],[10.**i for i in range(-3,-(3+opts['nlatents']-1),-1)]]
-    # l_pen[2].append(0.)
-    # l_pen[3].append(0.)
-    # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    base_lmba1 = [0.05, 0.1, 0.5]
-    lmba1 = [0.00001, 0.0001, 0.001]
-    pen_lmba = [2.,]# 2.]
-    lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
-    # base_lmba2 = [0.001,]
-    # lmba2 = [0.005, 0.01, 0.05]
-    # lmbas2 = list(itertools.product(base_lmba2,lmba2,pen_lmba))
-    # lmbas = lmbas1 + lmbas2
-    opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1],]*(opts['nlatents'])
-    # opts['lambda_pen_enc_sigma'].append(0.5)
+    base_lmba1 = [0.01, 0.05, 0.1, 0.5]
+    lmba1 = [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    lmbas = list(itertools.product(base_lmba1,lmba1))
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
+    opts['lambda_pen_enc_sigma'] = [3 - 0.5*i for i in range(opts['nlatents'])]
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
-    # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
-    # lmba = [0.000001,0.0000001,0.0001,0.0001]
-    # opts['lambda'].append(lmba[FLAGS.exp_id-1])
-    # opts['lambda_schedule'] = 'constant'
 
     # NN set up
     opts['filter_size'] = [5,3,3,3,3,3,3,3,3,3]
@@ -121,24 +104,20 @@ def main():
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
     # opts['e_resample'] = ['down', 'down', 'down', None, None, 'down'] # None, down
-    # opts['e_resample'] = ['down', None, 'down', None, 'down', None]# None, down
-    opts['e_resample'] = ['down', None, None, None, 'down', None]# None, down
+    opts['e_resample'] = ['down', None, 'down', None, 'down', None]# None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     # opts['e_nfilters'] = [64, 64, 64, 128, 128, 128]
-    # opts['e_nfilters'] = [64, 64, 96, 96, 128, 128]
-    opts['e_nfilters'] = [64, 96, 96, 96, 96, 96]
+    opts['e_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
     opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
     # opts['d_resample'] = ['up', 'up', 'up', None, None, 'up'] #None, up
-    # opts['d_resample'] = ['up', None, 'up', None, 'up', None] #None, up
-    opts['d_resample'] = ['up', None, None, None, 'up', None] #None, up
+    opts['d_resample'] = ['up', None, 'up', None, 'up', None] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     # opts['d_nfilters'] = [64, 64, 64, 128, 128, 128]
-    # opts['d_nfilters'] = [64, 64, 96, 96, 128, 128]
-    opts['d_nfilters'] = [64, 96, 96, 96, 96, 96]
+    opts['d_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
     opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
