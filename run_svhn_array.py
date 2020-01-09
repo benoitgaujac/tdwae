@@ -91,8 +91,8 @@ def main():
     # l_pen[2].append(0.)
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
-    base_lmba1 = [0.1, 0.5]
-    lmba1 = [0.01, 0.1, 1]
+    base_lmba1 = [0.05, 0.1, 0.5]
+    lmba1 = [0.001, 0.01, 0.1]
     pen_lmba = [0.1, 0.5]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
     # base_lmba2 = [0.001,]
