@@ -84,8 +84,8 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.01, 0.05, 0.1, 0.5]
-    lmba = [base_lmba[i]**(8/3+1)*10**(j+1) for j in range(2) for i in range(len(base_lmba))]
+    base_lmba = [0.05, 0.1, 0.5]
+    lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(2) for i in range(len(base_lmba))]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [1.,]*(opts['nlatents'])
     # opts['lambda_pen_enc_sigma'].append(0.5)
