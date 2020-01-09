@@ -63,7 +63,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] =  20*6043 #78125 #every 25 epochs
+    opts['print_every'] =  10*6043 #78125 #every 25 epochs
     opts['lr'] = 0.0003
     opts['batch_size'] = 100
     opts['dropout_rate'] = 1.
@@ -92,8 +92,8 @@ def main():
     # l_pen[3].append(0.)
     # opts['lambda_pen_enc_sigma'] = l_pen[FLAGS.exp_id-1]
     base_lmba1 = [0.1, 0.5]
-    lmba1 = [0.01, 0.05, 0.1, 0.5]
-    pen_lmba = [0.5, 1.5]
+    lmba1 = [0.1, 1, 10]
+    pen_lmba = [0.5, 1]
     lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
     # base_lmba2 = [0.001,]
     # lmba2 = [0.005, 0.01, 0.05]
