@@ -60,9 +60,9 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 200
-    opts['print_every'] = 5*3010 #3010 it/epoch
-    opts['lr'] = 0.0004
+    opts['epoch_num'] = 205
+    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -84,10 +84,10 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.01,0.05, 0.1, 0.5]
+    base_lmba = [0.01, 0.05, 0.1, 0.5]
     lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(3) for i in range(len(base_lmba))]
     lmbas = list(itertools.product(base_lmba,lmba))
-    opts['lambda_pen_enc_sigma'] = [1.,]*(opts['nlatents'])
+    opts['lambda_pen_enc_sigma'] = [1.5 - 0.2*i for i in range(opts['nlatents'])]
     # opts['lambda_pen_enc_sigma'].append(0.5)
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
