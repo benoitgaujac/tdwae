@@ -28,6 +28,10 @@ parser.add_argument('--gpu_id', default='cpu',
                     help='gpu id for DGX box. Default is cpu')
 parser.add_argument('--exp_id', type=int, default=1,
                     help='experiment id')
+parser.add_argument('--obs_cost', default='l2sq',
+                    help='observation cost function')
+parser.add_argument('--l_cost', default='l2sq_gauss',
+                    help='latent cost function')
 
 
 FLAGS = parser.parse_args()
@@ -49,7 +53,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 1011
-    opts['print_every'] = 100*469
+    opts['print_every'] = 50*469
     opts['lr'] = 0.0005
     opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
@@ -68,25 +72,24 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
-    base_lmba1 = [0.05, 0.1, 0.5]
-    lmba1 = [0.1, 1., 10.]
-    pen_lmba = [[1.,0.1], [2.,0.5]]
+    base_lmba1 = [0.005, 0.01, 0.05, 0.1]
+    lmba1 = [0.00001, 0.0001, 0.001]
     # pen_enc_lmba = [0.1, 0.5, 1]
     # pen_dec_lmba = [0.1, 0.5]
     # lmbas = list(itertools.product(base_lmba1,lmba1,pen_enc_lmba,pen_dec_lmba))
-    lmbas = list(itertools.product(base_lmba1,lmba1,pen_lmba))
+    lmbas = list(itertools.product(base_lmba1,lmba1))
 
-    opts['pen_enc_sigma'] = True
-    opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1][0],]*(opts['nlatents'])
+    opts['pen_enc_sigma'] = False
+    # opts['lambda_pen_enc_sigma'] = [lmbas[FLAGS.exp_id-1][-1][0],]*(opts['nlatents'])
     # if lmbas[FLAGS.exp_id-1][-1] == 0. :
     #     opts['lambda_pen_enc_sigma'].append(0.)
     # else:
     #     opts['lambda_pen_enc_sigma'].append(0.1)
     # opts['lambda_pen_enc_sigma'].append(0.)
-    opts['pen_dec_sigma'] = True
-    opts['lambda_pen_dec_sigma'] = [lmbas[FLAGS.exp_id-1][-1][1],]*(opts['nlatents'])
-    opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
-    opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
+    opts['pen_dec_sigma'] = False
+    # opts['lambda_pen_dec_sigma'] = [lmbas[FLAGS.exp_id-1][-1][1],]*(opts['nlatents'])
+    opts['obs_cost'] = FLAGS.obs_cost #l2, l2sq, l2sq_norm, l1
+    opts['latent_cost'] = FLAGS.l_cost #l2, l2sq, l2sq_norm, l2sq_gauss, l1
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['lambda_schedule'] = 'constant'
