@@ -5,10 +5,10 @@
 #$ -wd /home/bgaujac/tdwae
 
 #$ -l gpu=True
-#$ -l tmem=15G
+#$ -l tmem=25G
 #$ -l h_rt=24:00:00
 
-#$ -t 1-18
+#$ -t 1-48
 
 #$ -N celeba_icml
 

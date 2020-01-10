@@ -76,7 +76,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 8
-    opts['zdim'] = [8, 7, 6, 5, 4, 3, 2, 16]
+    opts['zdim'] = [7, 6, 5, 4, 3, 2, 1, 32]
     # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
     # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
@@ -84,8 +84,8 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.05, 0.1, 0.5]
-    lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(2) for i in range(len(base_lmba))]
+    base_lmba = [0.01,0.05, 0.1, 0.5]
+    lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(3) for i in range(len(base_lmba))]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [1.,]*(opts['nlatents'])
     # opts['lambda_pen_enc_sigma'].append(0.5)
@@ -108,7 +108,7 @@ def main():
     opts['encoder'] = [FLAGS.etype,]*opts['nlatents'] # deterministic, gaussian
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down', 'down', None, None, 'down', None, None, 'down'] # None, down
+    opts['e_resample'] = ['down',  'down',  None, None, 'down', None, None, 'down'] # None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
@@ -116,7 +116,7 @@ def main():
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up', 'up', None, None, 'up', None, None, 'up'] #None, up
+    opts['d_resample'] = ['up',  'up',  None, None, 'up', None, None, 'up'] #None, up
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
