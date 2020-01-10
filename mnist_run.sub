@@ -10,11 +10,11 @@
 
 #$ -t 1-16
 
-#$ -N l2_mnist_icml
+#$ -N l1_mnist_icml
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
 
 #python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
-python3 run_mnist_array.py --exp_id $SGE_TASK_ID --work_dir 5l_mnist_l2_$SGE_TASK_ID --obs_cost l2 --l_cost l2
+python3 run_mnist_array.py --exp_id $SGE_TASK_ID --work_dir 5l_mnist_l1_$SGE_TASK_ID --obs_cost l1 --l_cost l1
