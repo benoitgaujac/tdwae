@@ -52,8 +52,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 1011
-    opts['print_every'] = 50*469
+    opts['epoch_num'] = 4011
+    opts['print_every'] = 400*469
     opts['lr'] = 0.0005
     opts['dropout_rate'] = 1.
     opts['batch_size'] = 128
