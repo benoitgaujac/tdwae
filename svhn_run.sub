@@ -6,9 +6,9 @@
 
 #$ -l gpu=True
 #$ -l tmem=20G
-#$ -l h_rt=24:00:00
+#$ -l h_rt=50:00:00
 
-#$ -t 21-25
+#$ -t 1-20
 
 #$ -N svhn_icml
 
@@ -16,4 +16,4 @@ source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-9.0.source
 
 # python3 run_svhn.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_$SGE_TASK_ID --lmba  0.0001 --base_lmba 0.1 --dataset extra --exp_id $SGE_TASK_ID
-python3 run_svhn_array.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_icml_v7_$SGE_TASK_ID --dataset extra --exp_id $SGE_TASK_ID
+python3 run_svhn_array.py --enet_archi resnet_v2 --dnet_archi resnet_v2 --work_dir 6l_svhn_icml_v8_$SGE_TASK_ID --exp_id $SGE_TASK_ID

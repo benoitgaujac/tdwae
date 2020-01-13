@@ -62,9 +62,9 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 105
-    opts['print_every'] =  5*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
-    opts['lr'] = 0.0003
+    opts['epoch_num'] = 1005
+    opts['print_every'] =  100*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
+    opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -85,10 +85,10 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
-    base_lmba1 = [0.0001, 0.001, 0.01, 0.1, 0.5]
-    lmba1 = [0.001, 0.01, 0.1, 1, 10]
+    base_lmba1 = [0.01, 0.05, 0.1, 0.5]
+    lmba1 = [0.0001, 0.0001, 0.001, 0.01, 0.1]
     lmbas = list(itertools.product(base_lmba1,lmba1))
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/2+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['lambda_pen_enc_sigma'] = [2.6 - 0.5*i for i in range(opts['nlatents'])]
     opts['pen_dec_sigma'] = False
@@ -109,7 +109,7 @@ def main():
     # opts['e_nfilters'] = [64, 64, 64, 128, 128, 128]
     opts['e_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['e_norm'] = 'layernorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
@@ -119,7 +119,7 @@ def main():
     # opts['d_nfilters'] = [64, 64, 64, 128, 128, 128]
     opts['d_nfilters'] = [64, 64, 96, 96, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
