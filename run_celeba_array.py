@@ -113,7 +113,7 @@ def main():
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['e_norm'] = 'layernorm' #batchnorm, layernorm, none
+    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
@@ -121,7 +121,7 @@ def main():
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
