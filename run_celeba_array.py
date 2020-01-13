@@ -61,7 +61,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] = 1*3010 #3010 it/epoch
+    opts['print_every'] = 20*3010 #3010 it/epoch
     opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -85,7 +85,7 @@ def main():
     opts['mmd_kernel'] = 'IMQ'
     opts['pen_enc_sigma'] = True
     base_lmba = [0.05, 0.1, 0.5]
-    lmba = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
+    lmba = [0.001, 0.01, 0.1, 1, 10]
     # lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(3) for i in range(len(base_lmba))]
     lmbas = list(itertools.product(base_lmba,lmba))
     opts['lambda_pen_enc_sigma'] = [2.5 - 0.3*i for i in range(opts['nlatents'])]
@@ -113,7 +113,7 @@ def main():
     opts['e_nlayers'] = [3,]*opts['nlatents']
     opts['e_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['e_norm'] = 'layernorm' #batchnorm, layernorm, none
     opts['decoder'] = ['det','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
     opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
     opts['d_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
@@ -121,7 +121,7 @@ def main():
     opts['d_nlayers'] = [3,]*opts['nlatents']
     opts['d_nfilters'] = [64, 96, 96, 96, 96, 128, 128, 128]
     opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    opts['d_norm'] = 'layernorm' #batchnorm, layernorm, none
 
     # Create directories
     if not tf.gfile.IsDirectory(opts['method']):
