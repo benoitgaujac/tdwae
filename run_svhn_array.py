@@ -62,15 +62,15 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 205
-    opts['print_every'] =  20*6043 #78125 #every 25 epochs
+    opts['epoch_num'] = 105
+    opts['print_every'] =  5*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every'] = 10000000*6043
-    opts['save_final'] = True #True
+    opts['save_final'] = False #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = False
