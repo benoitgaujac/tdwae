@@ -91,7 +91,7 @@ def main():
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     # opts['lambda_pen_enc_sigma'] = [2.6 - 0.5*i for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'] = [0.01*3**i for i in range(opts['nlatents'])]
+    opts['lambda_pen_enc_sigma'] = [2.43 / (3**i) for i in range(opts['nlatents'])]
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
