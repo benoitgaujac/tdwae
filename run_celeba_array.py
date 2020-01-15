@@ -61,7 +61,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['print_every'] = 2*3010 #3010 it/epoch
     opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -83,24 +83,28 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
+    lmbas = []
+    base_lmba = [0.05,]
+    lmba = [0.01, 0.1, 1]
+    lmbas += list(itertools.product(base_lmba,lmba))
+    base_lmba = [0.1,]
+    lmba = [1, 5, 10]
+    lmbas += list(itertools.product(base_lmba,lmba))
+    base_lmba = [0.5,]
+    lmba = [10, 50, 100]
+    lmbas += list(itertools.product(base_lmba,lmba))
+    base_lmba = [1.,]
+    lmba = [10, 100, 1000]
+    lmbas += list(itertools.product(base_lmba,lmba))
+
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/3+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['pen_enc_sigma'] = True
-    base_lmba = [0.05, 0.1, 0.5]
-    lmba = [0.001, 0.01, 0.1, 1, 10]
-    # lmba = [base_lmba[i]**(8/3+1)*10**(j+2) for j in range(3) for i in range(len(base_lmba))]
-    lmbas = list(itertools.product(base_lmba,lmba))
-    opts['lambda_pen_enc_sigma'] = [2.5 - 0.3*i for i in range(opts['nlatents'])]
-    # opts['lambda_pen_enc_sigma'].append(0.5)
+    opts['lambda_pen_enc_sigma'] = [2.5 * exp(-4. * i / 6.) for i in range(opts['nlatents'])]
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
     opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    # opts['lambda'] = [FLAGS.base_lmba**(i/2.+1) for i in range(opts['nlatents']-1)]
-    # opts['lambda'] = [FLAGS.base_lmba**(i/opts['nlatents']+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/3+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
-    # lmba = [0.000001,0.0000001,0.0001,0.0001]
-    # opts['lambda'].append(lmba[FLAGS.exp_id-1])
-    # opts['lambda_schedule'] = 'constant'
 
     # NN set up
     opts['filter_size'] = [7,5,3,3,3,3,3,3,3,3]

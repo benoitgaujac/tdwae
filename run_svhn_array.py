@@ -63,7 +63,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 1005
-    opts['print_every'] =  50*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
+    opts['print_every'] =  10*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -73,7 +73,7 @@ def main():
     opts['save_final'] = False #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
-    opts['vizu_encSigma'] = False
+    opts['vizu_encSigma'] = True
 
     # Model set up
     opts['nlatents'] = 6
@@ -88,21 +88,21 @@ def main():
     opts['pen_enc_sigma'] = True
     lmbas = []
     base_lmba = [0.01,]
-    lmba = [0.0000001, 0.000001, 0.00001, 0.0001, 0.001]
+    lmba = [0.000001, 0.00001, 0.0001, 0.001]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.05,]
-    lmba = [0.000001, 0.00001, 0.0001, 0.001, 0.01]
+    lmba = [0.00001, 0.0001, 0.001, 0.01]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
-    lmba = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+    lmba = [0.0001, 0.001, 0.01, 0.1]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.5,]
-    lmba = [0.0001, 0.001, 0.01, 0.1, 1]
+    lmba = [0.001, 0.01, 0.1, 1]
     lmbas += list(itertools.product(base_lmba,lmba))
     # base_lmba = [0.01, 0.05, 0.1, 0.5]
     # lmba1 = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
     # lmbas = list(itertools.product(base_lmba1,lmba1))
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/2.+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     # opts['lambda_pen_enc_sigma'] = [2.6 - 0.5*i for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'] = [2.5 * exp(-3.5 * i / 4.) for i in range(opts['nlatents'])]
