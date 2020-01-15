@@ -303,10 +303,10 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
         mean, var = encSig[::x_step,i,0], encSig[::x_step,i,1]
         y = np.log(mean)
         plt.plot(x, y, linewidth=1, color=color_list[i], label=r'e$\Sigma_%d$' % i)
-        if i!=0:
-            mean, var = decSig[::x_step,i-1,0], decSig[::x_step,i-1,1]
-            y = np.log(mean)
-            plt.plot(x, y, linewidth=1, linestyle='--', color=color_list[i], label=r'd$\Sigma_%d$' % i)
+        # if i!=0:
+        #     mean, var = decSig[::x_step,i-1,0], decSig[::x_step,i-1,1]
+        #     y = np.log(mean)
+        #     plt.plot(x, y, linewidth=1, linestyle='--', color=color_list[i], label=r'd$\Sigma_%d$' % i)
         # y = np.log(mean+np.sqrt(var))
         # plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
     plt.grid(axis='y')
