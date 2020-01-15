@@ -62,8 +62,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 1005
-    opts['print_every'] =  10*1144 #extra: 6043it/epoch, cropped: 1144it/epoch
+    opts['epoch_num'] = 205
+    opts['print_every'] =  10*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -85,29 +85,29 @@ def main():
     # Penalty
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
-    opts['pen_enc_sigma'] = True
     lmbas = []
     base_lmba = [0.01,]
     lmba = [0.000001, 0.0001, 0.01]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.05,]
-    lmba = [0.0001, 0.01, 0.1]
+    lmba = [0.000001, 0.0001, 0.001]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
     # lmba = [0.0001, 0.001, 0.01, 0.1]
-    lmba = [0.01, 0.1, 1.]
+    lmba = [0.0001, 0.01, 0.1]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.5,]
     # lmba = [0.001, 0.01, 0.1, 1.]
-    lmba = [0.1, 1., 10.]
+    lmba = [0.1, 1., 10., 100.]
     lmbas += list(itertools.product(base_lmba,lmba))
     # base_lmba = [0.01, 0.05, 0.1, 0.5]
     # lmba1 = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
     # lmbas = list(itertools.product(base_lmba1,lmba1))
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1.+1) for i in range(opts['nlatents']-1)]
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
+    opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.6 - 0.5*i for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'] = [2.5 * exp(-3.5 * i / 4.) for i in range(opts['nlatents'])]
+    opts['lambda_pen_enc_sigma'] = [2.5 * exp(-i) for i in range(opts['nlatents'])]
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
