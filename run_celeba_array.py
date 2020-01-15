@@ -2,16 +2,16 @@ import os
 import sys
 import logging
 import argparse
+import itertools
+import tensorflow as tf
+from math import exp
+
 import configs
 from wae import WAE
 # from vae import VAE
 from vae_v2 import VAE
 from datahandler import DataHandler
 import utils
-
-import itertools
-
-import tensorflow as tf
 
 import pdb
 
