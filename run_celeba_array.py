@@ -71,7 +71,7 @@ def main():
     opts['save_final'] = False #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
-    opts['vizu_encSigma'] = False
+    opts['vizu_encSigma'] = True
     opts['vizu_embedded'] = False
 
     # Model set up
@@ -84,17 +84,14 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     lmbas = []
-    base_lmba = [0.01,]
-    lmba = [0.0001, 0.001, 0.01]
-    lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.05,]
-    lmba = [0.001, 0.01, 0.1]
+    lmba = [0.005, 0.05]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
-    lmba = [0.01, 0.1, 1]
+    lmba = [0.05, 0.5]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.5,]
-    lmba = [.1, 1., 10.]
+    lmba = [.5, 5., 50.]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [1.,]
     lmba = [10, 100, 500]
