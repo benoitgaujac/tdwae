@@ -63,7 +63,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] =  10*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
+    opts['print_every'] =  1*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -86,19 +86,16 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     lmbas = []
-    base_lmba = [0.01,]
-    lmba = [0.000001, 0.0001, 0.01]
-    lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.05,]
-    lmba = [0.000001, 0.0001, 0.001]
+    lmba = [0.01, 0.05, 0.1]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
     # lmba = [0.0001, 0.001, 0.01, 0.1]
-    lmba = [0.0001, 0.01, 0.1]
+    lmba = [0.05, 0.5, 1.]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.5,]
     # lmba = [0.001, 0.01, 0.1, 1.]
-    lmba = [0.1, 1., 10., 100.]
+    lmba = [0.5, 5., 50.]
     lmbas += list(itertools.product(base_lmba,lmba))
     # base_lmba = [0.01, 0.05, 0.1, 0.5]
     # lmba1 = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
