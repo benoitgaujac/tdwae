@@ -62,8 +62,8 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 205
-    opts['print_every'] =  1*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
+    opts['epoch_num'] = 305
+    opts['print_every'] =  50*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -88,11 +88,11 @@ def main():
     lmbas = []
     base_lmba = [0.5,]
     # lmba = [5., 10., 50.]
-    lmba = [20., 40., 60., 80., 100.]
+    lmba = [5., 10., 20., 40., 50., 60., 80., 100.]
     lmbas += list(itertools.product(base_lmba,lmba))
-    base_lmba = [1.1,]
+    base_lmba = [1.,]
     # lmba = [5., 10., 50.]
-    lmba = [50., 100., 1000.]
+    lmba = [50., 100., 200., 400., 500., 600., 800., 1000.]
     lmbas += list(itertools.product(base_lmba,lmba))
     pen_sigma_coef = [5./6. , 4./6., 3./6]
     lmbas = list(itertools.product(lmbas,pen_sigma_coef))
