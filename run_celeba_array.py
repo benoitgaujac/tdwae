@@ -61,7 +61,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 205
-    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['print_every'] = 1*3010 #3010 it/epoch
     opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
@@ -76,7 +76,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [10, 9, 8, 7, 6, 5, 4, 3, 2, 32]
+    opts['zdim'] = [10, 9, 8, 7, 6, 5, 4, 3, 2, 16]
     # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
     # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
