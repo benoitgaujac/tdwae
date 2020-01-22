@@ -85,18 +85,18 @@ def main():
     opts['mmd_kernel'] = 'IMQ'
     lmbas = []
     base_lmba = [0.05,]
-    lmba = [0.0005, 0.001, 0.005]
+    lmba = [0.001, 0.05]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
-    lmba = [0.005, 0.01, 0.05]
+    lmba = [0.1,]
     lmbas += list(itertools.product(base_lmba,lmba))
-    base_lmba = [0.5,]
-    lmba = [.5, 1., 5., 10.]
-    lmbas += list(itertools.product(base_lmba,lmba))
+    # base_lmba = [0.5,]
+    # lmba = [.5, 1., 5., 10.]
+    # lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [1.,]
-    lmba = [10, 50., 100, 500]
+    lmba = [1., 5.] 
     lmbas += list(itertools.product(base_lmba,lmba))
-    pen_sigma_coef = [5./6. , 4./6., 3./6]
+    pen_sigma_coef = [5./6. , 3./6]
     lmbas = list(itertools.product(lmbas,pen_sigma_coef))
 
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0][0]**(i/3+1) for i in range(opts['nlatents']-1)]
