@@ -70,7 +70,7 @@ def main():
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
     opts['save_every'] = 10000000*6043
-    opts['save_final'] = False #True
+    opts['save_final'] = True
     opts['save_train_data'] = True
     opts['use_trained'] = False
     opts['vizu_encSigma'] = True
