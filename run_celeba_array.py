@@ -61,8 +61,8 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 305
-    opts['print_every'] = 2*3010 #3010 it/epoch
-    opts['lr'] = 0.0005
+    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -85,18 +85,18 @@ def main():
     opts['mmd_kernel'] = 'IMQ'
     lmbas = []
     base_lmba = [0.05,]
-    lmba = [0.001, 0.05, 0.1]
+    lmba = [0.005, 0.01, 0.05]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.1,]
-    lmba = [0.01, 0.1, 0.5]
+    lmba = [.5, 1., 5.]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [0.5,]
-    lmba = [.5, 1., 10.]
+    lmba = [.5, 1., 5.]
     lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [1.,]
-    lmba = [5., 10., 20.]
+    lmba = [1., 5., 10.]
     lmbas += list(itertools.product(base_lmba,lmba))
-    pen_sigma_coef = [5./6., 3./6]
+    pen_sigma_coef = [5./6., 4./6]
     lmbas = list(itertools.product(lmbas,pen_sigma_coef))
 
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0][0]**(i/3+1) for i in range(opts['nlatents']-1)]
