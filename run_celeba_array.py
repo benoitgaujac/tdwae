@@ -76,7 +76,7 @@ def main():
 
     # Model set up
     opts['nlatents'] = 10
-    opts['zdim'] = [8, 6, 4, 8, 6, 4, 8, 6, 4, 8]
+    opts['zdim'] = [8, 6, 4, 8, 6, 4, 8, 6, 4, 128]
     # zdims = [[2, 1, 2, 1, 2, 16], [1, 3, 2, 1, 2, 16], [1, 2, 4, 2, 1, 8],[2, 1, 2, 1, 2, 16]]
     # opts['zdim'] = zdims[FLAGS.exp_id-1]
 
@@ -118,7 +118,7 @@ def main():
     opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
     opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
     # opts['e_resample'] = ['down',  'down',  None, None, None, 'down', None, None, None, 'down'] # None, down
-    opts['e_resample'] = ['down',  None, None, 'down',  None, None, 'down', None, None, 'down'] # None, down
+    opts['e_resample'] = ['down', None, None, 'down', None, None, 'down', None, None, 'down'] # None, down
     opts['e_nlayers'] = [3,]*opts['nlatents']
     # opts['e_nfilters'] = [64, 96, 96, 96, 96, 96, 128, 128, 128, 128]
     opts['e_nfilters'] = [64, 64, 64, 64, 96, 96, 96, 128, 128, 128]
