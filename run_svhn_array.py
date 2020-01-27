@@ -99,10 +99,13 @@ def main():
     # base_lmba = [0.01, 0.05, 0.1, 0.5]
     # lmba1 = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
     # lmbas = list(itertools.product(base_lmba1,lmba1))
-    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0][0]**(i/1.+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(lmbas[FLAGS.exp_id-1][0][1])
+    # opts['lambda'] = [lmbas[FLAGS.exp_id-1][0][0]**(i/1.+1) for i in range(opts['nlatents']-1)]
+    # opts['lambda'].append(lmbas[FLAGS.exp_id-1][0][1])
+    opts['lambda'] = [lmbas[FLAGS.exp_id-1][0]**(i/1.+1) for i in range(opts['nlatents']-1)]
+    opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
+    # opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][1]* i) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][1]* i) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'][-1] *= 1.5
     opts['pen_dec_sigma'] = False

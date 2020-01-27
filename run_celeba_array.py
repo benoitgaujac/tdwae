@@ -96,7 +96,7 @@ def main():
     base_lmba = [1.,]
     lmba = [1., 5., 10., 20.]
     lmbas += list(itertools.product(base_lmba,lmba))
-    pen_sigma_coef = [5./6. 4./6, 3./6]
+    pen_sigma_coef = [5./6., 4./6, 3./6]
     lmbas = list(itertools.product(lmbas,pen_sigma_coef))
 
     opts['lambda'] = [lmbas[FLAGS.exp_id-1][0][0]**(i/3+1) for i in range(opts['nlatents']-1)]
