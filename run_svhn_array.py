@@ -62,7 +62,7 @@ def main():
         opts['fid'] = False
 
     # Experiemnts set up
-    opts['epoch_num'] = 305
+    opts['epoch_num'] = 505
     opts['print_every'] =  50*9443 #extra: 9443it/epoch, cropped: 1144it/epoch
     opts['lr'] = 0.0003
     opts['batch_size'] = 64
@@ -89,7 +89,7 @@ def main():
     base_lmba = [0.5,]
     # lmba = [5., 10., 50.]
     lmba = [5., 10., 25., 50., 75., 100.]
-    pen_sigma_coef = [6./6., 5./6., 4./6.]
+    pen_sigma_coef = [6./6.,  4./6.]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     # base_lmba = [1.,]
     # # lmba = [5., 10., 50.]
@@ -106,7 +106,7 @@ def main():
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][1]* i) for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][1]* i) for i in range(opts['nlatents'])]
+    opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'][-1] *= 2.
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
