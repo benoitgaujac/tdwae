@@ -6,9 +6,9 @@
 
 #$ -l gpu=True
 #$ -l tmem=25G
-#$ -l h_rt=24:00:00
+#$ -l h_rt=10:00:00
 
-#$ -t 1-24
+#$ -t 1-42
 
 #$ -N celeba_icml
 
