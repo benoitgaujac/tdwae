@@ -61,7 +61,7 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 305
-    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['print_every'] = 2*3010 #3010 it/epoch
     opts['lr'] = 0.0005
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
