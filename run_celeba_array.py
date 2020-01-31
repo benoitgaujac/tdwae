@@ -61,13 +61,13 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 305
-    opts['print_every'] = 10*3010 #3010 it/epoch
+    opts['print_every'] = 20*3010 #3010 it/epoch
     opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every'] = 10000000*3010
+    opts['save_every'] = 100*3010
     opts['save_final'] = False #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
@@ -88,8 +88,8 @@ def main():
     # lmba = [.01, .05]
     # lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [.1,]
-    lmba = [0.1, 0.3, .5, 1.]
-    pen_sigma_coef = [6./6, 5./6., 4./6.]
+    lmba = [.5, 1.]
+    pen_sigma_coef = [6./6, 5./6.]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [.5,]
     lmba = [1., 2., 5., 10.]
