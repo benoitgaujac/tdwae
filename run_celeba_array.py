@@ -97,7 +97,7 @@ def main():
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [1.,]
     lmba = [2., 5., 7]
-    pen_sigma_coef = [5./6, 4./6, 3./6]
+    pen_sigma_coef = [5./6, 3./6]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     # lmbas = list(itertools.product(lmbas,pen_sigma_coef))
 
