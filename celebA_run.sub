@@ -8,7 +8,7 @@
 #$ -l tmem=25G
 #$ -l h_rt=72:00:00
 
-#$ -t 1-26
+#$ -t 1-22
 
 #$ -N celeba_icml
 
