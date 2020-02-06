@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 
 import utils
-from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, linespace
+from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, sample_unif, linespace
 from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss, moments_loss
 from loss_functions import sinkhorn_it, sinkhorn_it_v2, square_dist, square_dist_v2
 from plot_functions import save_train, plot_sinkhorn, plot_embedded, plot_encSigma, save_latent_interpolation, save_vlae_experiment
@@ -720,16 +720,17 @@ class WAE(object):
         wait, wait_lambda = 0, 0
         wae_lambda = opts['lambda']
         self.start_time = time.time()
+
         for epoch in range(opts['epoch_num']):
-            # Saver
-            # if epoch > 0 and epoch % opts['save_every_epoch'] == 0:
-            if counter>0 and counter % opts['save_every'] == 0:
-                self.saver.save(self.sess, os.path.join(
-                                                work_dir,'checkpoints',
-                                                'trained-wae'),
-                                                global_step=counter)
             ##### TRAINING LOOP #####
             for it in range(batches_num):
+                # Saver
+                if counter>0 and counter % opts['save_every'] == 0:
+                    self.saver.save(self.sess, os.path.join(
+                                                    work_dir,'checkpoints',
+                                                    'trained-wae'),
+                                                    global_step=counter)
+
                 # Sample batches of data points and Pz noise
                 data_ids = np.random.choice(train_size, opts['batch_size'],
                                                 replace=True)
@@ -967,52 +968,54 @@ class WAE(object):
         self.saver.restore(self.sess, WEIGHTS_PATH)
         # Set up
         test_size = np.shape(data.test_data)[0]
-        num_steps = 13 #28
-        num_anchors = 14 #12
         imshape = datashapes[opts['dataset']]
-
+        # mnist plot setup
+        # num_cols = 14
+        # num_pics = num_cols**2
+        # num_pics_enc = 5000
+        # svhn plot setup
+        num_cols = 18
+        num_pics = 7*num_cols
+        # num_pics = num_cols*num_cols
+        num_pics_enc = 200
+        data_ids = np.random.choice(200, 18, replace=True)
+        # data_ids = [21, 7, 24, 18, 28, 12, 75, 82, 32]
         # --- Reconstructions
-        # logging.error('Encoding test images..')
-        num_pics = 2000
-        encoded, full_recons = self.sess.run([self.encoded,
-                                # self.full_reconstructed[-1]],
-                                self.full_reconstructed],
-                                feed_dict={self.points:data.test_data[:num_pics],
+        full_recons = self.sess.run(self.full_reconstructed,
+                                feed_dict={self.points:data.test_data[:200], #num_pics],
                                            self.dropout_rate: 1.,
                                            self.is_training:False})
         reconstructed = full_recons[-1]
-        # data_ids = np.arange(43,43+15,dtype='int32')
-        data_ids = np.random.choice(num_pics, 30,
-                                        replace=True)
+        # mnist plot setup
         full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
-        # full_recon = self.sess.run(self.full_reconstructed,
-        #                        feed_dict={self.points:data.test_data[data_ids],
-        #                                   self.dropout_rate: 1.,
-        #                                   self.is_training: False})
         full_reconstructed = [data.test_data[data_ids],] + full_recon
+        # svhn plot setup
+        # full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
+        # full_reconstructed = [data.test_data[data_ids],] + full_recon
+        # full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
+        # full_reconstructed = [data.test_data[data_ids],] + full_recon
 
-        if opts['sample_recons']:
-            if opts['encoder'][0]=='gauss':
-                data_ids = np.arange(36,37)
-                sampled_recon = self.sess.run(self.sampled_reconstructed,
-                                       feed_dict={self.points:data.test_data[data_ids],
-                                                  self.dropout_rate: 1.,
-                                                  self.is_training: False})
-
-                sampled_reconstructed = [np.concatenate([data.test_data[data_ids] for i in range(6)]),] + sampled_recon
-            else:
-                sampled_reconstructed = None
-        else:
-            sampled_reconstructed = None
 
         # --- Encode anchors points and interpolate
-        # logging.error('Anchors interpolation..')
+        encoded = self.sess.run(self.encoded,
+                                feed_dict={self.points:data.test_data[:num_pics_enc],
+                                           self.dropout_rate: 1.,
+                                           self.is_training:False})
+
         encshape = list(np.shape(encoded[-1])[1:])
-        #anchors_ids = np.random.choice(num_pics,2*num_anchors,replace=False)
-        # anchors_ids = np.arange(2*num_anchors,3*num_anchors)
+        # mnist plot setup
+        # num_steps = 23
+        # num_anchors = 12
+        # anchors_ids = np.random.choice(num_pics, num_anchors,
+        #                                 replace=True)
+        # data_anchors = data.test_data[anchors_ids]
+        # svhn plot setup
+        num_steps = 16
+        num_anchors = 14
         anchors_ids = np.random.choice(num_pics, num_anchors,
                                         replace=True)
         data_anchors = data.test_data[anchors_ids]
+
         enc_anchors = np.reshape(encoded[-1][anchors_ids],[-1,2]+encshape)
         enc_interpolation = linespace(opts, num_steps, anchors=enc_anchors)
         num_int = np.shape(enc_interpolation)[1]
@@ -1035,7 +1038,6 @@ class WAE(object):
 
         if opts['zdim'][-1]==2:
             # --- Latent interpolation
-            # logging.error('Latent interpolation..')
             if False:
                 enc_mean = np.mean(encoded[-1],axis=0)
                 enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
@@ -1043,34 +1045,30 @@ class WAE(object):
                 enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
                 enc_var = np.ones(opts['zdim'][-1], dtype='float32')
             mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
-            x = np.linspace(mins[0], maxs[0], num=num_steps, endpoint=True)
-            xymin = np.stack([x,mins[1]*np.ones(num_steps)],axis=-1)
-            xymax = np.stack([x,maxs[1]*np.ones(num_steps)],axis=-1)
+            x = np.linspace(mins[0], maxs[0], num=num_cols, endpoint=True)
+            xymin = np.stack([x,mins[1]*np.ones(num_cols)],axis=-1)
+            xymax = np.stack([x,maxs[1]*np.ones(num_cols)],axis=-1)
             latent_anchors = np.stack([xymin,xymax],axis=1)
-            grid_interpolation = linespace(opts, num_steps,
+            grid_interpolation = linespace(opts, num_cols,
                                     anchors=latent_anchors)
             dec_latent = self.sess.run(self.decoded[-1],
                                     feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
                                                self.dropout_rate: 1.,
                                                self.is_training: False})
-            inter_latent = np.reshape(dec_latent,[-1,num_steps]+imshape)
+            inter_latent = np.reshape(dec_latent,[-1,num_cols]+imshape)
         else:
             inter_latent = None
 
         # --- Samples generation
-        # logging.error('Samples generation..')
-        num_cols = 15
-        npics = 7*num_cols #num_cols**2
-        prior_noise = sample_pz(opts, self.pz_params, npics)
+        prior_noise = sample_pz(opts, self.pz_params, num_pics)
         samples = self.sess.run(self.decoded[-1],
                                feed_dict={self.samples: prior_noise,
                                           self.dropout_rate: 1.,
                                           self.is_training: False})
         # --- Making & saving plots
-        # logging.error('Saving images..')
-        save_latent_interpolation(opts, data.test_data[:num_pics],data.test_labels[:num_pics], # data,labels
-                        encoded, reconstructed[:npics], # encoded, reconstructed points
-                        full_reconstructed, sampled_reconstructed, # full & sampled recons
+        save_latent_interpolation(opts, data.test_data[:num_pics_enc],data.test_labels[:num_pics_enc], # data,labels
+                        encoded, # encoded
+                        reconstructed, full_reconstructed, # recon, full_recon
                         inter_anchors, inter_latent, # anchors and latents interpolation
                         samples, # samples
                         MODEL_PATH) # working directory
@@ -1132,14 +1130,13 @@ class WAE(object):
                             p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
                             decoded = sample_gaussian(opts, p_params, 'tensorflow')
                         else:
-                            dec_dim = decoded_mean.get_shape().as_list()[-1]
-                            decoded = []
-                            for i in range(dec_dim):
-                                start = decoded_mean[0,i]-2.*decoded_Sigma[0,i]
-                                stop = decoded_mean[0,i]+2.*decoded_Sigma[0,i]
-                                decoded.append(tf.linspace(start,stop,num_pics))
-                                # decoded.append(tf.linspace(decoded_mean[0,i]-2.*decoded_Sigma[0,i],1.2*decoded_mean[0,i],num_pics))
-                            decoded = tf.stack(decoded,axis=-1)
+                            shape = decoded_mean.get_shape().as_list()[-1]
+                            eps = []
+                            for i in range(num_pics):
+                                # eps.append(sample_unif([shape,],-(3-n/2.),3-n/2.))
+                                eps.append(sample_unif([shape,],-1,1))
+                            eps = tf.stack(eps,axis=0)
+                            decoded = decoded_mean + eps
                     else:
                         decoded =  decoded_mean #+ tf.multiply(fixed_noise[opts['nlatents']-n],tf.sqrt(1e-10+decoded_Sigma))
                 else:
