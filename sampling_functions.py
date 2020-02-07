@@ -41,6 +41,12 @@ def sample_dirichlet(opts, alpha, batch_size=100):
     """
     return np.random.dirichlet(alpha, batch_size)
 
+def sample_unif(shape, minval=0, maxval=None, dtype=tf.float32):
+    """
+    Sample noise from Unif[minval,maxval]
+    """
+    return tf.random.uniform(shape, minval, maxval, dtype)
+
 def sample_bernoulli(params):
     """
     Sample noise from Bernoulli distribution with mean parameters
@@ -73,8 +79,6 @@ def linespace(opts,n,anchors):
     linespce = np.stack(linespce,axis=0)
 
     return linespce
-
-
 
 def generate_linespace(opts, n, mode, anchors):
     """
