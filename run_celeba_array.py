@@ -61,13 +61,13 @@ def main():
 
     # Experiemnts set up
     opts['epoch_num'] = 305
-    opts['print_every'] = 20*3010 #3010 it/epoch
+    opts['print_every'] = 50*3010 #3010 it/epoch
     opts['lr'] = 0.0004
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
     opts['rec_loss_nsamples'] = 1
-    opts['save_every'] = 100*3010
+    opts['save_every'] = 155*3010
     opts['save_final'] = False #True
     opts['save_train_data'] = True
     opts['use_trained'] = False
@@ -89,11 +89,11 @@ def main():
     # lmbas += list(itertools.product(base_lmba,lmba))
     base_lmba = [.1,]
     lmba = [.5, 1.]
-    pen_sigma_coef = [6./6, 5./6.]
+    pen_sigma_coef = [7./6.,]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [.5,]
-    lmba = [1., 2., 5., 10.]
-    pen_sigma_coef = [5./6., 4./6., 3./6]
+    lmba = [10.,25]
+    pen_sigma_coef = [7./6.]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [1.,]
     lmba = [2., 5., 7]
@@ -105,7 +105,7 @@ def main():
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'] = [2.5 * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
+    opts['lambda_pen_enc_sigma'] = [2. * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'][-1] *= 1.
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']

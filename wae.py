@@ -970,15 +970,16 @@ class WAE(object):
         test_size = np.shape(data.test_data)[0]
         imshape = datashapes[opts['dataset']]
         # mnist plot setup
-        # num_cols = 14
-        # num_pics = num_cols**2
-        # num_pics_enc = 5000
-        # svhn plot setup
-        num_cols = 18
-        num_pics = 7*num_cols
-        # num_pics = num_cols*num_cols
-        num_pics_enc = 200
+        num_cols = 10
+        num_pics = num_cols**2
+        num_pics_enc = 5000
         data_ids = np.random.choice(200, 18, replace=True)
+        # svhn plot setup
+        # num_cols = 18
+        # num_pics = 7*num_cols
+        # # num_pics = num_cols*num_cols
+        # num_pics_enc = 200
+        # data_ids = np.random.choice(200, 18, replace=True)
         # data_ids = [21, 7, 24, 18, 28, 12, 75, 82, 32]
         # --- Reconstructions
         full_recons = self.sess.run(self.full_reconstructed,
@@ -1004,17 +1005,17 @@ class WAE(object):
 
         encshape = list(np.shape(encoded[-1])[1:])
         # mnist plot setup
-        # num_steps = 23
-        # num_anchors = 12
-        # anchors_ids = np.random.choice(num_pics, num_anchors,
-        #                                 replace=True)
-        # data_anchors = data.test_data[anchors_ids]
-        # svhn plot setup
-        num_steps = 16
-        num_anchors = 14
+        num_steps = 23
+        num_anchors = 12
         anchors_ids = np.random.choice(num_pics, num_anchors,
                                         replace=True)
         data_anchors = data.test_data[anchors_ids]
+        # svhn plot setup
+        # num_steps = 16
+        # num_anchors = 14
+        # anchors_ids = np.random.choice(num_pics, num_anchors,
+        #                                 replace=True)
+        # data_anchors = data.test_data[anchors_ids]
 
         enc_anchors = np.reshape(encoded[-1][anchors_ids],[-1,2]+encshape)
         enc_interpolation = linespace(opts, num_steps, anchors=enc_anchors)
