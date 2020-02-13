@@ -62,7 +62,7 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 305
     opts['print_every'] = 50*3010 #3010 it/epoch
-    opts['lr'] = 0.0004
+    opts['lr'] = 0.0005
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
@@ -106,7 +106,7 @@ def main():
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'] = [2. * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'][-1] *= 1.
+    opts['lambda_pen_enc_sigma'][-1] *= 2.
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
     opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
