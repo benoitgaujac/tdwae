@@ -84,13 +84,13 @@ def main():
     opts['pen'] = FLAGS.penalty
     opts['mmd_kernel'] = 'IMQ'
     lmbas = []
-    base_lmba = [0.05,]
-    lmba = [.01, .05, .1]
-    pen_sigma_coef = [9./6.]
-    lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
+    # base_lmba = [0.05,]
+    # lmba = [.01, .05, .1]
+    # pen_sigma_coef = [9./6.]
+    # lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [.1,]
-    lmba = [.1, .5, 1.]
-    pen_sigma_coef = [9./6.]
+    lmba = [.5, 1.]
+    pen_sigma_coef = [9./10., 10./10., 11./10.]
     lmbas += list(itertools.product(base_lmba,lmba,pen_sigma_coef))
     base_lmba = [.5,]
     lmba = [0.1,0.5,1.]
@@ -106,7 +106,7 @@ def main():
     opts['lambda'].append(lmbas[FLAGS.exp_id-1][1])
     opts['pen_enc_sigma'] = True
     # opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
-    opts['lambda_pen_enc_sigma'] = [2. * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
+    opts['lambda_pen_enc_sigma'] = [1.5 * exp(- lmbas[FLAGS.exp_id-1][-1]* i) for i in range(opts['nlatents'])]
     opts['lambda_pen_enc_sigma'][-1] *= 2.
     opts['pen_dec_sigma'] = False
     opts['lambda_pen_dec_sigma'] = [0.0005,]*opts['nlatents']
