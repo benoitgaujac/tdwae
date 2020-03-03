@@ -62,7 +62,7 @@ def main():
     # Experiemnts set up
     opts['epoch_num'] = 305
     opts['print_every'] = 50*3010 #3010 it/epoch
-    opts['lr'] = 0.0005
+    opts['lr'] = 0.0008
     opts['batch_size'] = 64
     opts['dropout_rate'] = 1.
     opts['rec_loss_resamples'] = 'encoder'
