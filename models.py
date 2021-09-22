@@ -25,7 +25,7 @@ class Model(object):
         self.pz_params = pz_params
 
     # --- encode the inputs
-    def encode(self, inputs, resample, nresamples=1, reuse=False, is_training=True):
+    def encode(self, inputs, resample, nresamples=1, sigma_scale=1., reuse=False, is_training=True):
         pass
 
     # --- encode the inputs
@@ -35,7 +35,7 @@ class Model(object):
     # --- full path through the model
     def forward_pass(self, inputs, resample, nresamples=1, reuse=False, is_training=True):
         # --- encoder-decoder foward pass
-        zs, enc_means, enc_Sigmas = self.encode(inputs, resample, nresamples, reuse, is_training)
+        zs, enc_means, enc_Sigmas = self.encode(inputs, resample, nresamples, 1., reuse, is_training)
 
         xs, dec_means, dec_Sigmas = self.decode(zs, None, reuse, is_training)
         return zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas
@@ -118,7 +118,7 @@ class stackedWAE(Model):
     def __init__(self, opts, pz_params):
         super().__init__(opts, pz_params)
 
-    def encode(self, inputs, resample, nresamples=1, reuse=False, is_training=True):
+    def encode(self, inputs, resample, nresamples=1, sigma_scale=1., reuse=False, is_training=True):
         # --- Encoding Loop
         zs, means, Sigmas = [], [], []
         for n in range(self.opts['nlatents']):
@@ -145,7 +145,7 @@ class stackedWAE(Model):
                 z = mean
             elif self.opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
-                q_params = tf.concat((mean,self.opts['sigma_scale']*Sigma), axis=-1)
+                q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                 if resample:
                     q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
                 z = sample_gaussian(self.opts, q_params, 'tensorflow', self.opts['batch_size'])

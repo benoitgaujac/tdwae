@@ -76,7 +76,7 @@ class Run(object):
             latent_loss += self.latent_costs[i]*self.lmbd[i]
         self.objective = self.obs_cost + latent_loss + self.lmbd[-1] * self.matching_penalty
         # Enc Sigma penalty
-        if opts['pen_sigma']:
+        if self.opts['pen_sigma']:
             pen_Sigma = 0.
             for i in range(len(self.Sigma_penalty)):
                 pen_Sigma += self.Sigma_penalty[i]*self.lmbd_sigma[i]
@@ -101,6 +101,7 @@ class Run(object):
         # encode
         self.encoded, _, _ = self.model.encode(self.images, True,
                                     self.opts['nresamples'],
+                                    self.opts['sigma_scale'],
                                     reuse=True,
                                     is_training=False)
         # reconstruct
@@ -497,7 +498,7 @@ class Run(object):
 
         # Save the final model
         if self.opts['save_final']:
-            self.saver.save(self.sess, os.path.join(work_dir,
+            self.saver.save(self.sess, os.path.join(exp_dir,
                                                 'checkpoints',
                                                 'trained-wae-final'),
                                                 global_step=it)
