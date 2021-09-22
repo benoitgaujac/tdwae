@@ -54,7 +54,7 @@ parser.add_argument('--save_model', action='store_false', default=True,
 parser.add_argument("--save_data", action='store_false', default=True,
                     help='save training data')
 # exp id
-parser.add_argument("--id", type=int, default=0,
+parser.add_argument("--id", type=int, default=1,
                     help='exp id corresponding to latent reg weight setup')
 
 
@@ -73,12 +73,15 @@ def main():
         assert False, 'Unknown dataset'
 
     # lamba
-    lambda_rec = [10e-4,10e-3,10e-2,10e-1]
-    lamdba_match = [10e-4,10e-3,10e-2,10e-1]
-    lmba = list(itertools.product(lambda_rec,lamdba_match))
+    lambda_rec = [10e-3,10e-2,10e-1]
+    lamdba_match = [10e-4,10e-3,10e-2]
+    nfilters = [1024, 512]
+    lmba = list(itertools.product(lambda_rec,lamdba_match, nfilters))
     id = (FLAGS.id-1) % len(lmba)
     lrec, lmatch = lmba[id][0], lmba[id][1]
     opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
+    opts['nfilters'] = [int(lmba[id][2] / 2**i) for i in range(opts['nlatents'])]
+
 
     # Create directories
     results_dir = 'results'
@@ -87,7 +90,7 @@ def main():
     opts['out_dir'] = os.path.join(results_dir,FLAGS.out_dir)
     if not tf.io.gfile.isdir(opts['out_dir']):
         utils.create_dir(opts['out_dir'])
-    out_subdir = os.path.join(opts['out_dir'], opts['model'])
+    out_subdir = os.path.join(opts['out_dir'], opts['model'] + '_nfilters' + str(lmba[id][2]))
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
