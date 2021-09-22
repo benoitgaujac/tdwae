@@ -19,7 +19,7 @@ def upsample_nn(input_, new_size, scope=None, reuse=None):
     """NN up-sampling
     """
 
-    with tf.variable_scope(scope or "upsample_nn", reuse=reuse):
+    with tf.compat.v1.variable_scope(scope or "upsample_nn", reuse=reuse):
         result = tf.image.resize_nearest_neighbor(input_, new_size)
 
     return result
@@ -28,7 +28,7 @@ def downsample(input_, d_h=2, d_w=2, conv_filters_dim=None, scope=None, reuse=No
     """NN up-sampling
     """
 
-    with tf.variable_scope(scope or "downsample", reuse=reuse):
+    with tf.compat.v1.variable_scope(scope or "downsample", reuse=reuse):
         result = tf.nn.max_pool(input_, ksize=[1, d_h, d_w, 1], strides=[1, d_h, d_w, 1], padding='SAME')
 
     return result
@@ -47,14 +47,17 @@ def softmax(logits,axis=None):
     return tf.nn.softmax(logits,axis=axis)
 
 def non_linear(inputs,type):
-    if type=='relu':
+    if type=='linear':
+        return inputs
+    elif type=='elu':
+        return tf.nn.elu(inputs)
+    elif type=='relu':
         return tf.nn.relu(inputs)
+    elif type=='leaky_relu':
+        return tf.nn.leaky_relu(features, alpha=0.2)
     elif type=='soft_plus':
         return tf.nn.softplus(inputs)
     elif type=='tanh':
         return tf.nn.tanh(inputs)
-    elif type=='leaky_relu':
-        alpha = .2
-        return tf.maximum(alpha*inputs, inputs)
     else:
         assert False, 'Unknow non linear operation'

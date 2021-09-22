@@ -1,95 +1,113 @@
 import copy
 from math import pow, sqrt
 
-### MNIST config
-config_mnist = {}
+### Default common config
+config = {}
 # Outputs set up
-config_mnist['verbose'] = False
-config_mnist['save_every'] = 10000
-config_mnist['save_final'] = True
-config_mnist['save_train_data'] = True
-config_mnist['print_every'] = 100
-config_mnist['vizu_sinkhorn'] = False
-config_mnist['vizu_embedded'] = True
-config_mnist['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
-config_mnist['vizu_encSigma'] = False
-config_mnist['fid'] = False
-config_mnist['work_dir'] = 'results_mnist'
-config_mnist['plot_num_pics'] = 100
-config_mnist['plot_num_cols'] = 10
+config['verbose'] = False
+config['save_every'] = 10000
+config['save_final'] = True
+config['save_train_data'] = True
+config['print_every'] = 100
+config['vizu_splitloss'] = True
+config['vizu_fullrec'] = True
+config['vizu_embedded'] = True
+config['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
+config['vizu_latent'] = True
+config['vizu_encSigma'] = False
+config['fid'] = False
+config['out_dir'] = 'results'
+config['plot_num_pics'] = 100
+config['plot_num_cols'] = 10
+
+# Experiment set up
+config['train_dataset_size'] = -1
+config['batch_size'] = 100
+config['it_num'] = 50000
+config['model'] = 'stackedwae' #vae, wae, stackedwae, lvae
+config['use_trained'] = False #train from pre-trained model
+config['pretrain'] = False #pretrained the encoder parameters
+config['pretrain_it'] = 1000
+config['pretrain_sample_size'] = 200
+
+# Opt set up
+config['optimizer'] = 'adam' # adam, sgd
+config['adam_beta1'] = 0.9
+config['adam_beta1'] = 0.9
+config['adam_beta2'] = 0.999
+config['lr'] = 0.0001
+config['lr_adv'] = 1e-08
+config['enorm'] = 'batchnorm' #batchnorm, layernorm, none
+config['dnorm'] = 'batchnorm' #batchnorm, layernorm, none
+config['batch_norm_eps'] = 1e-05
+config['batch_norm_momentum'] = 0.99
+
+# Objective set up
+config['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config['latent_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
+config['penalty'] = 'mmd' #sinkhorn, mmd
+config['mmd_kernel'] = 'IMQ' # RBF, IMQ
+
+# Model set up
+config['nlatents'] = 5
+config['zdim'] = [32,16,8,4,2] #[32,8]
+config['pz_scale'] = 1.
+config['sigma_scale'] = 1.
+config['prior'] = 'gaussian' # dirichlet, gaussian
+config['encoder'] = ['gauss',]*config['nlatents'] # det, gaussian
+config['decoder'] = ['det',]+['gauss',]*(config['nlatents']-1) # det, gaussian
+config['resamples'] = False
+config['nresamples'] = 1
+
+# lambda set up
+config['lambda_scalar'] = 2.
+config['lambda'] = [config['lambda_scalar']**i/config['zdim'][0] for i in range(config['nlatents'])]
+config['lambda'].append(0.0001*config['lambda_scalar']**5/config['zdim'][0])
+config['lambda_schedule'] = 'constant' # adaptive, constant
+
+# Sigma penalties
+config['pen_sigma'] = False # True, False
+config['lambda_sigma'] = [0.01,]*config['nlatents']
+
+# NN set up
+config['init_std'] = 0.099999
+config['init_bias'] = 0.0
+config['mlpinit'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
+config['convinit'] = 'he' #he, glorot, normilized_glorot, truncated_norm
+
+### MNIST config
+config_mnist = config.copy()
 
 # Data set up
 config_mnist['dataset'] = 'mnist'
 config_mnist['data_dir'] = 'mnist'
 config_mnist['input_normalize_sym'] = False
 config_mnist['MNIST_data_source_url'] = 'http://yann.lecun.com/exdb/mnist/'
-config_mnist['Zalando_data_source_url'] = 'http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/'
-
-# Experiment set up
-config_mnist['train_dataset_size'] = -1
-config_mnist['batch_size'] = 128
-config_mnist['epoch_num'] = 4001
-config_mnist['method'] = 'wae' #vae, wae
-config_mnist['use_trained'] = False #train from pre-trained model
-config_mnist['e_pretrain'] = False #pretrained the encoder parameters
-config_mnist['e_pretrain_it'] = 1000
-config_mnist['e_pretrain_sample_size'] = 200
-
-# Opt set up
-config_mnist['optimizer'] = 'adam' # adam, sgd
-config_mnist['adam_beta1'] = 0.5
-config_mnist['lr'] = 0.001
-config_mnist['lr_adv'] = 0.0008
-config_mnist['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-config_mnist['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
-config_mnist['batch_norm_eps'] = 1e-05
-config_mnist['batch_norm_momentum'] = 0.99
-
-# Objective set up
-config_mnist['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
-config_mnist['latent_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-config_mnist['penalty'] = 'mmd' #sinkhorn, mmd
-config_mnist['pen'] = 'wae' #wae, wae_mmd
-config_mnist['epsilon'] = 0.1 #Sinkhorn regularization parameters
-config_mnist['L'] = 30 #Sinkhorn iteration
-config_mnist['mmd_kernel'] = 'IMQ' # RBF, IMQ
-config_mnist['pen'] = 'wae' # wae, wae_mmd
-config_mnist['pen_enc_sigma'] = True # True, False
-config_mnist['lambda_pen_enc_sigma'] = 0.01
+config_mnist['dataset_size'] = 70000
+config_mnist['crop_style'] = 'closecrop' # closecrop, resizecrop
 
 # Model set up
 config_mnist['nlatents'] = 5
-config_mnist['zdim'] = [32,16,8,4,2] #[32,8]
-config_mnist['pz_scale'] = 1.
-config_mnist['prior'] = 'gaussian' # dirichlet, gaussian
+config_mnist['zdim'] = [32,16,8,4,2]
+config_mnist['resample'] = True
+config_mnist['nresamples'] = 4
 
 # lambda set up
-config_mnist['lambda_scalar'] = 2.
-config_mnist['lambda'] = [config_mnist['lambda_scalar']**i/config_mnist['zdim'][0] for i in range(config_mnist['nlatents'])]
-config_mnist['lambda'].append(0.0001*config_mnist['lambda_scalar']**5/config_mnist['zdim'][0])
-config_mnist['lambda_schedule'] = 'adaptive' # adaptive, constant
+config_mnist['lambda'] = [0.001**n for n in range(1,config_mnist['nlatents']+1)]
+config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
+
+# Cov penalties
+config_mnist['pen_sigma'] = False # True, False
+config_mnist['lambda_sigma'] = [0.01,]*config_mnist['nlatents']
 
 # NN set up
-config_mnist['init_std'] = 0.99999
-config_mnist['init_bias'] = 0.0
-config_mnist['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-config_mnist['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-config_mnist['filter_size'] = [5,3,3,3,3,3,3,3]
-config_mnist['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
-
-
-config_mnist['e_nlatents'] = 5
-config_mnist['encoder'] = ['gauss','gauss','gauss','gauss','gauss','gauss','gauss','gauss'] # deterministic, gaussian
-config_mnist['e_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-config_mnist['e_nlayers'] = [2,2,2,2,2,2,2]
-config_mnist['e_nfilters'] = [512,256,128,64,32,16]
-config_mnist['e_nonlinearity'] = 'leaky_relu' # soft_plus, relu, leaky_relu, tanh
-
-config_mnist['decoder'] = ['det','det','det','det','det','det','det'] # deterministic, gaussian
-config_mnist['d_arch'] = ['mlp','mlp','mlp','mlp','mlp','mlp','mlp'] # mlp, dcgan
-config_mnist['d_nlayers'] = [2,2,2,2,2,2,2]
-config_mnist['d_nfilters'] = [512,256,128,64,32,16]
-config_mnist['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
+config_mnist['archi'] = ['mlp',]*config['nlatents'] # mlp, dcgan
+config_mnist['nlayers'] = [2,]*config['nlatents']
+config_mnist['nfilters'] = [512,256,128,64,32]
+config_mnist['filters_size'] = [3,]*config['nlatents']
+config_mnist['nonlinearity'] = 'elu' # soft_plus, relu, leaky_relu, tanh
+config_mnist['output_layer'] = ['dense',]*config['nlatents'] # dense, conv, conv1x1
+config_mnist['upsample'] = False
 
 
 ### SVHN 10 config
@@ -162,7 +180,7 @@ config_svhn['init_std'] = 0.0099999
 config_svhn['init_bias'] = 0.0
 config_svhn['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_svhn['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-config_svhn['filter_size'] = [5,3,3,3,3,3,3,3]
+config_svhn['filters_size'] = [5,3,3,3,3,3,3,3]
 config_svhn['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
 
 
@@ -250,7 +268,7 @@ config_cifar10['init_std'] = 0.0099999
 config_cifar10['init_bias'] = 0.0
 config_cifar10['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_cifar10['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-config_cifar10['filter_size'] = [5,3,3,3,3,3,3,3]
+config_cifar10['filters_size'] = [5,3,3,3,3,3,3,3]
 config_cifar10['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
 
 
@@ -277,7 +295,7 @@ config_celebA['print_every'] = 200000
 config_celebA['save_final'] = True
 config_celebA['save_train_data'] = False
 config_celebA['vizu_sinkhorn'] = False
-config_celebA['vizu_embedded'] = True
+config_celebA['vizu_embedded'] = False
 config_celebA['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
 config_celebA['vizu_encSigma'] = False
 config_celebA['fid'] = False
@@ -338,7 +356,7 @@ config_celebA['init_std'] = 0.0099999
 config_celebA['init_bias'] = 0.0
 config_celebA['mlp_init'] = 'glorot_he' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
 config_celebA['conv_init'] = 'he' #he, glorot, normilized_glorot, truncated_norm
-config_celebA['filter_size'] = [5,3,3,3,3,3,3,3]
+config_celebA['filters_size'] = [5,3,3,3,3,3,3,3]
 config_celebA['last_archi'] = ['conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','conv1x1','dense']
 
 

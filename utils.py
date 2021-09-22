@@ -46,11 +46,11 @@ class ArraySaver(object):
             assert False, 'Unknown save / load mode'
 
 def create_dir(d):
-    if not tf.gfile.IsDirectory(d):
-        tf.gfile.MakeDirs(d)
+    if not tf.io.gfile.isdir(d):
+        tf.io.gfile.makedirs(d)
 
 
-class File(tf.gfile.GFile):
+class File(tf.io.gfile.GFile):
     """Wrapper on GFile extending seek, to support what python file supports."""
     def __init__(self, *args):
         super(File, self).__init__(*args)
@@ -75,7 +75,7 @@ def o_gfile(filename, mode):
     return File(filename, mode)
 
 def listdir(dirname):
-    return tf.gfile.ListDirectory(dirname)
+    return tf.io.gfile.ListDirectory(dirname)
 
 def get_batch_size(inputs):
     return tf.cast(tf.shape(inputs)[0], tf.float32)

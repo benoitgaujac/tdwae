@@ -1,184 +1,166 @@
 import os
+from datetime import datetime
 import sys
 import logging
 import argparse
-import configs
-from wae import WAE
-# from vae import VAE
-from vae_v2 import VAE
-from datahandler import DataHandler
-import utils
+import itertools
 
 import tensorflow as tf
-import itertools
+
+import configs
+from train import Run
+from datahandler import DataHandler
+import utils
 
 import pdb
 
 parser = argparse.ArgumentParser()
-# Args for experiment
+# run setup
+parser.add_argument("--model", default='stackedwae',
+                    help='model to train [vae/wae/lvae/stackedwae]')
 parser.add_argument("--mode", default='train',
                     help='mode to run [train/vizu/fid/test]')
-parser.add_argument("--exp", default='mnist',
-                    help='dataset [mnist/cifar10/].'\
-                    ' celebA/dsprites Not implemented yet')
-parser.add_argument("--method", default='wae')
-parser.add_argument("--penalty", default='wae',
-                    help='penalty type [wae/wae_mmd]')
-parser.add_argument("--work_dir")
-parser.add_argument("--lmba", type=float, default=0.0001,
-                    help='lambda')
-parser.add_argument("--base_lmba", type=float, default=0.01,
-                    help='base lambda')
-parser.add_argument("--etype", default='gauss',
-                    help='encoder type')
-parser.add_argument("--enet_archi", default='resnet',
-                    help='encoder networks architecture [mlp/dcgan_v2/resnet]')
-parser.add_argument("--dnet_archi", default='resnet',
-                    help='decoder networks architecture [mlp/dcgan_v2/resnet]')
+parser.add_argument('--fid', action='store_true', default=False,
+                    help='compute FID score')
+parser.add_argument("--dataset", default='mnist',
+                    help='dataset')
+parser.add_argument("--data_dir", type=str, default='../data',
+                    help='directory in which data is stored')
+parser.add_argument("--num_it", type=int, default=300000,
+                    help='iteration number')
+parser.add_argument("--batch_size", type=int, default=100,
+                    help='batch size')
+parser.add_argument("--lr", type=float, default=0.0001,
+                    help='learning rate size')
+# pretraining
+parser.add_argument('--use_trained', action='store_true', default=False,
+                    help='whether to use pre trained weights')
 parser.add_argument("--weights_file")
-parser.add_argument('--gpu_id', default='cpu',
-                    help='gpu id for DGX box. Default is cpu')
+# path setup
+parser.add_argument("--out_dir", type=str, default='code_outputs',
+                    help='root_directory in which outputs are saved')
+parser.add_argument("--res_dir", type=str, default='res',
+                    help='directory in which exp. res are saved')
+# model setup
+parser.add_argument("--encoder", type=str, default='gauss',
+                    help='encoder type')
+parser.add_argument("--net_archi", type=str, default='mlp',
+                    help='networks architecture [mlp/conv_locatello/conv_rae]')
+parser.add_argument("--cost", type=str, default='l2sq',
+                    help='ground cost [l2, l2sq, l2sq_norm, l1, xentropy]')
+# saving setup
+parser.add_argument('--save_model', action='store_false', default=True,
+                    help='save final model weights [True/False]')
+parser.add_argument("--save_data", action='store_false', default=True,
+                    help='save training data')
+# exp id
+parser.add_argument("--id", type=int, default=0,
+                    help='exp id corresponding to latent reg weight setup')
+
 
 FLAGS = parser.parse_args()
 
 def main():
 
     # Select dataset to use
-    if FLAGS.exp == 'celebA':
-        opts = configs.config_celebA
-    elif FLAGS.exp == 'celebA_small':
-        opts = configs.config_celebA_small
-    elif FLAGS.exp == 'mnist':
+    if FLAGS.dataset == 'mnist':
         opts = configs.config_mnist
-    elif FLAGS.exp == 'mnist_small':
-        opts = configs.config_mnist_small
-    elif FLAGS.exp == 'cifar10':
-        opts = configs.config_cifar10
-    elif FLAGS.exp == 'dsprites':
-        opts = configs.config_dsprites
-    elif FLAGS.exp == 'grassli':
-        opts = configs.config_grassli
-    elif FLAGS.exp == 'grassli_small':
-        opts = configs.config_grassli_small
+    elif FLAGS.dataset == 'smallNORB':
+        opts = configs.config_smallNORB
+    elif FLAGS.dataset == 'celebA':
+        opts = configs.config_celebA
     else:
-        assert False, 'Unknown experiment dataset'
+        assert False, 'Unknown dataset'
 
-    # Select training method
-    if FLAGS.method:
-        opts['method'] = FLAGS.method
-
-    # Working directory
-    if FLAGS.work_dir:
-        opts['work_dir'] = FLAGS.work_dir
-
-    # Mode
-    if FLAGS.mode=='fid':
-        opts['fid'] = True
-    else:
-        opts['fid'] = False
-
-    # Experiemnts set up
-    opts['epoch_num'] = 5011
-    opts['print_every'] = 200*469
-    opts['lr'] = 0.003
-    opts['dropout_rate'] = 1.
-    opts['batch_size'] = 128
-    opts['rec_loss_resamples'] = 'encoder'
-    opts['rec_loss_nsamples'] = 1
-    opts['save_every_epoch'] = 6005
-    opts['save_final'] = True
-    opts['save_train_data'] = True
-    opts['use_trained'] = False
-    opts['vizu_encSigma'] = True
-
-    # Model set up
-    opts['nlatents'] = 4
-    opts['zdim'] = [256,128,64,4]
-
-    # Penalty
-    opts['pen'] = FLAGS.penalty
-    opts['mmd_kernel'] = 'IMQ'
-    opts['pen_enc_sigma'] = False
-    opts['lambda_pen_enc_sigma'] = [10.**i for i in range(-6,-(6+opts['nlatents']),-1)]
-    opts['lambda_pen_enc_sigma'].append(0.)
-    opts['pen_dec_sigma'] = False
-    opts['lambda_pen_dec_sigma'] = 0.0005
-    opts['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
-    opts['latent_cost'] = 'l2sq_gauss' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
-    # opts['lambda'] = [FLAGS.base_lmba**(i+1) / opts['zdim'][i] for i in range(opts['nlatents']-1)]
-    opts['lambda'] = [FLAGS.base_lmba**(i+1) for i in range(opts['nlatents']-1)]
-    opts['lambda'].append(FLAGS.lmba)
-    opts['lambda_schedule'] = 'constant'
-    opts['lambda_schedule'] = 'constant'
-
-    # NN set up
-    opts['filter_size'] = [3,3,3,3,3,3,3,3,3,3]
-    opts['mlp_init'] = 'glorot_uniform' #normal, he, glorot, glorot_he, glorot_uniform, ('uniform', range)
-    opts['e_nlatents'] = opts['nlatents'] #opts['nlatents']
-    opts['encoder'] =  ['det','det','det','gauss'] # deterministic, gaussian
-    opts['e_arch'] = [FLAGS.enet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_v2, resnet
-    opts['e_last_archi'] = ['conv',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['e_resample'] = ['down', None,'down', None, 'down'] #None, down
-    opts['e_nlayers'] = [2,]*opts['nlatents']
-    opts['e_nfilters'] = [256,128,64,32] #[512,128,32,8]
-    opts['e_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['e_norm'] = 'batchnorm' #batchnorm, layernorm, none
-    opts['decoder'] = ['det',]*opts['nlatents'] # deterministic, gaussian
-    opts['d_arch'] =  [FLAGS.dnet_archi,]*opts['nlatents'] # mlp, dcgan, dcgan_mod, resnet
-    opts['d_last_archi'] = ['dense',]*opts['nlatents'] # dense, conv1x1, conv
-    opts['d_resample'] = ['up', None,'up', None, 'up'] #None, up
-    opts['d_nlayers'] = [2,]*opts['nlatents']
-    opts['d_nfilters'] = [256,128,64,32] #[512,128,32,8]
-    opts['d_nonlinearity'] = 'relu' # soft_plus, relu, leaky_relu, tanh
-    opts['d_norm'] = 'batchnorm' #batchnorm, layernorm, none
+    # lamba
+    lambda_rec = [10e-4,10e-3,10e-2,10e-1]
+    lamdba_match = [10e-4,10e-3,10e-2,10e-1]
+    lmba = list(itertools.product(lambda_rec,lamdba_match))
+    id = (FLAGS.id-1) % len(lmba)
+    lrec, lmatch = lmba[id][0], lmba[id][1]
+    opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
 
     # Create directories
-    if not tf.gfile.IsDirectory(opts['method']):
-        utils.create_dir(opts['method'])
-    work_dir = os.path.join(opts['method'],opts['work_dir'])
-    opts['work_dir'] = work_dir
-    if not tf.gfile.IsDirectory(work_dir):
-        utils.create_dir(work_dir)
-        utils.create_dir(os.path.join(work_dir, 'checkpoints'))
+    results_dir = 'results'
+    if not tf.io.gfile.isdir(results_dir):
+        utils.create_dir(results_dir)
+    opts['out_dir'] = os.path.join(results_dir,FLAGS.out_dir)
+    if not tf.io.gfile.isdir(opts['out_dir']):
+        utils.create_dir(opts['out_dir'])
+    out_subdir = os.path.join(opts['out_dir'], opts['model'])
+    if not tf.io.gfile.isdir(out_subdir):
+        utils.create_dir(out_subdir)
+    opts['exp_dir'] = FLAGS.res_dir
+    if opts['model'] == 'stackedwae' or opts['model'] == 'lvae':
+        exp_dir = os.path.join(out_subdir,
+                               '{}_{}layers_lrec{}_lmatch{}_{:%Y_%m_%d_%H_%M}'.format(
+                                    opts['exp_dir'],
+                                    opts['nlatents'],
+                                    lrec,
+                                    lmatch,
+                                    datetime.now()))
+    else :
+        exp_dir = os.path.join(out_subdir,
+                               '{}_lmatch{}_{:%Y_%m_%d_%H_%M}'.format(
+                                    opts['exp_dir'],
+                                    lmatch,
+                                    datetime.now()))
+    opts['exp_dir'] = exp_dir
+    if not tf.io.gfile.isdir(exp_dir):
+        utils.create_dir(exp_dir)
+        utils.create_dir(os.path.join(exp_dir, 'checkpoints'))
+
+    # getting weights path
+    if FLAGS.weights_file is not None:
+        WEIGHTS_PATH = os.path.join(opts['exp_dir'],'checkpoints',FLAGS.weights_file)
+    else:
+        WEIGHTS_PATH = None
 
     # Verbose
-    if opts['verbose']:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+    logging.basicConfig(filename=os.path.join(exp_dir,'outputs.log'),
+        level=logging.INFO, format='%(asctime)s - %(message)s')
 
-    # Loading the dataset
-    data = DataHandler(opts)
-    assert data.num_points >= opts['batch_size'], 'Training set too small'
+    # run set up
+    opts['fid'] = FLAGS.fid
+    opts['it_num'] = FLAGS.num_it
+    opts['print_every'] = int(opts['it_num'] / 5.)
+    opts['evaluate_every'] = int(opts['it_num'] / 10.)
+    opts['batch_size'] = FLAGS.batch_size
+    opts['lr'] = FLAGS.lr
+    opts['use_trained'] = FLAGS.use_trained
+    opts['save_every'] = 10000000000
+    opts['save_final'] = FLAGS.save_model
+    opts['save_train_data'] = FLAGS.save_data
 
     #Reset tf graph
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
 
-    # build WAE/VAE
-    if opts['method']=='wae':
-        wae = WAE(opts)
-    elif opts['method']=='vae':
-        wae = VAE(opts)
-    else:
-        assert False, 'Unknown methdo %s' % opts['method']
+    # Loading the dataset
+    opts['data_dir'] = FLAGS.data_dir
+    data = DataHandler(opts)
+    assert data.train_size >= opts['batch_size'], 'Training set too small'
+
+    # build model
+    run = Run(opts, data)
 
     # Training/testing/vizu
     if FLAGS.mode=="train":
         # Dumping all the configs to the text file
-        with utils.o_gfile((work_dir, 'params.txt'), 'w') as text:
+        with utils.o_gfile((opts['exp_dir'], 'params.txt'), 'w') as text:
             text.write('Parameters:\n')
             for key in opts:
                 text.write('%s : %s\n' % (key, opts[key]))
-        wae.train(data, FLAGS.weights_file)
+        run.train(WEIGHTS_PATH)
     elif FLAGS.mode=="vizu":
         opts['rec_loss_nsamples'] = 1
         opts['sample_recons'] = False
-        wae.latent_interpolation(data, opts['work_dir'], FLAGS.weights_file)
+        run.latent_interpolation(opts['exp_dir'], WEIGHTS_PATH)
     elif FLAGS.mode=="fid":
-        wae.fid_score(data, opts['work_dir'], FLAGS.weights_file)
+        run.fid_score(WEIGHTS_PATH)
     elif FLAGS.mode=="test":
-        wae.test_losses(data, opts['work_dir'], FLAGS.weights_file)
+        run.test_losses(WEIGHTS_PATH)
     elif FLAGS.mode=="vlae_exp":
-        wae.vlae_experiment(data, opts['work_dir'], FLAGS.weights_file)
+        run.vlae_experiment(WEIGHTS_PATH)
     else:
         assert False, 'Unknown mode %s' % FLAGS.mode
 

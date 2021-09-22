@@ -25,10 +25,12 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
     if typ =='tensorflow':
         means, covs = tf.split(params,2,axis=-1)
         shape = tf.shape(means)
-        eps = tf.random_normal(shape, dtype=tf.float32)
+        eps = tf.compat.v1.random_normal(shape, dtype=tf.float32)
         noise = means + tf.multiply(eps,tf.sqrt(1e-10+covs))
     elif typ =='numpy':
         means, covs = np.split(params,2,axis=-1)
+        # means = means[:,0]
+        # covs = covs[:,0]
         shape = (batch_size,)+np.shape(means)
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
         noise = means + np.multiply(eps,np.sqrt(1e-10+covs))

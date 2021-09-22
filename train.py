@@ -1,277 +1,893 @@
-"""
-Trains a Pixel-CNN++ generative model on CIFAR-10 or Tiny ImageNet data.
-Uses multiple GPUs, indicated by the flag --nr_gpu
+# Copyright 2017 Max Planck Society
+# Distributed under the BSD-3 Software license,
+# (See accompanying file ./LICENSE.txt or copy at
+# https://opensource.org/licenses/BSD-3-Clause)
 
-Example usage:
-CUDA_VISIBLE_DEVICES=0,1,2,3 python train_double_cnn.py --nr_gpu 4
+"""
+Wasserstein Auto-Encoder models
 """
 
-import os
 import sys
-import json
-import argparse
 import time
+import os
+import logging
 
+from math import sqrt, cos, sin, pi
 import numpy as np
 import tensorflow as tf
 
-from pcnn.pcnn_pp import nn
-from pcnn.pcnn_pp.model import model_spec
-from pcnn.utils import plotting
+import utils
+from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
+from models import stackedWAE
+from plot_functions import save_train, plot_splitloss, plot_fullrec, plot_embedded, plot_latent
+from plot_functions import save_latent_interpolation, save_vlae_experiment
 
-SCRIPT_PATH, _ = os.path.split(os.path.realpath(__file__))
+# Path to inception model and stats for training set
+sys.path.append('../TTUR')
+sys.path.append('../inception')
+import fid
+inception_path = '../inception'
+inception_model = os.path.join(inception_path, 'classify_image_graph_def.pb')
+layername = 'FID_Inception_Net/pool_3:0'
 
+import pdb
 
-# -----------------------------------------------------------------------------
-parser = argparse.ArgumentParser()
-# data I/O
-parser.add_argument('-i', '--data_dir', type=str, help='Location for the dataset')
-parser.add_argument('-o', '--save_dir', type=str, default=os.path.join(SCRIPT_PATH, 'saved'),
-                    help='Location for parameter checkpoints and samples')
-parser.add_argument('-d', '--data_set', type=str, default='imagenet', help='Can be either cifar|imagenet')
-parser.add_argument('-t', '--save_interval', type=int, default=1,
-                    help='Every how many epochs to write checkpoint/samples?')
-parser.add_argument('-r', '--load_params', dest='load_params', action='store_true',
-                    help='Restore training from previous model checkpoint?')
-# model
-parser.add_argument('-q', '--nr_resnet', type=int, default=5, help='Number of residual blocks per stage of the model')
-parser.add_argument('-n', '--nr_filters', type=int, default=160,
-                    help='Number of filters to use across the model. Higher = larger model.')
-parser.add_argument('-m', '--nr_logistic_mix', type=int, default=10,
-                    help='Number of logistic components in the mixture. Higher = more flexible model')
-parser.add_argument('-z', '--resnet_nonlinearity', type=str, default='concat_elu',
-                    help='Which nonlinearity to use in the ResNet layers. One of "concat_elu", "elu", "relu" ')
-parser.add_argument('-c', '--class_conditional', dest='class_conditional', action='store_true',
-                    help='Condition generative model on labels?')
-parser.add_argument('-ed', '--energy_distance', dest='energy_distance', action='store_true',
-                    help='use energy distance in place of likelihood')
-# optimization
-parser.add_argument('-l', '--learning_rate', type=float, default=0.001, help='Base learning rate')
-parser.add_argument('-e', '--lr_decay', type=float, default=0.999995,
-                    help='Learning rate decay, applied every step of the optimization')
-parser.add_argument('-b', '--batch_size', type=int, default=100, help='Batch size during training per GPU')
-parser.add_argument('-u', '--init_batch_size', type=int, default=16,
-                    help='How much data to use for data-dependent initialization.')
-parser.add_argument('-p', '--dropout_p', type=float, default=0.5,
-                    help='Dropout strength (i.e. 1 - keep_prob). 0 = No dropout, higher = more dropout.')
-parser.add_argument('-x', '--max_epochs', type=int, default=10, help='How many epochs to run in total?')
-parser.add_argument('-g', '--nr_gpu', type=int, default=1, help='How many GPUs to distribute the training across?')
-# evaluation
-parser.add_argument('--polyak_decay', type=float, default=0.9995,
-                    help='Exponential decay rate of the sum of previous model iterates during Polyak averaging')
-parser.add_argument('-ns', '--num_samples', type=int, default=1, help='How many batches of samples to output.')
-# reproducibility
-parser.add_argument('-s', '--seed', type=int, default=1, help='Random seed to use')
-args = parser.parse_args()
-print('input args:\n', json.dumps(vars(args), indent=4, separators=(',', ':')))  # pretty print args
+class Run(object):
 
-# -----------------------------------------------------------------------------
-# fix random seed for reproducibility
-rng = np.random.RandomState(args.seed)
-tf.set_random_seed(args.seed)
+    def __init__(self, opts, data):
 
-# energy distance or maximum likelihood?
-if args.energy_distance:
-    loss_fun = nn.energy_distance
-else:
-    loss_fun = nn.discretized_mix_logistic_loss
+        logging.error('Building the Tensorflow Graph')
+        self.opts = opts
 
-# initialize data loaders for train/test splits
-if args.data_set == 'imagenet' and args.class_conditional:
-    raise ("We currently don't have labels for the small imagenet data set")
-if args.data_set == 'cifar':
-    import data.cifar10_data as cifar10_data
+        # --- Data shape
+        self.data = data
 
-    DataLoader = cifar10_data.DataLoader
-elif args.data_set == 'imagenet':
-    import data.imagenet_data as imagenet_data
+        # --- Placeholders
+        self.add_placeholders()
 
-    DataLoader = imagenet_data.DataLoader
-else:
-    raise ("unsupported dataset")
-train_data = DataLoader(args.data_dir, 'train', args.batch_size * args.nr_gpu, rng=rng, shuffle=True,
-                        return_labels=args.class_conditional)
-test_data = DataLoader(args.data_dir, 'test', args.batch_size * args.nr_gpu, shuffle=False,
-                       return_labels=args.class_conditional)
-obs_shape = train_data.get_observation_size()  # e.g. a tuple (32,32,3)
-assert len(obs_shape) == 3, 'assumed right now'
+        # --- Initialize prior parameters
+        mean = np.zeros(opts['zdim'][-1], dtype='float32')
+        Sigma = np.ones(opts['zdim'][-1], dtype='float32')
+        self.pz_params = np.concatenate([mean, Sigma], axis=-1)
 
-# data place holders
-x_init = tf.placeholder(tf.float32, shape=(args.init_batch_size,) + obs_shape)
-xs = [tf.placeholder(tf.float32, shape=(args.batch_size,) + obs_shape) for i in range(args.nr_gpu)]
+        # --- Instantiate Model
+        if self.opts['model'] == 'vae':
+            raise NotImplementedError()
+        elif self.opts['model'] == 'wae':
+            raise NotImplementedError()
+        elif self.opts['model'] == 'stackedwae':
+            self.model = stackedWAE(self.opts, self.pz_params)
+        elif self.opts['model'] == 'LVAE':
+            raise NotImplementedError()
+        elif self.opts['model'] == 'ladderstackedwae':
+            raise Exception('Unknown {} model'.format(self.opts['model']))
 
-# if the model is class-conditional we'll set up label placeholders + one-hot encodings 'h' to condition on
-if args.class_conditional:
-    num_labels = train_data.get_num_labels()
-    y_init = tf.placeholder(tf.int32, shape=(args.init_batch_size,))
-    h_init = tf.one_hot(y_init, num_labels)
-    y_sample = np.split(np.mod(np.arange(args.batch_size * args.nr_gpu), num_labels), args.nr_gpu)
-    h_sample = [tf.one_hot(tf.Variable(y_sample[i], trainable=False), num_labels) for i in range(args.nr_gpu)]
-    ys = [tf.placeholder(tf.int32, shape=(args.batch_size,)) for i in range(args.nr_gpu)]
-    hs = [tf.one_hot(ys[i], num_labels) for i in range(args.nr_gpu)]
-else:
-    h_init = None
-    h_sample = [None] * args.nr_gpu
-    hs = h_sample
+        # --- Sample next batch
+        x = self.data.next_element
 
-# create the model
-model_opt = {'nr_resnet': args.nr_resnet, 'nr_filters': args.nr_filters, 'nr_logistic_mix': args.nr_logistic_mix,
-             'resnet_nonlinearity': args.resnet_nonlinearity, 'energy_distance': args.energy_distance}
-model = tf.make_template('model', model_spec)
+        # --- Objective
+        self.obs_cost, self.latent_costs, self.matching_penalty, self.Sigma_penalty = self.model.losses(
+                                    x, self.opts['resample'],
+                                    self.opts['nresamples'],
+                                    False, self.is_training)
+        # Compute obj
+        latent_loss = 0.
+        for i in range(len(self.latent_costs[:-1])):
+            latent_loss += self.latent_costs[i]*self.lmbd[i]
+        self.objective = self.obs_cost + latent_loss + self.lmbd[-1] * self.matching_penalty
+        # Enc Sigma penalty
+        if opts['pen_sigma']:
+            pen_Sigma = 0.
+            for i in range(len(self.Sigma_penalty)):
+                pen_Sigma += self.Sigma_penalty[i]*self.lmbd_sigma[i]
+            self.objective += pen_Sigma
 
-# run once for data dependent initialization of parameters
-init_pass = model(x_init, h_init, init=True, dropout_p=args.dropout_p, **model_opt)
+        # --- Various metrics
+        # MSE
+        self.mse = self.model.MSE(x)
+        # blurriness
+        self.blurriness = self.model.blurriness(x)
+        # real imagesnblurriness
+        self.real_blurriness = self.model.blurriness(self.images)
+        # layerwise KL
+        self.KL = self.model.layerwise_kl(x)
+        # FID
+        if opts['fid']:
+            self.inception_graph = tf.Graph()
+            self.inception_sess = tf.compat.v1.Session(graph=self.inception_graph)
+            self.inception_layer = self.model.inception_Net(self.inception_sess, self.inception_graph)
 
-# keep track of moving average
-all_params = tf.trainable_variables()
-ema = tf.train.ExponentialMovingAverage(decay=args.polyak_decay)
-maintain_averages_op = tf.group(ema.apply(all_params))
-ema_params = [ema.average(p) for p in all_params]
+        # --- encode and reconstruct
+        # encode
+        self.encoded, _, _ = self.model.encode(self.images, True,
+                                    self.opts['nresamples'],
+                                    reuse=True,
+                                    is_training=False)
+        # reconstruct
+        reconstruction = self.model.reconstruct(self.encoded)
+        # shape1 = lambda: [-1, self.model.opts['nresamples']] + self.data.data_shape
+        # shape2 = lambda: [-1,] + self.data.data_shape
+        # shape = tf.case([(self.resample, shape1)], default=shape2)
+        # if self.resample:
+        #     shape = [-1, self.model.opts['nresamples']] + self.data.data_shape
+        # else:
+        #     shape = [-1,] + self.data.data_shape
+        shape = [-1, self.model.opts['nresamples']] + self.data.data_shape
+        self.reconstruction = [tf.reshape(reconstruction[n], shape) for n in range(len(reconstruction))]
 
-# get loss gradients over multiple GPUs + sampling
-grads = []
-loss_gen = []
-loss_gen_test = []
-new_x_gen = []
-for i in range(args.nr_gpu):
-    with tf.device('/gpu:%d' % i):
-        # train
-        out = model(xs[i], hs[i], ema=None, dropout_p=args.dropout_p, **model_opt)
-        loss_gen.append(loss_fun(tf.stop_gradient(xs[i]), out))
+        # # --- Point interpolation for implicit-prior WAE (only for generation)
+        # self.anchor_interpolation = self.anchor_interpolate()
 
-        # gradients
-        grads.append(tf.gradients(loss_gen[i], all_params, colocate_gradients_with_ops=True))
+        # --- Sampling from model (only for generation)
+        decoded, _, _ = self.model.sample_x_from_prior(self.pz_samples)
+        self.samples = tf.reshape(decoded[-1], [-1,]+self.data.data_shape)
 
-        # test
-        out = model(xs[i], hs[i], ema=ema, dropout_p=0., **model_opt)
-        loss_gen_test.append(loss_fun(xs[i], out))
+        # --- Optimizers
+        self.add_optimizers()
 
-        # sample
-        out = model(xs[i], h_sample[i], ema=ema, dropout_p=0, **model_opt)
-        if args.energy_distance:
-            new_x_gen.append(out[0])
-        else:
-            new_x_gen.append(nn.sample_from_discretized_mix_logistic(out, args.nr_logistic_mix))
+        # --- Init iteratorssess, saver and load trained weights if needed, else init variables
+        self.sess = tf.compat.v1.Session()
+        self.train_handle, self.test_handle = self.data.init_iterator(self.sess)
+        self.saver = tf.compat.v1.train.Saver(max_to_keep=10)
+        self.initializer = tf.compat.v1.global_variables_initializer()
+        self.sess.graph.finalize()
 
-# add losses and gradients together and get training updates
-tf_lr = tf.placeholder(tf.float32, shape=[])
-with tf.device('/gpu:0'):
-    for i in range(1, args.nr_gpu):
-        loss_gen[0] += loss_gen[i]
-        loss_gen_test[0] += loss_gen_test[i]
-        for j in range(len(grads[0])):
-            grads[0][j] += grads[i][j]
-    # training op
-    optimizer = tf.group(nn.adam_updates(all_params, grads[0], lr=tf_lr, mom1=0.95, mom2=0.9995), maintain_averages_op)
+    def add_placeholders(self):
+        self.images = tf.compat.v1.placeholder(tf.float32, [None,] + self.data.data_shape,
+                                    name='images_ph')
+        self.pz_samples = tf.compat.v1.placeholder(tf.float32, [None,] + [self.opts['zdim'][-1],],
+                                    name='pzsamples_ph')
+        self.lmbd = tf.compat.v1.placeholder(tf.float32, [self.opts['nlatents'],],
+                                    name='lambda_ph')
+        self.lmbd_sigma = tf.compat.v1.placeholder(tf.float32, [self.opts['nlatents'],],
+                                    name='lambda_sigma_ph')
+        self.lr_decay = tf.compat.v1.placeholder(tf.float32, name='rate_decay_ph')
+        self.is_training = tf.compat.v1.placeholder(tf.bool, name='is_training_ph')
 
-# convert loss to bits/dim
-bits_per_dim = loss_gen[0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
-bits_per_dim_test = loss_gen_test[0] / (args.nr_gpu * np.log(2.) * np.prod(obs_shape) * args.batch_size)
-
-
-# sample from the model
-def sample_from_model(sess):
-    x_gen = [np.zeros((args.batch_size,) + obs_shape, dtype=np.float32) for i in range(args.nr_gpu)]
-    for yi in range(obs_shape[0]):
-        for xi in range(obs_shape[1]):
-            new_x_gen_np = sess.run(new_x_gen, {xs[i]: x_gen[i] for i in range(args.nr_gpu)})
-            for i in range(args.nr_gpu):
-                x_gen[i][:, yi, xi, :] = new_x_gen_np[i][:, yi, xi, :]
-    return np.concatenate(x_gen, axis=0)
-
-
-# init & save
-initializer = tf.global_variables_initializer()
-saver = tf.train.Saver()
-
-
-# turn numpy inputs into feed_dict for use with tensorflow
-def make_feed_dict(data, init=False):
-    if type(data) is tuple:
-        x, y = data
-    else:
-        x = data
-        y = None
-    x = np.cast[np.float32](
-        (x - 127.5) / 127.5)  # input to pixelCNN is scaled from uint8 [0,255] to float in range [-1,1]
-    if init:
-        feed_dict = {x_init: x}
-        if y is not None:
-            feed_dict.update({y_init: y})
-    else:
-        x = np.split(x, args.nr_gpu)
-        feed_dict = {xs[i]: x[i] for i in range(args.nr_gpu)}
-        if y is not None:
-            y = np.split(y, args.nr_gpu)
-            feed_dict.update({ys[i]: y[i] for i in range(args.nr_gpu)})
-    return feed_dict
-
-
-# //////////// perform training //////////////
-if not os.path.exists(args.save_dir):
-    os.makedirs(args.save_dir)
-test_bpd = []
-lr = args.learning_rate
-with tf.Session() as sess:
-    iter = 0
-    for epoch in range(args.max_epochs):
-        begin = time.time()
-
-        # init
-        if epoch == 0:
-            train_data.reset()  # rewind the iterator back to 0 to do one full epoch
-            if args.load_params:
-                ckpt_file = args.save_dir + '/params_' + args.data_set + '.ckpt'
-                print('restoring parameters from', ckpt_file)
-                saver.restore(sess, ckpt_file)
+        if self.opts['archi'][0]=='resnet_v2' and self.opts['nlatents']!=1:
+            if self.opts['e_resample'][0]=='down':
+                self.anchors_points = tf.compat.v1.placeholder(tf.float32,
+                                    [None] + [int(self.data_shape[0]/2)*int(self.data_shape[1]/2)*self.opts['zdim'][0],],
+                                    name='anchors_ph')
             else:
-                print('initializing the model...')
-                sess.run(initializer)
-                feed_dict = make_feed_dict(train_data.next(args.init_batch_size),
-                                           init=True)  # manually retrieve exactly init_batch_size examples
-                sess.run(init_pass, feed_dict)
-            print('starting training')
+                self.anchors_points = tf.compat.v1.placeholder(tf.float32,
+                                    [None] + [self.data_shape[0]*self.data_shape[1]*self.opts['zdim'][0],],
+                                    name='anchors_ph')
+        else:
+            self.anchors_points = tf.compat.v1.placeholder(tf.float32,
+                                    [None] + [self.opts['zdim'][0],],
+                                    name='anchors_ph')
 
-        # train for one epoch
-        train_losses = []
-        for d in train_data:
-            feed_dict = make_feed_dict(d)
-            # forward/backward/update model on each gpu
-            lr *= args.lr_decay
-            feed_dict.update({tf_lr: lr})
-            l, _ = sess.run([bits_per_dim, optimizer], feed_dict)
-            train_losses.append(l)
-            print('Iteraion: {}   Train cost: {:.3f}'.format(iter, l))
-            iter += 1
-        train_loss_gen = np.mean(train_losses)
+    # def anchor_interpolate(self):
+    #     # Anchor interpolation for 1-layer encoder
+    #     opts = self.opts
+    #     if opts['d_archi'][0]=='resnet_v2':
+    #         features_dim=self.features_dim[1]
+    #     else:
+    #         features_dim=self.features_dim[0]
+    #     output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
+    #     anc_mean, anc_Sigma = decoder(self.opts, input=self.anchors_points,
+    #                                             archi=opts['d_archi'][0],
+    #                                             num_layers=opts['d_nlayers'][0],
+    #                                             num_units=opts['d_nfilters'][0],
+    #                                             filter_size=opts['filter_size'][0],
+    #                                             output_dim=output_dim,
+    #                                             features_dim=features_dim,
+    #                                             resample=opts['d_resample'][0],
+    #                                             last_archi=opts['d_last_archi'][0],
+    #                                             scope='decoder/layer_0',
+    #                                             reuse=True,
+    #                                             is_training=False)
+    #     if opts['decoder'][0] == 'det':
+    #         anchors_decoded = anc_mean
+    #     elif opts['decoder'][0] == 'gauss':
+    #         p_params = tf.concat((anc_mean,anc_Sigma),axis=-1)
+    #         anchors_decoded = sample_gaussian(opts, p_params, 'tensorflow')
+    #     elif opts['decoder'][0] == 'bernoulli':
+    #         anchors_decoded = sample_bernoulli(anc_mean)
+    #     else:
+    #         assert False, 'Unknown encoder %s' % opts['decoder'][0]
+    #     if opts['decoder'][0] != 'bernoulli':
+    #         if opts['input_normalize_sym']:
+    #             anchors_decoded=tf.nn.tanh(anchors_decoded)
+    #         else:
+    #             anchors_decoded=tf.nn.sigmoid(anchors_decoded)
+    #     self.anchors_decoded = tf.reshape(anchors_decoded,[-1]+datashapes[opts['dataset']])
 
-        # compute likelihood over test data
-        test_losses = []
-        for d in test_data:
-            feed_dict = make_feed_dict(d)
-            l = sess.run(bits_per_dim_test, feed_dict)
-            test_losses.append(l)
-        test_loss_gen = np.mean(test_losses)
-        test_bpd.append(test_loss_gen)
+    def add_savers(self):
+        opts = self.opts
+        saver = tf.compat.v1.train.Saver(max_to_keep=10)
+        self.saver = saver
 
-        # log progress to console
-        print("Epoch %d, time = %ds, train bits_per_dim = %.4f, test bits_per_dim = %.4f" % (
-        epoch, time.time() - begin, train_loss_gen, test_loss_gen))
-        sys.stdout.flush()
+    def optimizer(self, lr, decay=1.):
+        opts = self.opts
+        lr *= decay
+        if opts['optimizer'] == 'sgd':
+            return tf.train.compat.v1.train.GradientDescentOptimizer(lr)
+        elif opts['optimizer'] == 'adam':
+            return tf.compat.v1.train.AdamOptimizer(lr, beta1=opts['adam_beta1'], beta2=opts['adam_beta2'])
+        else:
+            assert False, 'Unknown optimizer.'
 
-        if epoch % args.save_interval == 0:
+    def add_optimizers(self):
+        opts = self.opts
+        # WAE optimizer
+        lr = opts['lr']
+        opt = self.optimizer(lr, self.lr_decay)
+        encoder_vars = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES,
+                                                scope='encoder')
+        decoder_vars = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES,
+                                                scope='decoder')
+        ae_vars = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES)
+        update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            self.opt = opt.minimize(loss=self.objective, var_list=ae_vars)
+        # Pretraining optimizer
+        if opts['pretrain']:
+            pre_opt = self.optimizer(0.001)
+            self.pre_opt = pre_opt.minimize(loss=self.pre_loss, var_list=encoder_vars)
 
-            # generate samples from the model
-            sample_x = []
-            for i in range(args.num_samples):
-                sample_x.append(sample_from_model(sess))
-            sample_x = np.concatenate(sample_x, axis=0)
-            img_tile = plotting.img_tile(sample_x[:100], aspect_ratio=1.0, border_color=1.0, stretch=True)
-            img = plotting.plot_img(img_tile, title=args.data_set + ' samples')
-            plotting.plt.savefig(os.path.join(args.save_dir, '%s_sample%d.png' % (args.data_set, epoch)))
-            plotting.plt.close('all')
-            np.savez(os.path.join(args.save_dir, '%s_sample%d.npz' % (args.data_set, epoch)), sample_x)
 
-            # save params
-            saver.save(sess, args.save_dir + '/params_' + args.data_set + '.ckpt')
-            np.savez(args.save_dir + '/test_bpd_' + args.data_set + '.npz', test_bpd=np.array(test_bpd))
+    def train(self, WEIGHTS_PATH=None):
+        """
+        Train top-down model with chosen method
+        """
+
+        logging.error('\nTraining  {} with {} latent layers\n'.format(self.opts['model'], self.opts['nlatents']))
+        exp_dir = self.opts['exp_dir']
+
+        # - Set up for training
+        logging.error('\nTrain size: {}, Batch num.: {}, Ite. num: {}'.format(
+                                    self.data.train_size,
+                                    int(self.data.train_size/self.opts['batch_size']),
+                                    self.opts['it_num']))
+        npics = self.opts['plot_num_pics']
+        fixed_noise = sample_pz(self.opts, self.pz_params, npics)
+
+        # Compute blurriness of real data
+        idx = np.random.randint(0, high=self.data.test_size, size=1000)
+        images = self.data.data_test[idx]
+        real_blurr = self.sess.run(self.real_blurriness, feed_dict={self.images: images})
+        logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
+        print('')
+
+
+        # - FID
+        if self.opts['fid']:
+            # Load inception mean samples for train set
+            trained_stats = os.path.join(inception_path, 'fid_stats.npz')
+            # Load trained stats
+            f = np.load(trained_stats)
+            self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
+            f.close()
+
+        # Init all monitoring variables
+        trLoss, trLoss_obs, trLoss_latent, trLoss_match, trSigma_reg = [], [], [], [], []
+        trMSE, trBlurr, trKL = [], [], []
+        teLoss, teLoss_obs, teLoss_latent, teLoss_match, teSigma_reg = [], [], [], [], []
+        teMSE, teBlurr, teKL = [], [], []
+        FID = []
+        # various decays and reg. params
+        decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
+        wait, wait_lambda = 0, 0
+        lmbd = self.opts['lambda']
+        lmbd_sigma = self.opts['lambda_sigma']
+
+        # - Init sess and load trained weights if needed
+        if self.opts['use_trained']:
+            if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+                raise Exception("weights file doesn't exist")
+            self.saver.restore(self.sess, WEIGHTS_PATH)
+        else:
+            self.sess.run(self.initializer)
+            # if self.opts['pretrain']:
+            #     logging.error('Pretraining the encoder\n')
+            #     self.pretrain_encoder(data)
+            #     print('')
+
+        ##### TRAINING LOOP #####
+        for it in range(self.opts['it_num']):
+            # Saver
+            if it > 0 and it % self.opts['save_every'] == 0:
+                self.saver.save(self.sess, os.path.join(
+                                    exp_dir,
+                                    'checkpoints',
+                                    'trained-wae'),
+                                    global_step=it)
+
+            # optimization step
+            it += 1
+            _ = self.sess.run(self.opt, feed_dict={self.data.handle: self.train_handle,
+                                    self.lmbd: lmbd,
+                                    self.lmbd_sigma: lmbd_sigma,
+                                    self.lr_decay: decay,
+                                    self.is_training: True})
+
+            ##### TESTING LOOP #####
+            if it % self.opts['evaluate_every'] == 0:
+                logging.error('\nIteration {}/{}'.format(it, self.opts['it_num']))
+                # training losses
+                [loss, obs_cost, latent_costs, matching_penalty, Sigma_penalty] = self.sess.run(
+                                    [self.objective,
+                                    self.obs_cost,
+                                    self.latent_costs,
+                                    self.matching_penalty,
+                                    self.Sigma_penalty],
+                                    feed_dict={self.data.handle: self.train_handle,
+                                                self.lmbd: lmbd,
+                                                self.lmbd_sigma: lmbd_sigma,
+                                                self.is_training: False})
+                trLoss.append(loss)
+                trLoss_obs.append(obs_cost)
+                trLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
+                trLoss_match.append(lmbd[-1]*matching_penalty)
+                trSigma_reg.append([lmbd_sigma[n]*Sigma_penalty[n] for n in range(len(Sigma_penalty))])
+                # training metrics
+                idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
+                batch, _ = self.data.sample_observations(idx, 'train')
+                [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+                                    feed_dict={self.data.handle: self.train_handle,
+                                                self.images: batch,
+                                                self.is_training: False})
+                trMSE.append(mse)
+                trBlurr.append(blurr)
+                trKL.append(kl)
+                # init testing losses & metrics
+                test_it_num = int(self.data.test_size / self.opts['batch_size'])
+                loss, obs_cost, matching_penalty = 0., 0., 0.
+                Sigma_penalty, latent_costs = np.zeros(len(Sigma_penalty)), np.zeros(len(latent_costs))
+                mse, blurr, kl = 0., 0., np.zeros(len(kl))
+                for it_ in range(test_it_num):
+                    # testing losses
+                    [l, obs, latent, match, Sigma] = self.sess.run([self.objective,
+                                    self.obs_cost,
+                                    self.latent_costs,
+                                    self.matching_penalty,
+                                    self.Sigma_penalty],
+                                    feed_dict={self.data.handle: self.test_handle,
+                                                self.lmbd: lmbd,
+                                                self.lmbd_sigma: lmbd_sigma,
+                                                self.is_training: False})
+                    loss += l / test_it_num
+                    obs_cost += obs / test_it_num
+                    matching_penalty += match / test_it_num
+                    Sigma_penalty += np.array(Sigma) / test_it_num
+                    latent_costs += np.array(latent) / test_it_num
+                    # testing metrics
+                    idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
+                    batch, _ = self.data.sample_observations(idx)
+                    [m, b, k] = self.sess.run([self.mse, self.blurriness, self.KL],
+                                    feed_dict={self.data.handle: self.test_handle,
+                                                self.images: batch,
+                                                self.is_training: False})
+                    mse += m / test_it_num
+                    blurr += b / test_it_num
+                    kl += np.array(k) / test_it_num
+                teLoss.append(loss)
+                teLoss_obs.append(obs_cost)
+                teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
+                teLoss_match.append(lmbd[-1]*matching_penalty)
+                teSigma_reg.append([lmbd_sigma[n]*Sigma_penalty[n] for n in range(len(Sigma_penalty))])
+                teMSE.append(mse)
+                teBlurr.append(blurr)
+                teKL.append(kl)
+                # log output
+                debug_str = 'ITER: %d/%d, ' % (it, self.opts['it_num'])
+                logging.error(debug_str)
+                debug_str = 'teLOSS=%.3f, trLOSS=%.3f' % (teLoss[-1], trLoss[-1])
+                logging.error(debug_str)
+                debug_str = 'REC=%.3f, LATENT=%.3f, MATCH=%10.3e, SIGMA=%10.3e'  % (
+                                    teLoss_obs[-1],
+                                    np.sum(teLoss_latent[-1]),
+                                    teLoss_match[-1],
+                                    np.sum(teSigma_reg[-1]))
+                logging.error(debug_str)
+                debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
+                                    teMSE[-1],
+                                    teBlurr[-1],
+                                    np.mean(teKL[-1]/self.opts['zdim']))
+                logging.error(debug_str)
+
+                # Compute FID score
+                if self.opts['fid']:
+                    fid = 0
+                    for it_ in range(test_it_num):
+                        # First convert to RGB
+                        if np.shape(flat_samples)[-1] == 1:
+                            # We have greyscale
+                            flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
+                        preds_incep = self.inception_sess.run(self.inception_layer,
+                                      feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
+                        preds_incep = preds_incep.reshape((npics,-1))
+                        mu_gen = np.mean(preds_incep, axis=0)
+                        sigma_gen = np.cov(preds_incep, rowvar=False)
+                        fid_score = fid.calculate_frechet_distance(mu_gen,
+                                    sigma_gen,
+                                    self.mu_train,
+                                    self.sigma_train,
+                                    eps=1e-6)
+                    fid_scores.append(fid_score)
+
+
+            ##### Vizu #####
+            if it % self.opts['print_every'] == 0:
+                # Auto-encoding test images & samples generated by the model
+                idx = np.random.randint(0, self.data.test_size, npics)
+                batch, labels = self.data.sample_observations(idx)
+                [rec, encoded, samples] = self.sess.run([self.reconstruction,
+                                    self.encoded[-1],
+                                    self.samples],
+                                    feed_dict={self.images: batch,
+                                               self.pz_samples: fixed_noise,
+                                               self.is_training: False})
+                rec = [rec[n][:,0] for n in range(len(rec))]
+                encoded = encoded[:,0]
+                save_train(self.opts, batch, labels, rec[-1], samples,
+                                    encoded, fixed_noise,
+                                    teLoss, teLoss_obs,
+                                    teLoss_latent, teLoss_match,
+                                    teSigma_reg, trLoss,
+                                    trLoss_obs, trLoss_latent,
+                                    trLoss_match, trSigma_reg,
+                                    teMSE, teBlurr, teKL,
+                                    trMSE, trBlurr, trKL,
+                                    exp_dir, 'res_it%07d.png' % it)
+
+                if self.opts['vizu_splitloss']:
+                    plot_splitloss(self.opts, teLoss_obs, teLoss_latent, teLoss_match, teSigma_reg,
+                                    exp_dir, 'losses_it%07d.png' % it)
+
+                if self.opts['vizu_fullrec']:
+                    plot_fullrec(self.opts, batch[:10], [rec[n][:10] for n in range(len(rec))], exp_dir, 'rec_it%07d.png' % it)
+
+                if self.opts['vizu_embedded']:
+                    nencoded = 500
+                    batchsize = 500
+                    # zs, ys = [], []
+                    # for _ in range(int(nencoded/batchsize)):
+                    idx = np.random.randint(0, self.data.test_size, batchsize)
+                    x, y = self.data.sample_observations(idx)
+                    z = self.sess.run(self.encoded, feed_dict={self.images: x,
+                                self.is_training: False})
+                        # zs += [z[n][:,0] for n in range(len(z))]
+                        # ys += y
+                    plot_embedded(self.opts, z, y, exp_dir, 'emb_it%07d.png' % it)
+
+                if self.opts['vizu_latent']:
+                    sigma_scale = self.opts['sigma_scale']
+                    self.opts['sigma_scale'] = 2.
+                    idx = np.random.randint(0, self.data.test_size, self.opts['nresamples'])
+                    x, _ = self.data.sample_observations(idx)
+                    reconstruction = self.sess.run(self.reconstruction, feed_dict={self.images: x,
+                                    self.is_training: False})
+                    plot_latent(self.opts, reconstruction, exp_dir, 'latent_expl_it%07d.png' % it)
+                    self.opts['sigma_scale'] = sigma_scale
+
+                # Update learning rate if necessary and counter
+                # First 150 epochs do nothing
+                if it >= decay_warmup and it % decay_steps == 0:
+                    decay = decay_rate ** (int(it / decay_steps))
+                    logging.error('Reduction in lr: %f\n' % decay)
+                    """
+                    # If no significant progress was made in last 20 epochs
+                    # then decrease the learning rate.
+                    if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
+                        wait = 0
+                    else:
+                        wait += 1
+                    if wait > 20 * batches_num:
+                        decay = max(decay  / 1.33, 1e-6)
+                        logging.error('Reduction in lr: %f\n' % decay)
+                        print('')
+                        wait = 0
+                    """
+
+                # Update regularizer if necessary
+                if self.opts['lambda_schedule'] == 'adaptive':
+                    if it > 1 and len(teLoss) > 0:
+                        if wait_lambda > 50000 + 1:
+                            # opts['lambda'] = list(2*np.array(opts['lambda']))
+                            self.opts['lambda'][-1] = 2*self.opts['lambda'][-1]
+                            wae_lambda = self.opts['lambda']
+                            logging.error('Lambda updated to %s\n' % wae_lambda)
+                            print('')
+                            wait_lambda = 0
+                        else:
+                            wait_lambda+=1
+
+        # Save the final model
+        if self.opts['save_final']:
+            self.saver.save(self.sess, os.path.join(work_dir,
+                                                'checkpoints',
+                                                'trained-wae-final'),
+                                                global_step=it)
+        # save training data
+        if self.opts['save_train_data']:
+            data_dir = 'train_data'
+            save_path = os.path.join(exp_dir, data_dir)
+            utils.create_dir(save_path)
+            name = 'res_train_final'
+            np.savez(os.path.join(save_path, name),
+                        data=batch, labels=labels, rec=rec, samples=samples,
+                        encoded=encoded, samples_prior=samples_prior,
+                        teLoss=np.array(teLoss), teLoss_obs=np.array(teLoss_obs),
+                        teLoss_match=np.array(teLoss_match), teSigma_reg=np.array(teSigma_reg),
+                        trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
+                        trLoss_match=np.array(trLoss_match), trSigma_reg=np.array(trSigma_reg),
+                        teMSE=np.array(teMSE), teBlurr=np.array(teBlurr), teKL=np.array(teKL),
+                        trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
+
+    def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Plot and save different latent interpolation
+        """
+
+        opts = self.opts
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+        # Set up
+        test_size = np.shape(data.test_data)[0]
+        # mnist plot setup
+        num_cols = 10
+        num_pics = num_cols**2
+        num_pics_enc = 5000
+        data_ids = np.random.choice(200, 18, replace=True)
+        # svhn plot setup
+        # num_cols = 18
+        # num_pics = 7*num_cols
+        # # num_pics = num_cols*num_cols
+        # num_pics_enc = 200
+        # data_ids = np.random.choice(200, 18, replace=True)
+        # data_ids = [21, 7, 24, 18, 28, 12, 75, 82, 32]
+        # --- Reconstructions
+        full_recons = self.sess.run(self.full_reconstructed,
+                                feed_dict={self.points:data.test_data[:200], #num_pics],
+                                           self.dropout_rate: 1.,
+                                           self.is_training:False})
+        reconstructed = full_recons[-1]
+        # mnist plot setup
+        full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
+        full_reconstructed = [data.test_data[data_ids],] + full_recon
+        # svhn plot setup
+        # full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
+        # full_reconstructed = [data.test_data[data_ids],] + full_recon
+        # full_recon = [full_recons[i][data_ids] for i in range(len(full_recons))]
+        # full_reconstructed = [data.test_data[data_ids],] + full_recon
+
+
+        # --- Encode anchors points and interpolate
+        encoded = self.sess.run(self.encoded,
+                                feed_dict={self.points:data.test_data[:num_pics_enc],
+                                           self.dropout_rate: 1.,
+                                           self.is_training:False})
+
+        encshape = list(np.shape(encoded[-1])[1:])
+        # mnist plot setup
+        num_steps = 23
+        num_anchors = 12
+        anchors_ids = np.random.choice(num_pics, num_anchors,
+                                        replace=True)
+        data_anchors = data.test_data[anchors_ids]
+        # svhn plot setup
+        # num_steps = 16
+        # num_anchors = 14
+        # anchors_ids = np.random.choice(num_pics, num_anchors,
+        #                                 replace=True)
+        # data_anchors = data.test_data[anchors_ids]
+
+        enc_anchors = np.reshape(encoded[-1][anchors_ids],[-1,2]+encshape)
+        enc_interpolation = linespace(opts, num_steps, anchors=enc_anchors)
+        num_int = np.shape(enc_interpolation)[1]
+        if opts['e_nlatents']!=opts['nlatents']:
+            dec_anchors = self.sess.run(self.anchors_decoded,
+                                    feed_dict={self.anchors_points: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.dropout_rate: 1.,
+                                               self.is_training: False})
+        else:
+            dec_anchors = self.sess.run(self.decoded[-1],
+                                    feed_dict={self.samples: np.reshape(enc_interpolation,[-1,]+encshape),
+                                               self.dropout_rate: 1.,
+                                               self.is_training: False})
+        inter_anchors = np.reshape(dec_anchors,[-1,num_int]+imshape)
+        # adding data
+        data_anchors = np.reshape(data_anchors,[-1,2]+imshape)
+        inter_anchors = np.concatenate((np.expand_dims(data_anchors[:,0],axis=1),inter_anchors),axis=1)
+        inter_anchors = np.concatenate((inter_anchors,np.expand_dims(data_anchors[:,1],axis=1)),axis=1)
+
+
+        if opts['zdim'][-1]==2:
+            # --- Latent interpolation
+            if False:
+                enc_mean = np.mean(encoded[-1],axis=0)
+                enc_var = np.mean(np.square(encoded[-1]-enc_mean),axis=0)
+            else:
+                enc_mean = np.zeros(opts['zdim'][-1], dtype='float32')
+                enc_var = np.ones(opts['zdim'][-1], dtype='float32')
+            mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
+            x = np.linspace(mins[0], maxs[0], num=num_cols, endpoint=True)
+            xymin = np.stack([x,mins[1]*np.ones(num_cols)],axis=-1)
+            xymax = np.stack([x,maxs[1]*np.ones(num_cols)],axis=-1)
+            latent_anchors = np.stack([xymin,xymax],axis=1)
+            grid_interpolation = linespace(opts, num_cols,
+                                    anchors=latent_anchors)
+            dec_latent = self.sess.run(self.decoded[-1],
+                                    feed_dict={self.samples: np.reshape(grid_interpolation,[-1,]+list(np.shape(enc_mean))),
+                                               self.dropout_rate: 1.,
+                                               self.is_training: False})
+            inter_latent = np.reshape(dec_latent,[-1,num_cols]+imshape)
+        else:
+            inter_latent = None
+
+        # --- Samples generation
+        prior_noise = sample_pz(opts, self.pz_params, num_pics)
+        samples = self.sess.run(self.decoded[-1],
+                               feed_dict={self.samples: prior_noise,
+                                          self.dropout_rate: 1.,
+                                          self.is_training: False})
+        # --- Making & saving plots
+        save_latent_interpolation(opts, data.test_data[:num_pics_enc],data.test_labels[:num_pics_enc], # data,labels
+                        encoded, # encoded
+                        reconstructed, full_reconstructed, # recon, full_recon
+                        inter_anchors, inter_latent, # anchors and latents interpolation
+                        samples, # samples
+                        MODEL_PATH) # working directory
+
+    def vlae_experiment(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Plot and save different latent interpolation
+        """
+
+        opts = self.opts
+        num_pics = opts['plot_num_pics']
+        # num_pics = 16
+
+        # --- Sampling fixed noise
+        fixed_noise = []
+        for n in range(opts['nlatents']):
+            mean = np.zeros(opts['zdim'][opts['nlatents']-1-n], dtype='float32')
+            Sigma = np.ones(opts['zdim'][opts['nlatents']-1-n], dtype='float32')
+            params = np.concatenate([mean,Sigma],axis=0)
+            fixed_noise.append(sample_gaussian(opts, params, batch_size=1))
+
+        # --- Decoding loop
+        self.vlae_decoded = []
+        for m in range(opts['nlatents']):
+            if m==0:
+                decoded = tf.convert_to_tensor(sample_pz(opts,self.pz_params,num_pics-1),
+                                                dtype=tf.float32)
+                decoded = tf.concat([tf.convert_to_tensor(fixed_noise[0],dtype=tf.float32),decoded],axis=0)
+            else:
+                decoded = tf.concat([fixed_noise[0] for i in range(num_pics)],axis=0)
+            for n in range(opts['nlatents']-1,-1,-1):
+                # Output dim
+                if n==0:
+                    output_dim = datashapes[opts['dataset']][:-1]+[2*datashapes[opts['dataset']][-1],]
+                else:
+                    output_dim = [2*opts['zdim'][n-1],]
+                if opts['d_archi'][n]=='resnet_v2':
+                    features_dim=self.features_dim[n+1]
+                else:
+                    features_dim=self.features_dim[n]
+                # Decoding
+                decoded_mean, decoded_Sigma = decoder(opts, input=decoded,
+                                                archi=opts['d_archi'][n],
+                                                num_layers=opts['d_nlayers'][n],
+                                                num_units=opts['d_nfilters'][n],
+                                                filter_size=opts['filter_size'][n],
+                                                output_dim=output_dim,
+                                                features_dim=features_dim,
+                                                resample=opts['d_resample'][n],
+                                                last_archi=opts['d_last_archi'][n],
+                                                scope='decoder/layer_%d' % n,
+                                                reuse=True,
+                                                is_training=False)
+                if opts['decoder'][n] == 'det':
+                    decoded = decoded_mean
+                elif opts['decoder'][n] == 'gauss':
+                    if n==opts['nlatents']-m:
+                        if m==0:
+                            p_params = tf.concat((decoded_mean,decoded_Sigma),axis=-1)
+                            decoded = sample_gaussian(opts, p_params, 'tensorflow')
+                        else:
+                            shape = decoded_mean.get_shape().as_list()[-1]
+                            eps = []
+                            for i in range(num_pics):
+                                # eps.append(sample_unif([shape,],-(3-n/2.),3-n/2.))
+                                eps.append(sample_unif([shape,],-1,1))
+                            eps = tf.stack(eps,axis=0)
+                            decoded = decoded_mean + eps
+                    else:
+                        decoded =  decoded_mean #+ tf.multiply(fixed_noise[opts['nlatents']-n],tf.sqrt(1e-10+decoded_Sigma))
+                else:
+                    assert False, 'Unknown encoder %s' % opts['decoder'][n]
+                # reshape and normalize for last decoding
+                if n==0:
+                    if opts['input_normalize_sym']:
+                        decoded=tf.nn.tanh(decoded)
+                    else:
+                        decoded=tf.nn.sigmoid(decoded)
+                    decoded = tf.reshape(decoded,[-1]+datashapes[opts['dataset']])
+            self.vlae_decoded.append(decoded)
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+
+        # --- vlae decoding
+        decoded = self.sess.run(self.vlae_decoded,feed_dict={})
+
+        # --- Making & saving plots
+        # logging.error('Saving images..')
+        save_vlae_experiment(opts, decoded, MODEL_PATH)
+
+    def fid_score(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Compute FID score
+        """
+
+        opts = self.opts
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+
+        # Setup
+        batch_size = 1000
+        batches_num = 1
+
+        # Load inception mean samples for train set
+        trained_stats = os.path.join(inception_path, 'fid_stats.npz')
+        # Load trained stats
+        f = np.load(trained_stats)
+        self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
+        f.close()
+        # Compute bluriness of real data
+        real_blurr = self.sess.run(self.blurriness, feed_dict={
+                                                self.points: data.test_data[:batch_size]})
+        real_blurr = np.mean(real_blurr)
+        # logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
+        # print('')
+
+        # Test loop
+        now = time.time()
+        mean_blurr, fid_scores = 0., 0.
+        for it_ in range(batches_num):
+            # Samples
+            noise = sample_pz(opts, self.pz_params, batch_size)
+            # Sampling
+            samples = self.sess.run(self.decoded[-1],
+                                        feed_dict={self.samples: noise,
+                                        self.is_training:False})
+            # compute blur
+            gen_blurr = self.sess.run(self.blurriness,
+                                        feed_dict={self.points: samples})
+            mean_blurr+= (np.mean(gen_blurr) / batches_num)
+            # Compute FID score
+            # First convert to RGB
+            if np.shape(samples)[-1] == 1:
+                # We have greyscale
+                samples = self.sess.run(tf.image.grayscale_to_rgb(samples))
+            preds_incep = self.inception_sess.run(self.inception_layer,
+                          feed_dict={'FID_Inception_Net/ExpandDims:0': samples})
+            preds_incep = preds_incep.reshape((batch_size,-1))
+            mu_gen = np.mean(preds_incep, axis=0)
+            sigma_gen = np.cov(preds_incep, rowvar=False)
+            fid_score = fid.calculate_frechet_distance(mu_gen,
+                                        sigma_gen,
+                                        self.mu_train,
+                                        self.sigma_train,
+                                        eps=1e-6)
+            fid_scores+= (fid_score / batches_num)
+
+            # Logging
+            debug_str = 'FID=%.3f, BLUR=%10.3e, REAL BLUR=%10.3e' % (
+                                    fid_scores,
+                                    mean_blurr,
+                                    real_blurr)
+            logging.error(debug_str)
+        name = 'fid'
+        np.savez(os.path.join(work_dir,name),
+                    fid=np.array(fid_scores),
+                    blur=np.array(mean_blurr))
+
+    def test_losses(self, data, MODEL_PATH, WEIGHTS_FILE):
+        """
+        Compute losses
+        """
+
+        opts = self.opts
+
+        # --- Load trained weights
+        if not tf.gfile.IsDirectory(MODEL_PATH):
+            raise Exception("model doesn't exist")
+        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+        work_dir = opts['work_dir']
+
+        # Setup
+        now = time.time()
+        batch_size_te = 200
+        test_size = np.shape(data.test_data)[0]
+        batches_num_te = int(test_size/batch_size_te)
+        train_size = data.num_points
+        # Logging stat
+        debug_str = 'TEST SIZE=%d, BATCH NUM=%d' % (
+                                test_size,
+                                batches_num_te)
+        logging.error(debug_str)
+
+        # Test loss
+        wae_lambda = opts['lambda']
+        loss, loss_test = 0., 0.
+        loss_rec, loss_rec_test = 0., 0.
+        loss_match, loss_match_test = 0., 0.
+        for it_ in range(batches_num_te):
+            # Sample batches of test data points
+            data_ids =  np.random.choice(test_size, batch_size_te,
+                                    replace=True)
+            batch_images = data.test_data[data_ids].astype(np.float32)
+            batch_samples = sample_pz(opts, self.pz_params,
+                                            batch_size_te)
+            l, lrec, lmatch = self.sess.run([self.objective,
+                                                self.loss_reconstruct,
+                                                self.matching_penalty],
+                                feed_dict={self.points:batch_images,
+                                                self.samples: batch_samples,
+                                                self.lmbd: wae_lambda,
+                                                self.is_training:False})
+            loss_test += l / batches_num_te
+            loss_rec_test += lrec / batches_num_te
+            loss_match_test += lmatch / batches_num_te
+            # Sample batches of train data points
+            data_ids =  np.random.choice(train_size, batch_size_te,
+                                    replace=True)
+            batch_images = data.data[data_ids].astype(np.float32)
+            batch_samples = sample_pz(opts, self.pz_params,
+                                            batch_size_te)
+            l, lrec, lmatch = self.sess.run([self.objective,
+                                                self.loss_reconstruct,
+                                                self.matching_penalty],
+                                feed_dict={self.points:batch_images,
+                                                self.samples: batch_samples,
+                                                self.lmbd: wae_lambda,
+                                                self.is_training:False})
+            loss += l / batches_num_te
+            loss_rec += lrec / batches_num_te
+            loss_match += lmatch / batches_num_te
+
+        # Logging
+        debug_str = 'TRAIN: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
+                                loss,
+                                loss_rec,
+                                loss_match)
+        logging.error(debug_str)
+        debug_str = 'TEST: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
+                                loss_test,
+                                loss_rec_test,
+                                loss_match_test)
+        logging.error(debug_str)
+
+        name = 'losses'
+        np.savez(os.path.join(work_dir,name),
+                    loss_train=np.array(loss),
+                    loss_rec_train=np.array(loss_rec),
+                    loss_match_train=np.array(loss_match),
+                    loss_test=np.array(loss_test),
+                    loss_rec_test=np.array(loss_rec_test),
+                    loss_match_test=np.array(loss_match_test))

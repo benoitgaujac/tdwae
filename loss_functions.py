@@ -11,46 +11,42 @@ from ops._ops import logsumexp, logsumexp_v2
 
 import pdb
 
-
-def kl_penalty(pz_mean, pz_sigma, encoded_mean, encoded_sigma):
+### --- Latent penalty --- ###
+def kl_penalty(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
     """
     Compute KL divergence between prior and variational distribution
     """
     kl = encoded_sigma / pz_sigma \
         + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
-        + tf.log(pz_sigma) - tf.log(encoded_sigma)
+        + tf.compat.v1.log(pz_sigma) - tf.compat.v1.log(1e-10+encoded_sigma)
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
-
 
 def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
     """
     Compute MC log density ratio
     """
-    kl = tf.log(q_Sigma) - tf.log(p_Sigma) \
+    kl = tf.compat.v1.log(q_Sigma) - tf.compat.v1.log(p_Sigma) \
         + tf.square(samples - q_mean) / q_Sigma \
         - tf.square(samples - p_mean) / p_Sigma
     kl = -0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
-
 def Xentropy_penalty(samples, mean, sigma):
     """
     Compute Xentropy for gaussian using MC
     """
-    loglikelihood = tf.log(2*pi) + tf.log(sigma) + tf.square(samples-mean) / sigma
+    loglikelihood = tf.compat.v1.log(2*pi) + tf.compat.v1.log(sigma) + tf.square(samples-mean) / sigma
     loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
     return tf.reduce_mean(loglikelihood)
-
 
 def entropy_penalty(samples, mean, sigma):
     """
     Compute entropy for gaussian
     """
-    entropy = tf.log(sigma) + 1. + tf.log(2*pi)
+    entropy = tf.compat.v1.log(sigma) + 1. + tf.compat.v1.log(2*pi)
     entropy = 0.5 * tf.reduce_sum(entropy,axis=-1)
     return tf.reduce_mean(entropy)
-
 
 def matching_penalty(opts, samples_pz, samples_qz):
     """
@@ -65,7 +61,6 @@ def matching_penalty(opts, samples_pz, samples_qz):
         raise ValueError('Unknown matching penalty term')
     return macth_penalty
 
-
 def sinkhorn_penalty(opts, samples_pz, samples_qz):
     """
     Compute the sinkhorn distance penatly as
@@ -76,7 +71,6 @@ def sinkhorn_penalty(opts, samples_pz, samples_qz):
     # Sinkhorn fixed points iteration
     sinkhorn = sinkhorn_it_v2(opts, C)
     return sinkhorn[-1]
-
 
 def sinkhorn_it(opts, C):
     # Batch size
@@ -95,23 +89,21 @@ def sinkhorn_it(opts, C):
     Sinkhorn.append(tf.reduce_sum(tf.exp(log_u+log_K+log_v) * C))
     return Sinkhorn
 
-
 def sinkhorn_it_v2(opts,C):
     # Batch size
     M = utils.get_batch_size(C)
     # Initialization
-    u = opts['epsilon']*(tf.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
-    v = opts['epsilon']*(tf.log(M) - logsumexp((-C + u)/opts['epsilon'], axis=0, keepdims=True))
+    u = opts['epsilon']*(tf.compat.v1.log(M) - logsumexp(-C / opts['epsilon'], axis=1, keepdims=True))
+    v = opts['epsilon']*(tf.compat.v1.log(M) - logsumexp((-C + u)/opts['epsilon'], axis=0, keepdims=True))
     Sinkhorn = []
     sinkhorn_init = tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C)
     Sinkhorn.append(sinkhorn_init)
     # Sinkhorn iterations
     for l in range(opts['L']-1):
-        u -= opts['epsilon']*(tf.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
-        v -= opts['epsilon']*(tf.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=0, keepdims=True))
+        u -= opts['epsilon']*(tf.compat.v1.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=1, keepdims=True))
+        v -= opts['epsilon']*(tf.compat.v1.log(M) + logsumexp((-C + u + v)/opts['epsilon'], axis=0, keepdims=True))
         Sinkhorn.append(tf.reduce_sum(tf.exp((-C + u + v)/opts['epsilon']) * C))
     return Sinkhorn
-
 
 def mmd_penalty(opts, sample_qz, sample_pz):
     sigma2_p = opts['pz_scale'] ** 2
@@ -169,7 +161,6 @@ def mmd_penalty(opts, sample_qz, sample_pz):
 
     return stat
 
-
 def square_dist(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance
@@ -181,7 +172,6 @@ def square_dist(opts, sample_x, sample_y):
                     - 2. * tf.matmul(sample_x,sample_y,transpose_b=True)
     return tf.nn.relu(squared_dist)
 
-
 def square_dist_v2(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance
@@ -192,24 +182,20 @@ def square_dist_v2(opts, sample_x, sample_y):
     return squared_dist
 
 
+### --- Reconstruction costs --- ###
 def obs_reconstruction_loss(opts, x1, x2):
     """
     Compute the WAE's reconstruction losses for the top layer
-    x1: image data             [batch,im_dim]
+    x1: image data             [batch,im_shape]
     x2: image reconstruction   [batch,nsamples,im_dim]
     """
     # assert len(x1.get_shape().as_list())==len(x2.get_shape().as_list()), \
     #             'data and reconstruction must have the same shape'
     # Flatten last dim input
-    x1 = tf.layers.flatten(x1)
+    x1 = tf.compat.v1.layers.flatten(x1)
     # Expand dim x1 if needed and flatten last dim input
-    if len(x2.get_shape().as_list())>4:
+    if len(x2.get_shape().as_list())>2:
         x1 = tf.expand_dims(x1,axis=1)
-        # Flatten last dim input
-        rec_shape = x2.get_shape().as_list()[1:]
-        x2 = tf.reshape(x2,[-1,rec_shape[0]]+[np.prod(rec_shape[-3:]),])
-    else:
-        x2 = tf.layers.flatten(x2)
     # Compute chosen cost
     if opts['obs_cost'] == 'l2':
         cost = l2_cost(x1, x2)
@@ -225,8 +211,7 @@ def obs_reconstruction_loss(opts, x1, x2):
     loss = tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr in WAE
     return loss
 
-
-def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
+def latent_reconstruction_loss(opts, x1, mu1, Sigma1, x2, mu2, Sigma2):
     """
     Compute the WAE's reconstruction losses for latent layers
     x1: image data              [batch,im_dim]
@@ -245,9 +230,9 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
     elif opts['latent_cost'] == 'l2sq':
         cost = l2sq_cost(x1, x2)
     elif opts['latent_cost'] == 'l2sq_gauss':
-        cost = l2sq_gauss_cost(x1, x2, mu, Sigma)
+        cost = l2sq_gauss_cost(x1, x2, mu2, Sigma2)
     elif opts['latent_cost'] == 'quad_norm_1':
-        cost = quad_norm_1_cost(x1, x2, mu, Sigma)
+        cost = quad_norm_1_cost(x1, x2, mu2, Sigma2)
     elif opts['latent_cost'] == 'l2sq_norm':
         cost = l2sq_norm_cost(x1, x2)
     elif opts['latent_cost'] == 'l1':
@@ -255,15 +240,14 @@ def latent_reconstruction_loss(opts, x1, x2, mu=None, Sigma=None):
     elif opts['latent_cost'] == 'mahalanobis':
         cost = mahalanobis_cost(x1, x2)
     elif opts['latent_cost'] == 'mahalanobis_v2':
-        cost = mahalanobis_cost_v2(x1, x2, mu, Sigma)
+        cost = mahalanobis_cost_v2(x1, x2, mu2, Sigma2)
     elif opts['latent_cost'] == 'mahalanobis_v3':
-        cost = mahalanobis_cost_v3(x1, x2, mu, Sigma)
+        cost = mahalanobis_cost_v3(x1, x2, mu2, Sigma2)
     else:
         assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
     loss = tf.reduce_mean(cost) #coef: .2 for L2 and L1, .05 for L2sqr in WAE
     return loss
-
 
 def l2_cost(x1, x2):
     # c(x,y) = ||x - y||_2
@@ -271,18 +255,15 @@ def l2_cost(x1, x2):
     cost = tf.sqrt(1e-10 + cost)
     return cost
 
-
 def l2sq_cost(x1,x2):
     # c(x,y) = sum_i(||x - y||_2^2[:,i])
     cost = tf.reduce_sum(tf.square(x1 - x2), axis=-1)
     return cost
 
-
 def l2sq_gauss_cost(x1, x2, mu, Sigma):
     # c(x,y) = sum_i(Sigma[i]+(mu[i]-x1)^2)
     cost = tf.reduce_sum(Sigma + tf.square(mu-x1),axis=-1)
     return cost
-
 
 def quad_norm_1_cost(x1, x2, mu, Sigma):
     # c(x,y) = sum_i( (Sigma[i]+(mu[i]-x1)^2)/(1+Sigma[i]) )
@@ -290,7 +271,6 @@ def quad_norm_1_cost(x1, x2, mu, Sigma):
     cost = tf.divide(cost, 1. + Sigma)
     cost = tf.reduce_sum(cost,axis=-1)
     return cost
-
 
 def mahalanobis_cost(x1, x2):
     Sigma1 = cov(x1)
@@ -302,9 +282,7 @@ def mahalanobis_cost(x1, x2):
     cost = tf.matmul(tf.expand_dims(x1-x2,axis=1),cost)
     return tf.squeeze(cost,[1,2])
 
-
 def mahalanobis_cost_v2(x1, x2, mu, Sigma):
-    # pdb.set_trace()
     eps = 1e-10
     Sigma_square = tf.matrix_diag(Sigma+eps)
     Sigma_inv = tf.matrix_inverse(Sigma_square)
@@ -314,9 +292,7 @@ def mahalanobis_cost_v2(x1, x2, mu, Sigma):
             + x1.get_shape().as_list()[-1]
     return tf.reduce_mean(tf.squeeze(cost,[2,3]),axis=-1)
 
-
 def mahalanobis_cost_v3(x1, x2, mu, Sigma):
-    # pdb.set_trace()
     eps = 1e-10
     Sigma_square = tf.matrix_diag(Sigma+eps)
     mu1 = tf.reduce_mean(x1, axis=0, keepdims=True)
@@ -329,7 +305,6 @@ def mahalanobis_cost_v3(x1, x2, mu, Sigma):
     cost = tf.squeeze(cost,[2,3])
     cost += tf.linalg.trace(tf.matmul(pool_Sigma_inv,Sigma_square))
     return tf.reduce_mean(cost,axis=-1)
-
 
 def cov(x,mu,axis):
     mx = tf.matmul(tf.transpose(mu,perm=[0,2,1]), mu)
@@ -345,7 +320,6 @@ def cov(x,mu,axis):
     else:
         assert False, 'Wrong axis value for covariance'
 
-
 def l2sq_norm_cost(x1, x2):
     # c(x,y) = mean_i(||x - y||_2^2[:,i])
     cost = tf.reduce_mean(tf.square(x1 - x2), axis=-1)
@@ -354,7 +328,6 @@ def l2sq_norm_cost(x1, x2):
     #     return tf.reduce_mean(cost,axis=1)
     # else:
     #     return cost
-
 
 def l1_cost(x1, x2):
     # c(x,y) = ||x - y||_1
@@ -366,6 +339,7 @@ def l1_cost(x1, x2):
     #     return cost
 
 
+### --- various losses --- ###
 def vae_reconstruction_loss(x1, x2):
     """
     Compute the VAE's reconstruction losses
@@ -373,10 +347,9 @@ def vae_reconstruction_loss(x1, x2):
     x2: image reconstruction   [batch,im_dim]
     """
     eps = 1e-8
-    l = x1*tf.log(eps+x2) + (1-x1)*tf.log(eps+1-x2)
+    l = x1*tf.compat.v1.log(eps+x2) + (1-x1)*tf.compat.v1.log(eps+1-x2)
     l = -tf.reduce_sum(l,axis=[1,2,3])
     return tf.reduce_mean(l)
-
 
 def vae_sigmoid_reconstruction_loss(x1, logits):
     """
@@ -388,12 +361,10 @@ def vae_sigmoid_reconstruction_loss(x1, logits):
     l = tf.reduce_sum(l,axis=[1,2,3])
     return tf.reduce_mean(l)
 
-
 def contrast_norm(pics):
     # pics is a [N, H, W, C] tensor
     mean, var = tf.nn.moments(pics, axes=[-3, -2, -1], keepdims=True)
     return pics / tf.sqrt(var + 1e-08)
-
 
 def moments_loss(prior_samples, model_samples):
     # Matching the first 2 moments (mean and covariance)
