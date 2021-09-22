@@ -13,7 +13,7 @@
 #$ -N mnist
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
-source /share/apps/examples/source_files/cuda/cuda-9.0.source
+source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
 
 #python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
