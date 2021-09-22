@@ -30,7 +30,7 @@ parser.add_argument("--num_it", type=int, default=300000,
                     help='iteration number')
 parser.add_argument("--batch_size", type=int, default=100,
                     help='batch size')
-parser.add_argument("--lr", type=float, default=0.0001,
+parser.add_argument("--lr", type=float, default=0.0003,
                     help='learning rate size')
 # pretraining
 parser.add_argument('--use_trained', action='store_true', default=False,
