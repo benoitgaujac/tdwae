@@ -73,9 +73,9 @@ def main():
         assert False, 'Unknown dataset'
 
     # lamba
-    lambda_rec = [10e-3,10e-2,10e-1]
-    lamdba_match = [10e-4,10e-3,10e-2]
-    nfilters = [1024, 512]
+    lambda_rec = [10e-4,10e-3,10e-2,10e-1]
+    lamdba_match = [10e-4,10e-3,10e-2,10e-1]
+    nfilters = [2048, 1024, 512]
     lmba = list(itertools.product(lambda_rec,lamdba_match, nfilters))
     id = (FLAGS.id-1) % len(lmba)
     lrec, lmatch = lmba[id][0], lmba[id][1]
