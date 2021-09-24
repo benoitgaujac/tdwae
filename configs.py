@@ -1,5 +1,5 @@
 import copy
-from math import pow, sqrt
+from math import pow, sqrt, exp
 
 ### Default common config
 config = {}
@@ -66,8 +66,8 @@ config['lambda'].append(0.0001*config['lambda_scalar']**5/config['zdim'][0])
 config['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Sigma penalties
-config['pen_sigma'] = False # True, False
-config['lambda_sigma'] = [1.,]*config['nlatents']
+config['pen_sigma'] = True # True, False
+config['lambda_sigma'] = [exp(1-i) for i in range(len(config['nlatents']))]
 
 # NN set up
 config['init_std'] = 0.099999

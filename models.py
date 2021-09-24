@@ -248,7 +248,7 @@ class stackedWAE(Model):
         # -- compute the encoder Sigmas penalty
         penalties = []
         for n in range(len(Sigmas)):
-            penalty = tf.reduce_mean(tf.abs(tf.reduce_sum(tf.compat.v1.log(Sigmas[n]),axis=-1)))
+            penalty = tf.reduce_mean(tf.abs(tf.reduce_mean(tf.compat.v1.log(Sigmas[n]),axis=-1)))
             penalties.append(penalty)
         return penalties
 
