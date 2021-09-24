@@ -66,7 +66,7 @@ config['lambda'].append(0.0001*config['lambda_scalar']**5/config['zdim'][0])
 config['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Sigma penalties
-config['pen_sigma'] = True # True, False
+config['pen_sigma'] = False # True, False
 config['lambda_sigma'] = [exp(1-i) for i in range(config['nlatents'])]
 
 # NN set up
@@ -97,7 +97,7 @@ config_mnist['lambda'] = [0.001**n for n in range(1,config_mnist['nlatents']+1)]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Cov penalties
-config_mnist['pen_sigma'] = False # True, False
+config_mnist['pen_sigma'] = True # True, False
 config_mnist['lambda_sigma'] = [0.01,]*config_mnist['nlatents']
 
 # NN set up
