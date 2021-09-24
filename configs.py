@@ -67,7 +67,7 @@ config['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Sigma penalties
 config['pen_sigma'] = False # True, False
-config['lambda_sigma'] = [0.01,]*config['nlatents']
+config['lambda_sigma'] = [1.,]*config['nlatents']
 
 # NN set up
 config['init_std'] = 0.099999

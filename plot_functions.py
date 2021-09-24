@@ -157,17 +157,26 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     ax = plt.subplot(gs[1, 0])
     for loss, (label, color, style) in zip([teLoss, trLoss,
                                             teLoss_obs, trLoss_obs,
-                                            teLoss_latent_reg, trLoss_latent_reg,
-                                            np.sum(teSigma_reg, axis=-1), np.sum(trSigma_reg, axis=-1)],
+                                            teLoss_latent_reg, trLoss_latent_reg],
                                             [('loss', 'k', '-'), (None, 'k', '--'),
                                             ('rec.', 'b', '-'), (None, 'b', '--'),
-                                            ('latent', 'r', '-'), (None, 'r', '--'),
-                                            ('sigma reg.', 'g', '-'), (None, 'g', '--')]):
+                                            ('latent', 'r', '-'), (None, 'r', '--')]):
         total_num = len(loss)
         x_step = max(int(total_num / 200), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
+    if opts['pen_sigma']:
+        for loss, (label, color, style) in zip([np.sum(teSigma_reg, axis=-1),
+                                                np.sum(trSigma_reg, axis=-1)],
+                                                [('sigma reg.', 'g', '-'),
+                                                (None, 'g', '--')]):
+            total_num = len(loss)
+            x_step = max(int(total_num / 200), 1)
+            x = np.arange(1, len(loss) + 1, x_step)
+            y = np.log(loss[::x_step])
+            plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
+
     plt.ylabel('loss')
     plt.grid(axis='y')
     plt.legend(loc='upper right')

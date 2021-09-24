@@ -72,7 +72,7 @@ class Run(object):
                                     False, self.is_training)
         # Compute obj
         latent_loss = 0.
-        for i in range(len(self.latent_costs[:-1])):
+        for i in range(len(self.latent_costs)):
             latent_loss += self.latent_costs[i]*self.lmbd[i]
         self.objective = self.obs_cost + latent_loss + self.lmbd[-1] * self.matching_penalty
         # Enc Sigma penalty
