@@ -80,7 +80,7 @@ class Run(object):
             pen_Sigma = 0.
             for i in range(len(self.Sigma_penalty)):
                 pen_Sigma += self.Sigma_penalty[i]*self.lmbd_sigma[i]
-            self.objective += pen_Sigma
+            self.objective -= pen_Sigma
 
         # --- Various metrics
         # MSE
