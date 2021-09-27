@@ -18,7 +18,7 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
-from models import stackedWAE
+from models import WAE, stackedWAE
 from plot_functions import save_train, plot_splitloss, plot_fullrec, plot_embedded, plot_latent
 from plot_functions import save_latent_interpolation, save_vlae_experiment
 
@@ -54,7 +54,7 @@ class Run(object):
         if self.opts['model'] == 'vae':
             raise NotImplementedError()
         elif self.opts['model'] == 'wae':
-            raise NotImplementedError()
+            self.model = WAE(self.opts, self.pz_params)
         elif self.opts['model'] == 'stackedwae':
             self.model = stackedWAE(self.opts, self.pz_params)
         elif self.opts['model'] == 'LVAE':
@@ -67,9 +67,8 @@ class Run(object):
 
         # --- Objective
         self.obs_cost, self.latent_costs, self.matching_penalty, self.Sigma_penalty = self.model.losses(
-                                    x, self.opts['resample'],
-                                    self.opts['nresamples'],
-                                    False, self.is_training)
+                                    x, self.sigma_scale, self.opts['resample'],
+                                    self.opts['nresamples'], False, self.is_training)
         # Compute obj
         latent_loss = 0.
         for i in range(len(self.latent_costs)):
@@ -84,13 +83,13 @@ class Run(object):
 
         # --- Various metrics
         # MSE
-        self.mse = self.model.MSE(x)
+        self.mse = self.model.MSE(x, self.sigma_scale)
         # blurriness
         self.blurriness = self.model.blurriness(x)
         # real imagesnblurriness
         self.real_blurriness = self.model.blurriness(self.images)
         # layerwise KL
-        self.KL = self.model.layerwise_kl(x)
+        self.KL = self.model.layerwise_kl(x, self.sigma_scale)
         # FID
         if opts['fid']:
             self.inception_graph = tf.Graph()
@@ -99,11 +98,8 @@ class Run(object):
 
         # --- encode and reconstruct
         # encode
-        self.encoded, _, _ = self.model.encode(self.images, True,
-                                    self.opts['nresamples'],
-                                    self.opts['sigma_scale'],
-                                    reuse=True,
-                                    is_training=False)
+        self.encoded, _, _ = self.model.encode(self.images, self.sigma_scale,
+                                    True, self.opts['nresamples'], True, is_training=False)
         # reconstruct
         reconstruction = self.model.reconstruct(self.encoded)
         # shape1 = lambda: [-1, self.model.opts['nresamples']] + self.data.data_shape
@@ -134,17 +130,21 @@ class Run(object):
         self.sess.graph.finalize()
 
     def add_placeholders(self):
+        # inputs ph
         self.images = tf.compat.v1.placeholder(tf.float32, [None,] + self.data.data_shape,
                                     name='images_ph')
         self.pz_samples = tf.compat.v1.placeholder(tf.float32, [None,] + [self.opts['zdim'][-1],],
                                     name='pzsamples_ph')
+        # obj coef ph
         self.lmbd = tf.compat.v1.placeholder(tf.float32, [self.opts['nlatents'],],
                                     name='lambda_ph')
         self.lmbd_sigma = tf.compat.v1.placeholder(tf.float32, [self.opts['nlatents'],],
                                     name='lambda_sigma_ph')
+        # training parms ph
         self.lr_decay = tf.compat.v1.placeholder(tf.float32, name='rate_decay_ph')
         self.is_training = tf.compat.v1.placeholder(tf.bool, name='is_training_ph')
-
+        # vizu config ph
+        self.sigma_scale = tf.compat.v1.placeholder(tf.float32, [1,], name='sigma_scale_ph')
         if self.opts['archi'][0]=='resnet_v2' and self.opts['nlatents']!=1:
             if self.opts['e_resample'][0]=='down':
                 self.anchors_points = tf.compat.v1.placeholder(tf.float32,
@@ -299,6 +299,7 @@ class Run(object):
             # optimization step
             it += 1
             _ = self.sess.run(self.opt, feed_dict={self.data.handle: self.train_handle,
+                                    self.sigma_scale: np.ones(1),
                                     self.lmbd: lmbd,
                                     self.lmbd_sigma: lmbd_sigma,
                                     self.lr_decay: decay,
@@ -315,6 +316,7 @@ class Run(object):
                                     self.matching_penalty,
                                     self.Sigma_penalty],
                                     feed_dict={self.data.handle: self.train_handle,
+                                                self.sigma_scale: np.ones(1),
                                                 self.lmbd: lmbd,
                                                 self.lmbd_sigma: lmbd_sigma,
                                                 self.is_training: False})
@@ -329,7 +331,7 @@ class Run(object):
                 [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
                                     feed_dict={self.data.handle: self.train_handle,
                                                 self.images: batch,
-                                                self.is_training: False})
+                                                self.sigma_scale: np.ones(1),})
                 trMSE.append(mse)
                 trBlurr.append(blurr)
                 trKL.append(kl)
@@ -346,6 +348,7 @@ class Run(object):
                                     self.matching_penalty,
                                     self.Sigma_penalty],
                                     feed_dict={self.data.handle: self.test_handle,
+                                                self.sigma_scale: np.ones(1),
                                                 self.lmbd: lmbd,
                                                 self.lmbd_sigma: lmbd_sigma,
                                                 self.is_training: False})
@@ -360,7 +363,7 @@ class Run(object):
                     [m, b, k] = self.sess.run([self.mse, self.blurriness, self.KL],
                                     feed_dict={self.data.handle: self.test_handle,
                                                 self.images: batch,
-                                                self.is_training: False})
+                                                self.sigma_scale: np.ones(1)})
                     mse += m / test_it_num
                     blurr += b / test_it_num
                     kl += np.array(k) / test_it_num
@@ -420,7 +423,7 @@ class Run(object):
                                     self.samples],
                                     feed_dict={self.images: batch,
                                                self.pz_samples: fixed_noise,
-                                               self.is_training: False})
+                                                self.sigma_scale: np.ones(1)})
                 rec = [rec[n][:,0] for n in range(len(rec))]
                 encoded = encoded[:,0]
                 save_train(self.opts, batch, labels, rec[-1], samples,
@@ -449,20 +452,17 @@ class Run(object):
                     idx = np.random.randint(0, self.data.test_size, batchsize)
                     x, y = self.data.sample_observations(idx)
                     z = self.sess.run(self.encoded, feed_dict={self.images: x,
-                                self.is_training: False})
+                                    self.sigma_scale: np.ones(1)})
                         # zs += [z[n][:,0] for n in range(len(z))]
                         # ys += y
                     plot_embedded(self.opts, z, y, exp_dir, 'emb_it%07d.png' % it)
 
                 if self.opts['vizu_latent']:
-                    sigma_scale = self.opts['sigma_scale']
-                    self.opts['sigma_scale'] = 2.
                     idx = np.random.randint(0, self.data.test_size, self.opts['nresamples'])
                     x, _ = self.data.sample_observations(idx)
                     reconstruction = self.sess.run(self.reconstruction, feed_dict={self.images: x,
-                                    self.is_training: False})
+                                    self.sigma_scale: self.opts['sigma_scale']})
                     plot_latent(self.opts, reconstruction, exp_dir, 'latent_expl_it%07d.png' % it)
-                    self.opts['sigma_scale'] = sigma_scale
 
                 # Update learning rate if necessary and counter
                 # First 150 epochs do nothing

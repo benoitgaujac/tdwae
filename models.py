@@ -25,7 +25,7 @@ class Model(object):
         self.pz_params = pz_params
 
     # --- encode the inputs
-    def encode(self, inputs, resample, nresamples=1, sigma_scale=1., reuse=False, is_training=True):
+    def encode(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         pass
 
     # --- encode the inputs
@@ -33,10 +33,9 @@ class Model(object):
         pass
 
     # --- full path through the model
-    def forward_pass(self, inputs, resample, nresamples=1, reuse=False, is_training=True):
+    def forward_pass(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- encoder-decoder foward pass
-        zs, enc_means, enc_Sigmas = self.encode(inputs, resample, nresamples, 1., reuse, is_training)
-
+        zs, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, resample, nresamples, reuse, is_training)
         xs, dec_means, dec_Sigmas = self.decode(zs, None, reuse, is_training)
         return zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas
 
@@ -49,9 +48,9 @@ class Model(object):
         pass
 
     # various metrics
-    def MSE(self, inputs):
+    def MSE(self, inputs, sigma_scale):
         # --- compute MSE between inputs and reconstruction
-        zs, _, _ = self.encode(inputs, False, reuse=True, is_training=False)
+        zs, _, _ = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
         xs = self.reconstruct(zs)
         square_dist = tf.reduce_sum(tf.square(tf.compat.v1.layers.flatten(inputs) - xs[-1]))
         return tf.reduce_mean(square_dist)
@@ -94,12 +93,13 @@ class Model(object):
                     o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
         return pool3
 
-    def layerwise_kl(self, inputs):
+    def layerwise_kl(self, inputs, sigma_scale):
         # --- compute layer-wise KL(q(z_i|z_i-1,p(z_i|z_i+1))
-        _, enc_means, enc_Sigmas = self.encode(inputs, False, reuse=True, is_training=False)
+        _, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
         pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
         _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples)
         dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
+        # pdb.set_trace()
         KL = []
         # latent layer up to N-1
         for n in range(len(enc_means)-1):
@@ -118,7 +118,7 @@ class stackedWAE(Model):
     def __init__(self, opts, pz_params):
         super().__init__(opts, pz_params)
 
-    def encode(self, inputs, resample, nresamples=1, sigma_scale=1., reuse=False, is_training=True):
+    def encode(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- Encoding Loop
         zs, means, Sigmas = [], [], []
         for n in range(self.opts['nlatents']):
@@ -148,7 +148,7 @@ class stackedWAE(Model):
                 q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                 if resample:
                     q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
-                z = sample_gaussian(self.opts, q_params, 'tensorflow', self.opts['batch_size'])
+                z = sample_gaussian(self.opts, q_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % self.opts['encoder']
             zs.append(z)
@@ -201,7 +201,7 @@ class stackedWAE(Model):
             elif self.opts['decoder'][idx] == 'gauss':
                 # - gaussian decoder
                 p_params = tf.concat((mean, Sigma),axis=-1)
-                x = sample_gaussian(self.opts, p_params, 'tensorflow', self.opts['batch_size'])
+                x = sample_gaussian(self.opts, p_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
             xs.append(x)
@@ -210,11 +210,11 @@ class stackedWAE(Model):
 
         return xs, means, Sigmas
 
-    def losses(self, inputs, resample, nresamples=1, reuse=False, is_training=True):
+    def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- compute the losses of the stackedWAE
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
-                                            inputs, resample, nresamples,
-                                            reuse, is_training)
+                                            inputs, sigma_scale, resample,
+                                            nresamples, reuse, is_training)
         obs_cost = self.obs_cost(inputs, xs[0])
         latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
                                             zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
@@ -273,5 +273,147 @@ class stackedWAE(Model):
             means.append(mean[0])
             Sigmas.append(Sigma[0])
             inputs = dec[0]
+
+        return decoded, means, Sigmas
+
+class WAE(Model):
+
+    def __init__(self, opts, pz_params):
+        super().__init__(opts, pz_params)
+
+    def encode(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+        # --- Encoding Loop
+        mean, Sigma = Encoder(self.opts, input=inputs,
+                                        archi=self.opts['archi'][0],
+                                        nlayers=self.opts['nlayers'][0],
+                                        nfilters=self.opts['nfilters'][0],
+                                        filters_size=self.opts['filters_size'][0],
+                                        output_dim=self.opts['zdim'][0],
+                                        downsample=self.opts['upsample'],
+                                        output_layer=self.opts['output_layer'][0],
+                                        scope='encoder/layer_1',
+                                        reuse=reuse,
+                                        is_training=is_training)
+        if self.opts['encoder'][0] == 'det':
+            # - deterministic encoder
+            z = mean
+        elif self.opts['encoder'][0] == 'gauss':
+            # - gaussian encoder
+            q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
+            if resample:
+                q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
+            z = sample_gaussian(self.opts, q_params, 'tensorflow')
+        else:
+            assert False, 'Unknown encoder %s' % self.opts['encoder']
+
+        return [z,], [mean,], [Sigma,]
+
+    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+        # --- Decoding Loop
+        output_dim = datashapes[self.opts['dataset']][:-1]+[datashapes[self.opts['dataset']][-1],]
+        z = zs[0]
+        zshape = z.get_shape().as_list()[1:]
+        if len(zshape)>1:
+            # reshape the codes to [-1,output_dim]
+            z = tf.squeeze(tf.concat(tf.split(z, zshape[0], 1), axis=0), [1])
+        mean, Sigma = Decoder(self.opts, input=z,
+                                        archi=self.opts['archi'][0],
+                                        nlayers=self.opts['nlayers'][0],
+                                        nfilters=self.opts['nfilters'][0],
+                                        filters_size=self.opts['filters_size'][0],
+                                        output_dim=output_dim,
+                                        upsample=self.opts['upsample'],
+                                        output_layer=self.opts['output_layer'][0],
+                                        scope='decoder/layer_0',
+                                        reuse=reuse,
+                                        is_training=is_training)
+        # reshaping to [-1,nresamples,output_dim] if needed
+        if len(zshape)>1:
+            mean = tf.stack(tf.split(mean, zshape[0]), axis=1)
+            Sigma = tf.stack(tf.split(Sigma, zshape[0]), axis=1)
+        # - resampling reconstruced
+        if self.opts['decoder'][0] == 'det':
+            # - deterministic decoder
+            x = mean
+        elif self.opts['decoder'][0] == 'gauss':
+            # - gaussian decoder
+            p_params = tf.concat((mean, Sigma),axis=-1)
+            x = sample_gaussian(self.opts, p_params, 'tensorflow')
+        else:
+            assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
+
+        return [x,], [mean,], [Sigma,]
+
+    def decode_implicit_prior(self, z, reuse=False, is_training=True):
+        # --- Decoding Loop
+        output = z
+        for n in range(self.opts['nlatents']-1,0,-1):
+            if n==1:
+                output_dim = [self.opts['zdim'][n-1],]
+            else:
+                output_dim = None
+            output, _ = Decoder(self.opts, input=output,
+                                            archi=self.opts['archi'][n],
+                                            nlayers=self.opts['nlayers'][n],
+                                            nfilters=self.opts['nfilters'][n],
+                                            filters_size=self.opts['filters_size'][n],
+                                            output_dim=output_dim,
+                                            upsample=self.opts['upsample'],
+                                            output_layer=self.opts['output_layer'][n],
+                                            scope='decoder/layer_%d' % n,
+                                            reuse=reuse,
+                                            is_training=is_training)
+
+        return output
+
+    def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+        # --- compute the losses of the stackedWAE
+        zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
+                                            inputs, sigma_scale, resample,
+                                            nresamples, reuse, is_training)
+        obs_cost = self.obs_cost(inputs, xs[0])
+        latent_cost = [0,]
+        pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
+        pz_samples = self.decode_implicit_prior(pz_samples, reuse, is_training)
+        if resample:
+            qz_samples = zs[-1][:,0]
+        else:
+            qz_samples = zs[-1]
+        # pdb.set_trace()
+        matching_penalty = self.matching_penalty(qz_samples, pz_samples)
+        Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
+        return obs_cost, latent_cost, matching_penalty, Sigma_penalty
+
+    def obs_cost(self, inputs, reconstructions):
+        # --- compute the reconstruction cost in the data space
+        return obs_reconstruction_loss(self.opts, inputs, reconstructions)
+
+    def matching_penalty(self, qz, pz):
+        # --- compute the latent penalty for the deepest latent layer
+        return matching_penalty(self.opts, qz, pz)
+
+    def Sigma_penalty(self, Sigmas):
+        # -- compute the encoder Sigmas penalty
+        penalties = []
+        for n in range(len(Sigmas)):
+            penalty = tf.reduce_mean(tf.abs(tf.reduce_mean(tf.compat.v1.log(Sigmas[n]),axis=-1)))
+            penalties.append(penalty)
+        return penalties
+
+    def reconstruct(self, zs):
+        # Reconstruct for each encoding layer
+        reconstruction = []
+        inputs = zs
+        for m in range(len(zs)):
+            rec, _, _ = self.decode(inputs, None, True, False)
+            reconstruction.append(rec[0])
+            inputs = rec[1:]
+
+        return reconstruction
+
+    def sample_x_from_prior(self, samples):
+        # --- sample from prior noise
+        outputs = self.decode_implicit_prior(samples, True, False)
+        decoded, means, Sigmas = self.decode([inputs,], reuse=True, is_training=False)
 
         return decoded, means, Sigmas

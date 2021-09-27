@@ -85,8 +85,8 @@ def main():
     id = (FLAGS.id-1) % len(lmba)
     lrec, lmatch, lsigma = lmba[id][0], lmba[id][1], lmba[id][2]
     opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
-    opts['lambda_sigma'] = [lsigma * exp(-n) for i in range(opts['nlatents'])]
-    opts['nfilters'] = [int(lmba[id][3] / 2**i) for i in range(opts['nlatents'])]
+    opts['lambda_sigma'] = [lsigma * exp(-n) for n in range(opts['nlatents'])]
+    opts['nfilters'] = [int(lmba[id][3] / 2**n) for n in range(opts['nlatents'])]
 
     # Create directories
     results_dir = 'results'

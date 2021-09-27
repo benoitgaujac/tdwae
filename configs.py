@@ -1,5 +1,6 @@
 import copy
 from math import pow, sqrt, exp
+import numpy as np
 
 ### Default common config
 config = {}
@@ -52,7 +53,7 @@ config['mmd_kernel'] = 'IMQ' # RBF, IMQ
 config['nlatents'] = 5
 config['zdim'] = [32,16,8,4,2] #[32,8]
 config['pz_scale'] = 1.
-config['sigma_scale'] = 4.
+config['sigma_scale'] = 4.*np.ones(1)
 config['prior'] = 'gaussian' # dirichlet, gaussian
 config['encoder'] = ['gauss',]*config['nlatents'] # det, gaussian
 config['decoder'] = ['det',]+['gauss',]*(config['nlatents']-1) # det, gaussian
