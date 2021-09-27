@@ -73,15 +73,16 @@ def main():
         assert False, 'Unknown dataset'
 
     # lamba
-    lambda_rec = [10e-4,10e-3,10e-2]
-    lamdba_match = [10e-5,10e-4,10e-3,10e-2]
-    nfilters = [2048, 1024, 512]
-    lmba = list(itertools.product(lambda_rec,lamdba_match, nfilters))
+    lambda_rec = [10e-4, 10e-3, 10e-2]
+    lamdba_match = [10e-5, 10e-4, 10e-3, 10e-2]
+    lamdba_sigma = [1., 0.1]
+    nfilters = [2048,]
+    lmba = list(itertools.product(lambda_rec,lamdba_match,lamdba_sigma,nfilters))
     id = (FLAGS.id-1) % len(lmba)
-    lrec, lmatch = lmba[id][0], lmba[id][1]
+    lrec, lmatch, lsigma = lmba[id][0], lmba[id][1], lmba[id][2]
     opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
-    opts['nfilters'] = [int(lmba[id][2] / 2**i) for i in range(opts['nlatents'])]
-
+    opts['lambda_sigma'] = [lsigma,]*opts['nlatents']
+    opts['nfilters'] = [int(lmba[id][3] / 2**i) for i in range(opts['nlatents'])]
 
     # Create directories
     results_dir = 'results'
@@ -90,17 +91,18 @@ def main():
     opts['out_dir'] = os.path.join(results_dir,FLAGS.out_dir)
     if not tf.io.gfile.isdir(opts['out_dir']):
         utils.create_dir(opts['out_dir'])
-    out_subdir = os.path.join(opts['out_dir'], opts['model'] + '_nfilters' + str(lmba[id][2]))
+    out_subdir = os.path.join(opts['out_dir'], opts['model'] + '_nfilters' + str(lmba[id][3]))
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
     if opts['model'] == 'stackedwae' or opts['model'] == 'lvae':
         exp_dir = os.path.join(out_subdir,
-                               '{}_{}layers_lrec{}_lmatch{}_{:%Y_%m_%d_%H_%M}'.format(
+                               '{}_{}layers_lrec{}_lmatch{}_lsigma{}_{:%Y_%m_%d_%H_%M}'.format(
                                     opts['exp_dir'],
                                     opts['nlatents'],
                                     lrec,
                                     lmatch,
+                                    lsigma,
                                     datetime.now()))
     else :
         exp_dir = os.path.join(out_subdir,
