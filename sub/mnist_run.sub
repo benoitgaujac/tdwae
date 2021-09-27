@@ -8,7 +8,7 @@
 #$ -l tmem=5G
 #$ -l h_rt=12:00:00
 
-#$ -t 1-24
+#$ -t 1-36
 
 #$ -N mnist
 
@@ -16,5 +16,5 @@ source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
 
-#python3 run_onelayer_wae.py --lmba 1. --work_dir 1l_mnist
 python3 run.py --num_it 200000 --out_dir mnist_pen_Sigma --save_model --id $SGE_TASK_ID
+# python3 run.py --num_it 200 --out_dir mnist_test --model wae --save_model --id 1
