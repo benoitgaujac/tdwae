@@ -6,6 +6,7 @@ import argparse
 import itertools
 
 import tensorflow as tf
+from math import pow, sqrt, exp
 
 import configs
 from train import Run
