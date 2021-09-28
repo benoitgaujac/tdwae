@@ -91,7 +91,7 @@ def main():
     opts['pen_sigma'] = FLAGS.pen_sigma
 
     # lamba
-    lambda_rec = [10e-4, 10e-3, 10e-2, 10e-1]
+    lambda_rec = [10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
     lamdba_match = [10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
     # lamdba_sigma = [10., 1., 0.1]
     nfilters = [2048,]
