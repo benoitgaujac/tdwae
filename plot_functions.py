@@ -219,7 +219,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     plt.ylabel(r'kl(q$_i$|p$_i$)')
     plt.grid(axis='y')
     plt.legend(loc='upper right')
-    plt.text(0.47, 1., 'Metrics', ha="center", va="bottom",
+    plt.text(0.47, 1., 'KL', ha="center", va="bottom",
                                 size=20, transform=ax.transAxes)
 
     ### Saving plots and data
