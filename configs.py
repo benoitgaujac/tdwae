@@ -13,7 +13,7 @@ config['print_every'] = 100
 config['vizu_splitloss'] = True
 config['vizu_fullrec'] = True
 config['vizu_embedded'] = True
-config['embedding'] = 'umap' #vizualisation method of the embeddings: pca, umap
+config['embedding'] = 'pca' #vizualisation method of the embeddings: pca, umap
 config['vizu_latent'] = True
 config['vizu_encSigma'] = False
 config['fid'] = False
@@ -54,7 +54,7 @@ config['sqrdist'] = 'broadcast' #dotprod, broadcast
 config['nlatents'] = 5
 config['zdim'] = [32,16,8,4,2] #[32,8]
 config['pz_scale'] = 1.
-config['sigma_scale'] = 4.*np.ones(1)
+config['sigma_scale'] = np.ones(1)
 config['prior'] = 'gaussian' # dirichlet, gaussian
 config['encoder'] = ['gauss',]*config['nlatents'] # det, gaussian
 config['decoder'] = ['det',]+['gauss',]*(config['nlatents']-1) # det, gaussian
@@ -90,9 +90,10 @@ config_mnist['crop_style'] = 'closecrop' # closecrop, resizecrop
 
 # Model set up
 config_mnist['nlatents'] = 5
+config_mnist['sigma_scale'] = 10.*np.ones(1)
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['resample'] = True
-config_mnist['nresamples'] = 4
+config_mnist['nresamples'] = 9
 
 # lambda set up
 config_mnist['lambda'] = [0.001**n for n in range(1,config_mnist['nlatents']+1)]
@@ -100,12 +101,12 @@ config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Cov penalties
 config_mnist['pen_sigma'] = True # True, False
-config_mnist['lambda_sigma'] = [0.01,]*config_mnist['nlatents']
+config_mnist['lambda_sigma'] = [1.,]*config_mnist['nlatents']
 
 # NN set up
 config_mnist['archi'] = ['mlp',]*config['nlatents'] # mlp, dcgan
 config_mnist['nlayers'] = [2,]*config['nlatents']
-config_mnist['nfilters'] = [512,256,128,64,32]
+config_mnist['nfilters'] = [2048,1024,512,256,128]
 config_mnist['filters_size'] = [3,]*config['nlatents']
 config_mnist['nonlinearity'] = 'elu' # soft_plus, relu, leaky_relu, tanh
 config_mnist['output_layer'] = ['dense',]*config['nlatents'] # dense, conv, conv1x1

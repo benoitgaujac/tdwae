@@ -449,7 +449,7 @@ class Run(object):
 
                 if self.opts['vizu_embedded']:
                     nencoded = 500
-                    batchsize = 500
+                    batchsize = 1000
                     # zs, ys = [], []
                     # for _ in range(int(nencoded/batchsize)):
                     idx = np.random.randint(0, self.data.test_size, batchsize)
