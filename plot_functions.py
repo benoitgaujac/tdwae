@@ -207,14 +207,14 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     ax = plt.subplot(gs[1, 2])
     for kl, (label, style) in zip([teKL, trKL], [(True, '-'), (False, '--')]):
         for i in range(kl.shape[-1]):
-            if label is not None:
+            if label:
                 label = 'latent ' + str(i+1)
             else:
                 label=None
             total_num = len(kl[:,i])
             x_step = max(int(total_num / 200), 1)
             x = np.arange(1, len(kl[:,i]) + 1, x_step)
-            y = np.log(kl[::x_step, i])
+            y = np.log(kl[::x_step, i] / opts['zdim'][i])
             plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
     plt.ylabel(r'kl(q$_i$|p$_i$)')
     plt.grid(axis='y')

@@ -19,7 +19,7 @@ def kl_penalty(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
     kl = encoded_sigma / pz_sigma \
         + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
         + tf.compat.v1.log(pz_sigma) - tf.compat.v1.log(1e-10+encoded_sigma)
-    kl = 0.5 * tf.reduce_mean(kl,axis=-1)
+    kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
 def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):

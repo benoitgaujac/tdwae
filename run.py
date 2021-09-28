@@ -100,7 +100,8 @@ def main():
     id = (FLAGS.id-1) % len(lmba)
     # lrec, lmatch, lsigma = lmba[id][0], lmba[id][1], lmba[id][2]
     lrec, lmatch, nfilters = lmba[id][0], lmba[id][1], lmba[id][2]
-    opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
+    # opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
+    opts['lambda'] = [lrec*exp(-n)/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
     # opts['lambda_sigma'] = [lsigma * exp(-n) for n in range(opts['nlatents'])]
     # opts['nfilters'] = [int(lmba[id][3] / 2**n) for n in range(opts['nlatents'])]
     opts['nfilters'] = [int(nfilters / 2**n) for n in range(opts['nlatents'])]
