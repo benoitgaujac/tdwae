@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from math import ceil, sqrt
+from math import ceil, sqrt, log, exp
 
 import ops.linear
 import ops.conv2d
@@ -38,7 +38,7 @@ def one_layer_encoder(opts, input, reuse=False, is_training=False):
     return mean, Sigma
 
 def Encoder(opts, input, archi, nlayers, nfilters, filters_size,
-                                            output_dim,
+                                            output_dim=None,
                                             # features_dim=None,
                                             downsample=None,
                                             output_layer='mlp',
@@ -97,7 +97,8 @@ def Encoder(opts, input, archi, nlayers, nfilters, filters_size,
             raise ValueError('%s : Unknown encoder architecture' % archi)
 
     mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -20, 500)
+    min, max = log(exp(1e-10)-1), 1e4
+    logSigma = tf.clip_by_value(logSigma, min, max)
     Sigma = tf.nn.softplus(logSigma)
     return tf.compat.v1.layers.flatten(mean), tf.compat.v1.layers.flatten(Sigma)
 

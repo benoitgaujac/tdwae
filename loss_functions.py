@@ -19,7 +19,7 @@ def kl_penalty(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
     kl = encoded_sigma / pz_sigma \
         + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
         + tf.compat.v1.log(pz_sigma) - tf.compat.v1.log(1e-10+encoded_sigma)
-    kl = 0.5 * tf.reduce_sum(kl,axis=-1)
+    kl = 0.5 * tf.reduce_mean(kl,axis=-1)
     return tf.reduce_mean(kl)
 
 def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
@@ -162,6 +162,15 @@ def mmd_penalty(opts, sample_qz, sample_pz):
     return stat
 
 def square_dist(opts, sample_x, sample_y):
+    if opts['sqrdist'] == 'dotprod':
+        return square_dist_dotprod(opts, sample_x, sample_y)
+    elif opts['sqrdist'] == 'broadcast':
+        return square_dist_broadcast(opts, sample_x, sample_y)
+    else:
+        raise Exception('Unknown {} square distance'.format(self.opts['sqrdist']))
+
+
+def square_dist_dotprod(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance
     """
@@ -172,7 +181,7 @@ def square_dist(opts, sample_x, sample_y):
                     - 2. * tf.matmul(sample_x,sample_y,transpose_b=True)
     return tf.nn.relu(squared_dist)
 
-def square_dist_v2(opts, sample_x, sample_y):
+def square_dist_broadcast(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance
     """

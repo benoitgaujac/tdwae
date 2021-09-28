@@ -6,7 +6,7 @@ import tensorflow as tf
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, sample_unif, linespace
 from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss, moments_loss
-from loss_functions import kl_penalty, square_dist, square_dist_v2
+from loss_functions import kl_penalty
 from encoder import Encoder
 from decoder import Decoder
 from datahandler import datashapes
@@ -52,7 +52,7 @@ class Model(object):
         # --- compute MSE between inputs and reconstruction
         zs, _, _ = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
         xs = self.reconstruct(zs)
-        square_dist = tf.reduce_sum(tf.square(tf.compat.v1.layers.flatten(inputs) - xs[-1]))
+        square_dist = tf.reduce_mean(tf.square(tf.compat.v1.layers.flatten(inputs) - xs[-1]), axis=-1)
         return tf.reduce_mean(square_dist)
 
     def blurriness(self, inputs):
@@ -99,7 +99,6 @@ class Model(object):
         pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
         _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples)
         dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
-        # pdb.set_trace()
         KL = []
         # latent layer up to N-1
         for n in range(len(enc_means)-1):
@@ -248,7 +247,7 @@ class stackedWAE(Model):
         # -- compute the encoder Sigmas penalty
         penalties = []
         for n in range(len(Sigmas)):
-            penalty = tf.reduce_mean(tf.abs(tf.reduce_mean(tf.compat.v1.log(Sigmas[n]),axis=-1)))
+            penalty = tf.reduce_mean(tf.abs(tf.reduce_sum(tf.compat.v1.log(Sigmas[n]),axis=-1)))
             penalties.append(penalty)
         return penalties
 
@@ -368,18 +367,17 @@ class WAE(Model):
 
     def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- compute the losses of the stackedWAE
-        zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
+        zs, _, enc_Sigmas, xs, _, _ = self.forward_pass(
                                             inputs, sigma_scale, resample,
                                             nresamples, reuse, is_training)
         obs_cost = self.obs_cost(inputs, xs[0])
-        latent_cost = [0,]
+        latent_cost = []
         pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
         pz_samples = self.decode_implicit_prior(pz_samples, reuse, is_training)
         if resample:
             qz_samples = zs[-1][:,0]
         else:
             qz_samples = zs[-1]
-        # pdb.set_trace()
         matching_penalty = self.matching_penalty(qz_samples, pz_samples)
         Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         return obs_cost, latent_cost, matching_penalty, Sigma_penalty
@@ -414,6 +412,6 @@ class WAE(Model):
     def sample_x_from_prior(self, samples):
         # --- sample from prior noise
         outputs = self.decode_implicit_prior(samples, True, False)
-        decoded, means, Sigmas = self.decode([inputs,], reuse=True, is_training=False)
+        decoded, means, Sigmas = self.decode([outputs,], reuse=True, is_training=False)
 
         return decoded, means, Sigmas

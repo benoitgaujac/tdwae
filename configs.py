@@ -48,6 +48,7 @@ config['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
 config['latent_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
 config['penalty'] = 'mmd' #sinkhorn, mmd
 config['mmd_kernel'] = 'IMQ' # RBF, IMQ
+config['sqrdist'] = 'broadcast' #dotprod, broadcast
 
 # Model set up
 config['nlatents'] = 5

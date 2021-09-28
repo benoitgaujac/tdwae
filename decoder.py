@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from math import ceil, sqrt
+from math import ceil, sqrt, log, exp
 
 import ops.linear
 import ops.conv2d
@@ -36,7 +36,7 @@ def one_layer_decoder(opts, input, reuse=False, is_training=False):
 
 
 def Decoder(opts, input, archi, nlayers, nfilters, filters_size,
-                                            output_dim,
+                                            output_dim=None,
                                             # features_dim=None,
                                             upsample=False,
                                             output_layer='mlp',
@@ -93,11 +93,17 @@ def Decoder(opts, input, archi, nlayers, nfilters, filters_size,
         else:
             raise ValueError('%s Unknown encoder architecture for mixtures' % opts['arch'])
 
-    mean, logSigma = tf.split(outputs,2,axis=-1)
-    logSigma = tf.clip_by_value(logSigma, -20, 500)
-    Sigma = tf.nn.softplus(logSigma)
+    if output_dim is not None:
+        mean, logSigma = tf.split(outputs,2,axis=-1)
+        min, max = log(exp(1e-10)-1), 1e4
+        logSigma = tf.clip_by_value(logSigma, min, max)
+        Sigma = tf.nn.softplus(logSigma)
+        mean = tf.compat.v1.layers.flatten(mean)
+        Sigma = tf.compat.v1.layers.flatten(Sigma)
+    else:
+        mean, Sigma = tf.compat.v1.layers.flatten(outputs), None
 
-    return tf.compat.v1.layers.flatten(mean), tf.compat.v1.layers.flatten(Sigma)
+    return mean, Sigma
 
 def mlp_decoder(opts, input, nlayers, nunits, output_dim, reuse,
                                             is_training):
@@ -115,8 +121,11 @@ def mlp_decoder(opts, input, nlayers, nunits, output_dim, reuse,
             layer_x = ops.layernorm.Layernorm(
                 opts, layer_x, 'hid%d/bn' % i, reuse)
         layer_x = ops._ops.non_linear(layer_x, opts['nonlinearity'])
-    outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
-                2*np.prod(output_dim), init=opts['mlpinit'], scope='hid_final')
+    if output_dim is not None:
+        outputs = ops.linear.Linear(opts, layer_x, np.prod(layer_x.get_shape().as_list()[1:]),
+                    2*np.prod(output_dim), init=opts['mlpinit'], scope='hid_final')
+    else:
+        outputs = layer_x
 
     return outputs
 

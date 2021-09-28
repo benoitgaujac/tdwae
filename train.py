@@ -59,7 +59,7 @@ class Run(object):
             self.model = stackedWAE(self.opts, self.pz_params)
         elif self.opts['model'] == 'LVAE':
             raise NotImplementedError()
-        elif self.opts['model'] == 'ladderstackedwae':
+        else:
             raise Exception('Unknown {} model'.format(self.opts['model']))
 
         # --- Sample next batch
@@ -89,7 +89,10 @@ class Run(object):
         # real imagesnblurriness
         self.real_blurriness = self.model.blurriness(self.images)
         # layerwise KL
-        self.KL = self.model.layerwise_kl(x, self.sigma_scale)
+        if self.opts['model'] == 'wae':
+            self.KL = [tf.ones([]) for i in range(self.opts['nlatents'])]
+        else:
+            self.KL = self.model.layerwise_kl(x, self.sigma_scale)
         # FID
         if opts['fid']:
             self.inception_graph = tf.Graph()

@@ -113,43 +113,44 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         ax.axes.set_aspect(1)
 
     ###UMAP visualization of the embedings
-    base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, 10))
-    num_pics = np.shape(encoded)[0]
-    ax = plt.subplot(gs[0, 2])
-    if np.shape(encoded)[1]==2:
-        embedding = np.concatenate((encoded,samples_prior),axis=0)
-    else:
-        if opts['embedding']=='pca':
-            embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
-        elif opts['embedding']=='umap':
-            embedding = umap.UMAP(n_neighbors=15,
-                                    min_dist=0.2,
-                                    metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+    if encoded.shape[-1]==samples_prior.shape[-1]:
+        base = plt.cm.get_cmap('tab10')
+        color_list = base(np.linspace(0, 1, 10))
+        num_pics = np.shape(encoded)[0]
+        ax = plt.subplot(gs[0, 2])
+        if np.shape(encoded)[1]==2:
+            embedding = np.concatenate((encoded,samples_prior),axis=0)
         else:
-            assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
-    plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
-                c=label[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                # c=label[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
-    plt.colorbar()
-    plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
-                            color='navy', s=50, marker='*',label='Pz')
-    xmin = np.amin(embedding[:,0])
-    xmax = np.amax(embedding[:,0])
-    magnify = 0.3
-    width = abs(xmax - xmin)
-    xmin = xmin - width * magnify
-    xmax = xmax + width * magnify
-    ymin = np.amin(embedding[:,1])
-    ymax = np.amax(embedding[:,1])
-    width = abs(ymin - ymax)
-    ymin = ymin - width * magnify
-    ymax = ymax + width * magnify
-    plt.xlim(xmin, xmax)
-    plt.ylim(ymin, ymax)
-    plt.legend(loc='upper left')
-    plt.text(0.47, 1., 'UMAP latents', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
+            if opts['embedding']=='pca':
+                embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+            elif opts['embedding']=='umap':
+                embedding = umap.UMAP(n_neighbors=15,
+                                        min_dist=0.2,
+                                        metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+            else:
+                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
+        plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
+                    c=label[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    # c=label[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
+        plt.colorbar()
+        plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
+                                color='navy', s=50, marker='*',label='Pz')
+        xmin = np.amin(embedding[:,0])
+        xmax = np.amax(embedding[:,0])
+        magnify = 0.3
+        width = abs(xmax - xmin)
+        xmin = xmin - width * magnify
+        xmax = xmax + width * magnify
+        ymin = np.amin(embedding[:,1])
+        ymax = np.amax(embedding[:,1])
+        width = abs(ymin - ymax)
+        ymin = ymin - width * magnify
+        ymax = ymax + width * magnify
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.legend(loc='upper left')
+        plt.text(0.47, 1., 'UMAP latents', ha="center", va="bottom",
+                                    size=20, transform=ax.transAxes)
 
     ### Losses curves
     teLoss_latent_reg = np.sum(teLoss_latent, axis=-1) + teLoss_match
