@@ -18,10 +18,9 @@ mydpi = 100
 
 
 def save_train(opts, data, label, rec, samples, encoded, samples_prior,
-                teLoss, teLoss_obs, teLoss_latent, teLoss_match, teSigma_reg,
-                trLoss, trLoss_obs, trLoss_latent, trLoss_match, trSigma_reg,
-                teMSE, teBlurr, teKL, trMSE, trBlurr, trKL,
-                exp_dir, filename):
+                teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
+                tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
+                teMSE, teBlurr, teKL, trMSE, trBlurr, trKL, exp_dir, filename):
 
     """ Generates and saves the plot of the following layout:
         img1 | img2 | img3
@@ -167,16 +166,20 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
-    if opts['pen_sigma']:
-        for loss, (label, color, style) in zip([np.sum(teSigma_reg, axis=-1),
-                                                np.sum(trSigma_reg, axis=-1)],
-                                                [('sigma reg.', 'g', '-'),
-                                                (None, 'g', '--')]):
-            total_num = len(loss)
-            x_step = max(int(total_num / 200), 1)
-            x = np.arange(1, len(loss) + 1, x_step)
-            y = np.log(loss[::x_step])
-            plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
+    if opts['enc_sigma_pen']:
+        loss = np.sum(teenc_Sigma_reg, axis=-1)
+        total_num = len(loss)
+        x_step = max(int(total_num / 200), 1)
+        x = np.arange(1, len(loss) + 1, x_step)
+        y = np.log(loss[::x_step])
+        plt.plot(x, y, linewidth=2, label='enc. Sig. reg.', color='g', linestyle='-')
+    if opts['dec_sigma_pen']:
+        loss = np.sum(tedec_Sigma_reg, axis=-1)
+        total_num = len(loss)
+        x_step = max(int(total_num / 200), 1)
+        x = np.arange(1, len(loss) + 1, x_step)
+        y = np.log(loss[::x_step])
+        plt.plot(x, y, linewidth=2, label='dec. Sig. reg.', color='y', linestyle='-')
 
     plt.ylabel('loss')
     plt.grid(axis='y')
@@ -233,19 +236,21 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
 
 
 ####### split losses #######
-def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, Sigma_reg, exp_dir, filename):
+def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_Sigma_reg, exp_dir, filename):
 
     Loss_obs = np.array(Loss_obs)
     Loss_match = np.array(Loss_match)
     Loss_latent = np.array(Loss_latent)
     Loss_latent_reg = np.concatenate([Loss_latent, np.expand_dims(Loss_match,axis=-1)], axis=-1)
-    Sigma_reg = np.array(Sigma_reg)
+    enc_Sigma_reg, dec_Sigma_reg = np.array(enc_Sigma_reg), np.array(dec_Sigma_reg)
     fig = plt.figure()
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 6))
-    for loss, (label, color, style) in zip([Loss_obs, Loss_latent_reg, Sigma_reg],
+    for loss, (label, color, style) in zip([Loss_obs, Loss_latent_reg,
+                                            enc_Sigma_reg, dec_Sigma_reg],
                                             [('rec', 'k', '-'),
-                                            ('latent reg. ', None, '-.'),
+                                            ('latent reg. ', None, '--'),
+                                            (None, None, '-.'),
                                             (None, None, ':')]):
         if len(loss.shape)==1:
             total_num = len(loss)

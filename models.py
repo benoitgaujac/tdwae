@@ -223,8 +223,9 @@ class stackedWAE(Model):
         else:
             qz_samples = zs[-1]
         matching_penalty = self.matching_penalty(qz_samples, pz_samples)
-        Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
-        return obs_cost, latent_cost, matching_penalty, Sigma_penalty
+        enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
+        dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
+        return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
 
     def obs_cost(self, inputs, reconstructions):
         # --- compute the reconstruction cost in the data space

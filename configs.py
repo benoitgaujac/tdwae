@@ -68,7 +68,8 @@ config['lambda'].append(0.0001*config['lambda_scalar']**5/config['zdim'][0])
 config['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Sigma penalties
-config['pen_sigma'] = False # True, False
+config['enc_sigma_pen'] = False # True, False
+config['dec_sigma_pen'] = False # True, False
 config['lambda_sigma'] = [exp(1-i) for i in range(config['nlatents'])]
 
 # NN set up
@@ -90,7 +91,7 @@ config_mnist['crop_style'] = 'closecrop' # closecrop, resizecrop
 
 # Model set up
 config_mnist['nlatents'] = 5
-config_mnist['sigma_scale'] = 10.*np.ones(1)
+config_mnist['sigma_scale'] = 100.*np.ones(1)
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['resample'] = True
 config_mnist['nresamples'] = 9
@@ -98,10 +99,6 @@ config_mnist['nresamples'] = 9
 # lambda set up
 config_mnist['lambda'] = [0.001**n for n in range(1,config_mnist['nlatents']+1)]
 config_mnist['lambda_schedule'] = 'constant' # adaptive, constant
-
-# Cov penalties
-config_mnist['pen_sigma'] = True # True, False
-config_mnist['lambda_sigma'] = [1.,]*config_mnist['nlatents']
 
 # NN set up
 config_mnist['archi'] = ['mlp',]*config['nlatents'] # mlp, dcgan

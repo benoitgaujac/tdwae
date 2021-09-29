@@ -66,20 +66,27 @@ class Run(object):
         x = self.data.next_element
 
         # --- Objective
-        self.obs_cost, self.latent_costs, self.matching_penalty, self.Sigma_penalty = self.model.losses(
-                                    x, self.sigma_scale, self.opts['resample'],
+        losses = self.model.losses(x, self.sigma_scale, self.opts['resample'],
                                     self.opts['nresamples'], False, self.is_training)
+        self.obs_cost, self.latent_costs, self.matching_penalty = losses[0], losses[1], losses[2]
+        self.enc_Sigma_penalty, self.dec_Sigma_penalty = losses[3], losses[4]
         # Compute obj
         latent_loss = 0.
         for i in range(len(self.latent_costs)):
             latent_loss += self.latent_costs[i]*self.lmbd[i]
         self.objective = self.obs_cost + latent_loss + self.lmbd[-1] * self.matching_penalty
         # Enc Sigma penalty
-        if self.opts['pen_sigma']:
-            pen_Sigma = 0.
-            for i in range(len(self.Sigma_penalty)):
-                pen_Sigma += self.Sigma_penalty[i]*self.lmbd_sigma[i]
-            self.objective -= pen_Sigma
+        if self.opts['enc_sigma_pen']:
+            Sigma_pen = 0.
+            for i in range(len(self.enc_Sigma_penalty)):
+                Sigma_pen += self.enc_Sigma_penalty[i]*self.lmbd_sigma[i]
+            self.objective -= Sigma_pen
+        # Dec Sigma penalty
+        if self.opts['dec_sigma_pen']:
+            Sigma_pen = 0.
+            for i in range(len(self.dec_Sigma_penalty)):
+                Sigma_pen += self.dec_Sigma_penalty[i]*self.lmbd_sigma[i]
+            self.objective -= Sigma_pen
 
         # --- Various metrics
         # MSE
@@ -266,9 +273,11 @@ class Run(object):
             f.close()
 
         # Init all monitoring variables
-        trLoss, trLoss_obs, trLoss_latent, trLoss_match, trSigma_reg = [], [], [], [], []
+        trLoss, trLoss_obs, trLoss_latent, trLoss_match = [], [], [], []
+        trenc_Sigma_reg, trdec_Sigma_reg = [], []
         trMSE, trBlurr, trKL = [], [], []
-        teLoss, teLoss_obs, teLoss_latent, teLoss_match, teSigma_reg = [], [], [], [], []
+        teLoss, teLoss_obs, teLoss_latent, teLoss_match = [], [], [], []
+        teenc_Sigma_reg, tedec_Sigma_reg = [], []
         teMSE, teBlurr, teKL = [], [], []
         FID = []
         # various decays and reg. params
@@ -312,12 +321,13 @@ class Run(object):
             if it % self.opts['evaluate_every'] == 0:
                 logging.error('\nIteration {}/{}'.format(it, self.opts['it_num']))
                 # training losses
-                [loss, obs_cost, latent_costs, matching_penalty, Sigma_penalty] = self.sess.run(
+                [loss, obs_cost, latent_costs, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty] = self.sess.run(
                                     [self.objective,
                                     self.obs_cost,
                                     self.latent_costs,
                                     self.matching_penalty,
-                                    self.Sigma_penalty],
+                                    self.enc_Sigma_penalty,
+                                    self.dec_Sigma_penalty],
                                     feed_dict={self.data.handle: self.train_handle,
                                                 self.sigma_scale: np.ones(1),
                                                 self.lmbd: lmbd,
@@ -327,7 +337,8 @@ class Run(object):
                 trLoss_obs.append(obs_cost)
                 trLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 trLoss_match.append(lmbd[-1]*matching_penalty)
-                trSigma_reg.append([lmbd_sigma[n]*Sigma_penalty[n] for n in range(len(Sigma_penalty))])
+                trenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
+                trdec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 # training metrics
                 idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
                 batch, _ = self.data.sample_observations(idx, 'train')
@@ -341,15 +352,17 @@ class Run(object):
                 # init testing losses & metrics
                 test_it_num = int(self.data.test_size / self.opts['batch_size'])
                 loss, obs_cost, matching_penalty = 0., 0., 0.
-                Sigma_penalty, latent_costs = np.zeros(len(Sigma_penalty)), np.zeros(len(latent_costs))
+                enc_Sigma_penalty, dec_Sigma_penalty = np.zeros(len(enc_Sigma_penalty)), np.zeros(len(dec_Sigma_penalty))
+                latent_costs = np.zeros(len(latent_costs))
                 mse, blurr, kl = 0., 0., np.zeros(len(kl))
                 for it_ in range(test_it_num):
                     # testing losses
-                    [l, obs, latent, match, Sigma] = self.sess.run([self.objective,
+                    [l, obs, latent, match, eSigma, dSigma] = self.sess.run([self.objective,
                                     self.obs_cost,
                                     self.latent_costs,
                                     self.matching_penalty,
-                                    self.Sigma_penalty],
+                                    self.enc_Sigma_penalty,
+                                    self.dec_Sigma_penalty],
                                     feed_dict={self.data.handle: self.test_handle,
                                                 self.sigma_scale: np.ones(1),
                                                 self.lmbd: lmbd,
@@ -358,7 +371,8 @@ class Run(object):
                     loss += l / test_it_num
                     obs_cost += obs / test_it_num
                     matching_penalty += match / test_it_num
-                    Sigma_penalty += np.array(Sigma) / test_it_num
+                    enc_Sigma_penalty += np.array(eSigma) / test_it_num
+                    dec_Sigma_penalty += np.array(dSigma) / test_it_num
                     latent_costs += np.array(latent) / test_it_num
                     # testing metrics
                     idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
@@ -374,7 +388,8 @@ class Run(object):
                 teLoss_obs.append(obs_cost)
                 teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 teLoss_match.append(lmbd[-1]*matching_penalty)
-                teSigma_reg.append([lmbd_sigma[n]*Sigma_penalty[n] for n in range(len(Sigma_penalty))])
+                teenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
+                tedec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 teMSE.append(mse)
                 teBlurr.append(blurr)
                 teKL.append(kl)
@@ -383,11 +398,12 @@ class Run(object):
                 logging.error(debug_str)
                 debug_str = 'teLOSS=%.3f, trLOSS=%.3f' % (teLoss[-1], trLoss[-1])
                 logging.error(debug_str)
-                debug_str = 'REC=%.3f, LATENT=%.3f, MATCH=%10.3e, SIGMA=%10.3e'  % (
+                debug_str = 'REC=%.3f, LATENT=%.3f, MATCH=%10.3e, eSIGMA=%10.3e, dSIGMA=%10.3e'  % (
                                     teLoss_obs[-1],
                                     np.sum(teLoss_latent[-1]),
                                     teLoss_match[-1],
-                                    np.sum(teSigma_reg[-1]))
+                                    np.sum(teenc_Sigma_reg[-1]),
+                                    np.sum(tedec_Sigma_reg[-1]))
                 logging.error(debug_str)
                 debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
                                     teMSE[-1],
@@ -434,15 +450,16 @@ class Run(object):
                                     encoded, fixed_noise,
                                     teLoss, teLoss_obs,
                                     teLoss_latent, teLoss_match,
-                                    teSigma_reg, trLoss,
-                                    trLoss_obs, trLoss_latent,
-                                    trLoss_match, trSigma_reg,
+                                    teenc_Sigma_reg, tedec_Sigma_reg,
+                                    trLoss, trLoss_obs,
+                                    trLoss_latent, trLoss_match,
                                     teMSE, teBlurr, teKL,
                                     trMSE, trBlurr, trKL,
                                     exp_dir, 'res_it%07d.png' % it)
 
                 if self.opts['vizu_splitloss']:
-                    plot_splitloss(self.opts, teLoss_obs, teLoss_latent, teLoss_match, teSigma_reg,
+                    plot_splitloss(self.opts, teLoss_obs, teLoss_latent, teLoss_match,
+                                    teenc_Sigma_reg, tedec_Sigma_reg,
                                     exp_dir, 'losses_it%07d.png' % it)
 
                 if self.opts['vizu_fullrec']:
@@ -516,12 +533,13 @@ class Run(object):
             name = 'res_train_final'
             np.savez(os.path.join(save_path, name),
                         data=batch, labels=labels, rec=rec, samples=samples,
-                        encoded=encoded, samples_prior=samples_prior,
-                        teLoss=np.array(teLoss), teLoss_obs=np.array(teLoss_obs),
-                        teLoss_match=np.array(teLoss_match), teSigma_reg=np.array(teSigma_reg),
+                        encoded=encoded, teLoss=np.array(teLoss),
+                        teLoss_obs=np.array(teLoss_obs), teLoss_match=np.array(teLoss_match),
+                        teenc_Sigma_reg=np.array(teenc_Sigma_reg),
+                        tedec_Sigma_reg=np.array(tedec_Sigma_reg),
                         trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
-                        trLoss_match=np.array(trLoss_match), trSigma_reg=np.array(trSigma_reg),
-                        teMSE=np.array(teMSE), teBlurr=np.array(teBlurr), teKL=np.array(teKL),
+                        trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
+                        teBlurr=np.array(teBlurr), teKL=np.array(teKL),
                         trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
