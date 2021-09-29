@@ -8,7 +8,7 @@
 #$ -l tmem=5G
 #$ -l h_rt=3:00:00
 
-#$ -t 1-60
+#$ -t 1-16
 
 #$ -N mnist
 
@@ -16,7 +16,7 @@ source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
 
-python3 run.py --num_it 100000 --out_dir mnist --save_model --id $SGE_TASK_ID
+python3 run.py --num_it 100000 --out_dir mnist_lambda_v2 --save_model --id $SGE_TASK_ID
 
 # python3 run.py --num_it 200 --out_dir mnist_test --save_model --id 1
 # python3 run.py --num_it 200 --out_dir mnist_test --model wae --save_model --embedded  --latents --id 1
