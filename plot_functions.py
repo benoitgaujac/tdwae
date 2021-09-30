@@ -162,21 +162,21 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                                             ('rec.', 'b', '-'), (None, 'b', '--'),
                                             ('latent', 'r', '-'), (None, 'r', '--')]):
         total_num = len(loss)
-        x_step = max(int(total_num / 200), 1)
+        x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
     if opts['enc_sigma_pen']:
         loss = np.sum(teenc_Sigma_reg, axis=-1)
         total_num = len(loss)
-        x_step = max(int(total_num / 200), 1)
+        x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
         plt.plot(x, y, linewidth=2, label='enc. Sig. reg.', color='g', linestyle='-')
     if opts['dec_sigma_pen']:
         loss = np.sum(tedec_Sigma_reg, axis=-1)
         total_num = len(loss)
-        x_step = max(int(total_num / 200), 1)
+        x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
         plt.plot(x, y, linewidth=2, label='dec. Sig. reg.', color='y', linestyle='-')
@@ -193,7 +193,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                                             [('mse', 'b', '-'), (None, 'b', '--'),
                                             ('blurr', 'r', '-'), (None, 'r', '--')]):
         total_num = len(metric)
-        x_step = max(int(total_num / 200), 1)
+        x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(metric) + 1, x_step)
         y = np.log(metric[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
@@ -215,7 +215,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
             else:
                 label=None
             total_num = len(kl[:,i])
-            x_step = max(int(total_num / 200), 1)
+            x_step = max(int(total_num / 500), 1)
             x = np.arange(1, len(kl[:,i]) + 1, x_step)
             y = np.log(kl[::x_step, i] / opts['zdim'][i])
             plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
@@ -253,14 +253,14 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
                                             (None, None, '-.')]):
         if len(loss.shape)==1:
             total_num = len(loss)
-            x_step = max(int(total_num / 200), 1)
+            x_step = max(int(total_num / 500), 1)
             x = np.arange(1, len(loss) + 1, x_step)
             y = np.log(loss[::x_step])
             plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
         else:
             for i in range(loss.shape[-1]):
                 total_num = len(loss[:,i])
-                x_step = max(int(total_num / 200), 1)
+                x_step = max(int(total_num / 500), 1)
                 x = np.arange(1, len(loss[:,i]) + 1, x_step)
                 y = np.log(loss[::x_step,i])
                 if label is not None:
@@ -271,7 +271,7 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
     loss = dec_Sigma_reg
     for i in range(loss.shape[-1]):
         total_num = len(loss[:,i])
-        x_step = max(int(total_num / 200), 1)
+        x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss[:,i]) + 1, x_step)
         y = np.log(loss[::x_step,i])
         plt.plot(x, y, linewidth=2, label=None, color=color_list[i+1], linestyle=':')

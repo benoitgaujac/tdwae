@@ -39,7 +39,7 @@ parser.add_argument("--num_it", type=int, default=300000,
                     help='iteration number')
 parser.add_argument("--batch_size", type=int, default=100,
                     help='batch size')
-parser.add_argument("--lr", type=float, default=0.0005,
+parser.add_argument("--lr", type=float, default=0.0001,
                     help='learning rate size')
 # pretraining
 parser.add_argument('--use_trained', action='store_true', default=False,
@@ -97,8 +97,8 @@ def main():
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
-    lambda_rec = [10e-6, 10e-4, 10e-2, 1.]
-    lamdba_match = [10e-7, 10e-6, 10e-4, 10e-2]
+    lambda_rec = [0.0005, 0.001, 0.05, 0.1, .5]
+    lamdba_match = [10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
     pen_sigma = [False,] #[True, False]
     lmba = list(itertools.product(pen_sigma,pen_sigma,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
@@ -108,7 +108,8 @@ def main():
     # opts['lambda'] = [lrec*exp(-(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     opts['lambda_init'] = [lrec*log(n+1.0001) for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
-    opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+    opts['lambda'] = [lrec**(n+1)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     opts['enc_sigma_pen'] = lmba[id][0]
     opts['dec_sigma_pen'] = lmba[id][1]
     if lmba[id][0] or lmba[id][1]:

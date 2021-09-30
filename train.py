@@ -517,6 +517,11 @@ class Run(object):
             # Update regularizer if necessary
             if self.opts['lambda_schedule'] == 'adaptive':
                 lmbd = [min(self.opts['lambda'][n], self.opts['lambda_init'][n]+it*(self.opts['lambda'][n]-self.opts['lambda_init'][n])/annealed_warmup) for n in range(len(lmbd))]
+                if it%2000==0:
+                    debug_str = 'Lambda update: l1=%10.3e, l2=%10.3e, l3=%10.3e, l4=%10.3e, l5=%10.3e\n'  % (
+                                    lmbd[0], lmbd[1], lmbd[2], lmbd[3], lmbd[4])
+                    logging.error(debug_str)
+
                 # if it > 1 and len(teLoss) > 0:
                 #     if wait_lambda > 50000 + 1:
                 #         # opts['lambda'] = list(2*np.array(opts['lambda']))
