@@ -6,7 +6,7 @@ import argparse
 import itertools
 
 import tensorflow as tf
-from math import pow, sqrt, exp
+from math import pow, sqrt, exp, log
 
 import configs
 from train import Run
@@ -39,7 +39,7 @@ parser.add_argument("--num_it", type=int, default=300000,
                     help='iteration number')
 parser.add_argument("--batch_size", type=int, default=100,
                     help='batch size')
-parser.add_argument("--lr", type=float, default=0.0003,
+parser.add_argument("--lr", type=float, default=0.0005,
                     help='learning rate size')
 # pretraining
 parser.add_argument('--use_trained', action='store_true', default=False,
@@ -57,6 +57,8 @@ parser.add_argument("--net_archi", type=str, default='mlp',
                     help='networks architecture [mlp/conv_locatello/conv_rae]')
 parser.add_argument("--cost", type=str, default='l2sq',
                     help='ground cost [l2, l2sq, l2sq_norm, l1, xentropy]')
+parser.add_argument('--lmba_schedule', type=str, default='constant',
+                    help='reg schedule')
 parser.add_argument('--enc_sigma_pen', action='store_true', default=False,
                     help='regularized enc sigma')
 parser.add_argument('--dec_sigma_pen', action='store_true', default=False,
@@ -90,20 +92,22 @@ def main():
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
     opts['obs_cost'] = FLAGS.cost
+    opts['lambda_schedule'] = FLAGS.lmba_schedule
     opts['enc_sigma_pen'] = FLAGS.enc_sigma_pen
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
     lambda_rec = [10e-6, 10e-4, 10e-2, 1.]
-    lamdba_match = [10e-7, 10e-5, 10e-3, 10e-1]
-    pen_sigma = [True, False]
-    # lmba = list(itertools.product(lambda_rec,lamdba_match,lamdba_sigma,nfilters))
+    lamdba_match = [10e-7, 10e-6, 10e-4, 10e-2]
+    pen_sigma = [False,] #[True, False]
     lmba = list(itertools.product(pen_sigma,pen_sigma,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
     # lrec, lmatch, lsigma = lmba[id][0], lmba[id][1], lmba[id][2]
     lrec, lmatch = lmba[id][2], lmba[id][3]
     # opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
     # opts['lambda'] = [lrec*exp(-(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+    opts['lambda_init'] = [lrec*log(n+1.0001) for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
     opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     opts['enc_sigma_pen'] = lmba[id][0]
     opts['dec_sigma_pen'] = lmba[id][1]

@@ -280,10 +280,14 @@ class Run(object):
         teenc_Sigma_reg, tedec_Sigma_reg = [], []
         teMSE, teBlurr, teKL = [], [], []
         FID = []
-        # various decays and reg. params
+        # lr schedule
         decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
-        wait, wait_lambda = 0, 0
-        lmbd = self.opts['lambda']
+        # lambda schedule
+        annealed_warmup = 10000
+        # lreg_init = self.opts['lambda_reg_init']
+        # lreg_final = self.opts['lambda'][-1]
+        # lmbd = self.opts['lambda'][:-1].append(lreg_init)
+        lmbd = self.opts['lambda_init']
         lmbd_sigma = self.opts['lambda_sigma']
 
         # - Init sess and load trained weights if needed
@@ -316,6 +320,7 @@ class Run(object):
                                     self.lmbd_sigma: lmbd_sigma,
                                     self.lr_decay: decay,
                                     self.is_training: True})
+
 
             ##### TESTING LOOP #####
             if it % self.opts['evaluate_every'] == 0:
@@ -487,7 +492,9 @@ class Run(object):
 
                 np.random.seed()
 
-            # Update learning rate if necessary and counter
+
+            ##### lr #####
+            #Update learning rate if necessary and counter
             # First 150 epochs do nothing
             if it >= decay_warmup and it % decay_steps == 0:
                 decay = decay_rate ** (int(it / decay_steps))
@@ -506,18 +513,20 @@ class Run(object):
                     wait = 0
                 """
 
+            ##### lambda #####
             # Update regularizer if necessary
             if self.opts['lambda_schedule'] == 'adaptive':
-                if it > 1 and len(teLoss) > 0:
-                    if wait_lambda > 50000 + 1:
-                        # opts['lambda'] = list(2*np.array(opts['lambda']))
-                        self.opts['lambda'][-1] = 2*self.opts['lambda'][-1]
-                        wae_lambda = self.opts['lambda']
-                        logging.error('Lambda updated to %s\n' % wae_lambda)
-                        print('')
-                        wait_lambda = 0
-                    else:
-                        wait_lambda+=1
+                lmbd = [min(self.opts['lambda'][n], self.opts['lambda_init'][n]+it*(self.opts['lambda'][n]-self.opts['lambda_init'][n])/annealed_warmup) for n in range(len(lmbd))]
+                # if it > 1 and len(teLoss) > 0:
+                #     if wait_lambda > 50000 + 1:
+                #         # opts['lambda'] = list(2*np.array(opts['lambda']))
+                #         self.opts['lambda'][-1] = 2*self.opts['lambda'][-1]
+                #         wae_lambda = self.opts['lambda']
+                #         logging.error('Lambda updated to %s\n' % wae_lambda)
+                #         print('')
+                #         wait_lambda = 0
+                #     else:
+                #         wait_lambda+=1
 
         # Save the final model
         if self.opts['save_final']:

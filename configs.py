@@ -62,9 +62,12 @@ config['resamples'] = False
 config['nresamples'] = 1
 
 # lambda set up
-config['lambda_scalar'] = 2.
-config['lambda'] = [config['lambda_scalar']**i/config['zdim'][0] for i in range(config['nlatents'])]
-config['lambda'].append(0.0001*config['lambda_scalar']**5/config['zdim'][0])
+lrec = 0.0001
+config['lambda'] = [lrec**n/config['zdim'][n] for n in range(config['nlatents'])]
+config['lambda'].append(lrec**5/config['zdim'][-1])
+lrec /= 100
+config['lambda_init'] = [lrec**n/config['zdim'][n] for n in range(config['nlatents'])]
+config['lambda_init'].append(lrec**5/config['zdim'][-1])
 config['lambda_schedule'] = 'constant' # adaptive, constant
 
 # Sigma penalties

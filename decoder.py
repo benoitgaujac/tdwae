@@ -95,7 +95,7 @@ def Decoder(opts, input, archi, nlayers, nfilters, filters_size,
 
     if output_dim is not None:
         mean, logSigma = tf.split(outputs,2,axis=-1)
-        min, max = log(exp(1e-10)-1), 1e4
+        min, max = log(exp(1e-5)-1), 1e4
         logSigma = tf.clip_by_value(logSigma, min, max)
         Sigma = tf.nn.softplus(logSigma)
         mean = tf.compat.v1.layers.flatten(mean)

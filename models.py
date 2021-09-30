@@ -248,7 +248,7 @@ class stackedWAE(Model):
         # -- compute the encoder Sigmas penalty
         penalties = []
         for n in range(len(Sigmas)):
-            penalty = tf.reduce_mean(tf.abs(tf.reduce_sum(tf.compat.v1.log(Sigmas[n]),axis=-1)-1.))
+            penalty = tf.reduce_mean(tf.abs(tf.reduce_sum(tf.compat.v1.log(Sigmas[n]),axis=-1)))
             penalties.append(penalty)
         return penalties
 
@@ -414,5 +414,169 @@ class WAE(Model):
         # --- sample from prior noise
         outputs = self.decode_implicit_prior(samples, True, False)
         decoded, means, Sigmas = self.decode([outputs,], reuse=True, is_training=False)
+
+        return decoded, means, Sigmas
+
+class VAE(Model):
+
+    def __init__(self, opts, pz_params):
+        super().__init__(opts, pz_params)
+
+    def encode(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+        # --- Encoding Loop
+        zs, means, Sigmas = [], [], []
+        for n in range(self.opts['nlatents']):
+            if n==0:
+                input = inputs
+            else:
+                input = zs[-1]
+                # just keep one latent code
+                if resample:
+                    input = input[:,0]
+            mean, Sigma = Encoder(self.opts, input=input,
+                                            archi=self.opts['archi'][n],
+                                            nlayers=self.opts['nlayers'][n],
+                                            nfilters=self.opts['nfilters'][n],
+                                            filters_size=self.opts['filters_size'][n],
+                                            output_dim=self.opts['zdim'][n],
+                                            downsample=self.opts['upsample'],
+                                            output_layer=self.opts['output_layer'][n],
+                                            scope='encoder/layer_%d' % (n+1),
+                                            reuse=reuse,
+                                            is_training=is_training)
+            if self.opts['encoder'][n] == 'det':
+                # - deterministic encoder
+                z = mean
+            elif self.opts['encoder'][n] == 'gauss':
+                # - gaussian encoder
+                q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
+                if resample:
+                    q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
+                z = sample_gaussian(self.opts, q_params, 'tensorflow')
+            else:
+                assert False, 'Unknown encoder %s' % self.opts['encoder']
+            zs.append(z)
+            means.append(mean)
+            Sigmas.append(Sigma)
+
+        return zs, means, Sigmas
+
+    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+        # --- Decoding Loop
+        xs, means, Sigmas = [], [], []
+        for n in range(len(zs)):
+            if latent_id is not None:
+                idx = latent_id
+            else:
+                idx = n
+            if idx==0:
+                output_dim = datashapes[self.opts['dataset']][:-1]+[datashapes[self.opts['dataset']][-1],]
+            else:
+                output_dim=[self.opts['zdim'][idx-1],]
+            # if self.opts['d_archi'][n]=='resnet_v2':
+            #     features_dim=self.features_dim[-1]
+            # else:
+            #     features_dim=self.features_dim[-2]
+            z = zs[n]
+            zshape = z.get_shape().as_list()[1:]
+            if len(zshape)>1:
+                # reshape the codes to [-1,output_dim]
+                z = tf.squeeze(tf.concat(tf.split(z, zshape[0], 1), axis=0), [1])
+            mean, Sigma = Decoder(self.opts, input=z,
+                                            archi=self.opts['archi'][idx],
+                                            nlayers=self.opts['nlayers'][idx],
+                                            nfilters=self.opts['nfilters'][idx],
+                                            filters_size=self.opts['filters_size'][idx],
+                                            output_dim=output_dim,
+                                            # features_dim=features_dim,
+                                            upsample=self.opts['upsample'],
+                                            output_layer=self.opts['output_layer'][idx],
+                                            scope='decoder/layer_%d' % idx,
+                                            reuse=reuse,
+                                            is_training=is_training)
+            # reshaping to [-1,nresamples,output_dim] if needed
+            if len(zshape)>1:
+                mean = tf.stack(tf.split(mean, zshape[0]), axis=1)
+                Sigma = tf.stack(tf.split(Sigma, zshape[0]), axis=1)
+            # - resampling reconstruced
+            if self.opts['decoder'][idx] == 'det':
+                # - deterministic decoder
+                x = mean
+            elif self.opts['decoder'][idx] == 'gauss':
+                # - gaussian decoder
+                p_params = tf.concat((mean, Sigma),axis=-1)
+                x = sample_gaussian(self.opts, p_params, 'tensorflow')
+            else:
+                assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
+            xs.append(x)
+            means.append(mean)
+            Sigmas.append(Sigma)
+
+        return xs, means, Sigmas
+
+    def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+        # --- compute the losses of the stackedWAE
+        zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
+                                            inputs, sigma_scale, resample,
+                                            nresamples, reuse, is_training)
+        obs_cost = self.obs_cost(inputs, xs[0])
+        latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
+                                            zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
+        pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
+        if resample:
+            qz_samples = zs[-1][:,0]
+        else:
+            qz_samples = zs[-1]
+        matching_penalty = self.matching_penalty(qz_samples, pz_samples)
+        enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
+        dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
+        return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
+
+    def obs_cost(self, inputs, reconstructions):
+        # --- compute the reconstruction cost in the data space
+        return obs_reconstruction_loss(self.opts, inputs, reconstructions)
+
+    def latent_cost(self, xs, x_means, x_Sigmas, zs, z_means, z_Sigmas):
+        # --- compute the latent cost for each latent layer last one
+        costs = []
+        for n in range(len(zs)):
+            costs.append(latent_reconstruction_loss(self.opts,
+                                            xs[n], x_means[n], x_Sigmas[n],
+                                            zs[n], z_means[n], z_Sigmas[n]))
+        return costs
+
+    def matching_penalty(self, qz, pz):
+        # --- compute the latent penalty for the deepest latent layer
+        return matching_penalty(self.opts, qz, pz)
+
+    def Sigma_penalty(self, Sigmas):
+        # -- compute the encoder Sigmas penalty
+        penalties = []
+        for n in range(len(Sigmas)):
+            penalty = tf.reduce_mean(tf.abs(tf.reduce_sum(tf.compat.v1.log(Sigmas[n]),axis=-1)-1.))
+            penalties.append(penalty)
+        return penalties
+
+    def reconstruct(self, zs):
+        # Reconstruct for each encoding layer
+        reconstruction = []
+        inputs = zs
+        for m in range(len(zs)):
+            rec, _, _ = self.decode(inputs, None, True, False)
+            reconstruction.append(rec[0])
+            inputs = rec[1:]
+
+        return reconstruction
+
+    def sample_x_from_prior(self, samples):
+        # --- sample from prior noise
+        decoded, means, Sigmas = [], [], []
+        inputs = samples
+        for m in range(self.opts['nlatents']):
+            dec, mean, Sigma = self.decode([inputs,], self.opts['nlatents'] - (m+1), True, False)
+            decoded.append(dec[0])
+            means.append(mean[0])
+            Sigmas.append(Sigma[0])
+            inputs = dec[0]
 
         return decoded, means, Sigmas

@@ -247,11 +247,10 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
     base = plt.cm.get_cmap('tab10')
     color_list = base(np.linspace(0, 1, 6))
     for loss, (label, color, style) in zip([Loss_obs, Loss_latent_reg,
-                                            enc_Sigma_reg, dec_Sigma_reg],
+                                            enc_Sigma_reg],
                                             [('rec', 'k', '-'),
                                             ('latent reg. ', None, '--'),
-                                            (None, None, '-.'),
-                                            (None, None, ':')]):
+                                            (None, None, '-.')]):
         if len(loss.shape)==1:
             total_num = len(loss)
             x_step = max(int(total_num / 200), 1)
@@ -269,6 +268,13 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
                 else:
                     label = None
                 plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
+    loss = dec_Sigma_reg
+    for i in range(loss.shape[-1]):
+        total_num = len(loss[:,i])
+        x_step = max(int(total_num / 200), 1)
+        x = np.arange(1, len(loss[:,i]) + 1, x_step)
+        y = np.log(loss[::x_step,i])
+        plt.plot(x, y, linewidth=2, label=None, color=color_list[i+1], linestyle=':')
 
     plt.grid(axis='y')
     plt.legend(loc='best')
