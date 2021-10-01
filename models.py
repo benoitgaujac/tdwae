@@ -531,7 +531,6 @@ class VAE(Model):
         pz_means, pz_Sigmas = np.split(self.pz_params, 2, axis=-1)
         matching_penalty = self.matching_penalty(pz_means, pz_Sigmas,
                                     enc_means[-1], enc_Sigmas[-1])
-        pdb.set_trace()
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
