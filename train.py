@@ -18,7 +18,7 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
-from models import WAE, stackedWAE
+from models import WAE, stackedWAE, VAE
 from plot_functions import save_train, plot_splitloss, plot_fullrec, plot_embedded, plot_latent
 from plot_functions import save_latent_interpolation, save_vlae_experiment
 
@@ -52,7 +52,7 @@ class Run(object):
 
         # --- Instantiate Model
         if self.opts['model'] == 'vae':
-            raise NotImplementedError()
+            self.model = VAE(self.opts, self.pz_params)
         elif self.opts['model'] == 'wae':
             self.model = WAE(self.opts, self.pz_params)
         elif self.opts['model'] == 'stackedwae':

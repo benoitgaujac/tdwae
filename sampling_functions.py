@@ -54,12 +54,10 @@ def sample_bernoulli(params):
     Sample noise from Bernoulli distribution with mean parameters
     params
     """
-    assert False, 'tfp not available on cluster gpu yet'
-    """
-    shape = tf.shape(params)
-    bernoulli_dist = tfp.distributions.Bernoulli(logits=params, dtype=tf.float32)
-    return bernoulli_dist.sample()
-    """
+    # assert False, 'tfp not available on cluster gpu yet'
+    bernoulli_dist = tf.compat.v1.distributions.Bernoulli(probs=params)
+    batch_size = params.get_shape().as_list()[0]
+    return bernoulli_dist.sample(batch_size)
 
     # eps = tf.random_uniform(shape)
     # return tf.where(tf.random_uniform(shape) - params < 0,

@@ -97,7 +97,7 @@ config_mnist['batch_size'] = 128
 
 # Model set up
 config_mnist['nlatents'] = 5
-config_mnist['sigma_scale'] = 100.*np.ones(1)
+config_mnist['sigma_scale'] = 25.*np.ones(1)
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['resample'] = True
 config_mnist['nresamples'] = 9

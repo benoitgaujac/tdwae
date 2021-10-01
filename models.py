@@ -5,8 +5,8 @@ import tensorflow as tf
 
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, sample_unif, linespace
-from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss, moments_loss
-from loss_functions import kl_penalty
+from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss
+from loss_functions import kl_penalty, xentropy_penalty, entropy_penalty
 from encoder import Encoder
 from decoder import Decoder
 from datahandler import datashapes
@@ -506,6 +506,8 @@ class VAE(Model):
                 # - gaussian decoder
                 p_params = tf.concat((mean, Sigma),axis=-1)
                 x = sample_gaussian(self.opts, p_params, 'tensorflow')
+            elif self.opts['decoder'][idx] == 'bernoulli':
+                x = sample_bernoulli(mean)
             else:
                 assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
             xs.append(x)
@@ -517,37 +519,38 @@ class VAE(Model):
     def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- compute the losses of the stackedWAE
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
-                                            inputs, sigma_scale, resample,
-                                            nresamples, reuse, is_training)
+                                    inputs, sigma_scale, resample,
+                                    nresamples, reuse, is_training)
         obs_cost = self.obs_cost(inputs, xs[0])
-        latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
-                                            zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
-        pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
-        if resample:
-            qz_samples = zs[-1][:,0]
-        else:
-            qz_samples = zs[-1]
-        matching_penalty = self.matching_penalty(qz_samples, pz_samples)
+        latent_cost = self.latent_cost(dec_means[1:], dec_Sigmas[1:], zs[:-1],
+                                    enc_means[:-1], enc_Sigmas[:-1])
+        dec_means, dec_Sigmas = np.split(self.pz_params, 2, axis=-1)
+        matching_penalty = self.matching_penalty(dec_means, dec_Sigmas,
+                                    enc_means[-1], enc_Sigmas[-1])
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
 
     def obs_cost(self, inputs, reconstructions):
         # --- compute the reconstruction cost in the data space
-        return obs_reconstruction_loss(self.opts, inputs, reconstructions)
+        cost = tf.nn.sigmoid_cross_entropy_with_logits(labels=inputs, logits=reconstructions)
+        cost = -tf.reduce_sum(cost, axis=-1)
+        return tf.reduce_mean(cost)
 
-    def latent_cost(self, xs, x_means, x_Sigmas, zs, z_means, z_Sigmas):
+    def latent_cost(self, x_means, x_Sigmas, zs, z_means, z_Sigmas):
         # --- compute the latent cost for each latent layer last one
         costs = []
         for n in range(len(zs)):
-            costs.append(latent_reconstruction_loss(self.opts,
-                                            xs[n], x_means[n], x_Sigmas[n],
-                                            zs[n], z_means[n], z_Sigmas[n]))
+            ent = entropy_penalty(z_means[n], z_Sigmas[n])
+            xent = xentropy_penalty(zs[n], x_means[n], x_Sigmas[n])
+            costs.append(ent - xent)
         return costs
 
-    def matching_penalty(self, qz, pz):
+    def matching_penalty(self, x_means, x_Sigmas, z_means, z_Sigmas):
         # --- compute the latent penalty for the deepest latent layer
-        return matching_penalty(self.opts, qz, pz)
+        kl = kl_penalty(z_means, z_Sigmas, x_means, x_Sigmas)
+        ent = entropy_penalty(z_means, z_Sigmas)
+        return kl + ent
 
     def Sigma_penalty(self, Sigmas):
         # -- compute the encoder Sigmas penalty

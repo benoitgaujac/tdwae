@@ -8,7 +8,7 @@
 #$ -l tmem=5G
 #$ -l h_rt=6:00:00
 
-#$ -t 1-56
+#$ -t 1-80
 
 #$ -N mnist
 
@@ -20,3 +20,4 @@ python3 run.py --num_it 500000 --out_dir mnist_v3 --save_model --save_data --id 
 
 # python3 run.py --num_it 200 --out_dir mnist_test --save_model --id 1
 # python3 run.py --num_it 200 --out_dir mnist_test --model wae --save_model --embedded  --latents --id 1
+# python3 run.py --num_it 200 --out_dir mnist_test --model vae --save_model --embedded  --latents --id 1

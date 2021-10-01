@@ -89,6 +89,7 @@ def main():
     # model
     opts['model'] = FLAGS.model
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
+    # opts['decoder'] = ['bernoulli',] + ['gauss',]*(opts['nlatents']-1)
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
     opts['obs_cost'] = FLAGS.cost
     opts['lambda_schedule'] = FLAGS.lmba_schedule
@@ -96,7 +97,7 @@ def main():
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
-    lambda_rec = [0.0005, 0.0001, 0.005, 0.001, 0.05, 0.1, .5]
+    lambda_rec = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, .5]
     lamdba_match = [0.00001, 0.0001, 0.001, 0.01, 0.1]
     zdims = [[32,16,8,4,2],[64,32,16,8,4]]
     lmba = list(itertools.product(zdims,lambda_rec,lamdba_match))

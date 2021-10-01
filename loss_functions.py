@@ -14,7 +14,7 @@ import pdb
 ### --- Latent penalty --- ###
 def kl_penalty(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
     """
-    Compute KL divergence between prior and variational distribution
+    Compute KL divergence between gaussian prior and variational distribution
     """
     kl = encoded_sigma / pz_sigma \
         + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
@@ -32,7 +32,7 @@ def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
     kl = -0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
-def Xentropy_penalty(samples, mean, sigma):
+def xentropy_penalty(samples, mean, sigma):
     """
     Compute Xentropy for gaussian using MC
     """
@@ -40,7 +40,7 @@ def Xentropy_penalty(samples, mean, sigma):
     loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
     return tf.reduce_mean(loglikelihood)
 
-def entropy_penalty(samples, mean, sigma):
+def entropy_penalty(mean, sigma):
     """
     Compute entropy for gaussian
     """
