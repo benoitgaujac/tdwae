@@ -56,8 +56,7 @@ def sample_bernoulli(params):
     """
     # assert False, 'tfp not available on cluster gpu yet'
     bernoulli_dist = tf.compat.v1.distributions.Bernoulli(probs=params)
-    batch_size = params.get_shape().as_list()[0]
-    return bernoulli_dist.sample(batch_size)
+    return bernoulli_dist.sample()
 
     # eps = tf.random_uniform(shape)
     # return tf.where(tf.random_uniform(shape) - params < 0,

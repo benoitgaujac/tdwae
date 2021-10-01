@@ -99,7 +99,7 @@ def main():
     # lamba
     lambda_rec = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, .5]
     lamdba_match = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    zdims = [[32,16,8,4,2],[64,32,16,8,4]]
+    zdims = [[64,32,16,8,4], [32,16,8,4,2]]
     lmba = list(itertools.product(zdims,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
     zdim, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]

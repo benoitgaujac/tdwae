@@ -66,8 +66,7 @@ class Run(object):
         x = self.data.next_element
 
         # --- Objective
-        losses = self.model.losses(x, self.sigma_scale, self.opts['resample'],
-                                    self.opts['nresamples'], False, self.is_training)
+        losses = self.model.losses(x, self.sigma_scale, False, self.is_training)
         self.obs_cost, self.latent_costs, self.matching_penalty = losses[0], losses[1], losses[2]
         self.enc_Sigma_penalty, self.dec_Sigma_penalty = losses[3], losses[4]
         # Compute obj

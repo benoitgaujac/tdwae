@@ -209,20 +209,20 @@ class stackedWAE(Model):
 
         return xs, means, Sigmas
 
-    def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+    def losses(self, inputs, sigma_scale, reuse=False, is_training=True):
         # --- compute the losses of the stackedWAE
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
-                                            inputs, sigma_scale, resample,
-                                            nresamples, reuse, is_training)
+                                    inputs, sigma_scale, False, reuse=reuse,
+                                    is_training=is_training)
         obs_cost = self.obs_cost(inputs, xs[0])
         latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
                                             zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
         pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
-        if resample:
-            qz_samples = zs[-1][:,0]
-        else:
-            qz_samples = zs[-1]
-        matching_penalty = self.matching_penalty(qz_samples, pz_samples)
+        # if len(qz_samples.get_Shape().as_list()[1:])>1:
+        #     qz_samples = zs[-1][:,0]
+        # else:
+        #     qz_samples = zs[-1]
+        matching_penalty = self.matching_penalty(zs[-1], pz_samples)
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
@@ -516,11 +516,12 @@ class VAE(Model):
 
         return xs, means, Sigmas
 
-    def losses(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
+    def losses(self, inputs, sigma_scale, reuse=False, is_training=True):
         # --- compute the losses of the stackedWAE
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
-                                    inputs, sigma_scale, resample,
-                                    nresamples, reuse, is_training)
+                                    inputs, sigma_scale, False, reuse=reuse,
+                                    is_training=is_training)
+        pdb.set_trace()
         obs_cost = self.obs_cost(inputs, xs[0])
         latent_cost = self.latent_cost(dec_means[1:], dec_Sigmas[1:], zs[:-1],
                                     enc_means[:-1], enc_Sigmas[:-1])
