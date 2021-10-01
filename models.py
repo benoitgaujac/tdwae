@@ -144,9 +144,11 @@ class stackedWAE(Model):
                 z = mean
             elif self.opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
-                q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                 if resample:
+                    q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                     q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
+                else:
+                    q_params = tf.concat((mean, Sigma), axis=-1)
                 z = sample_gaussian(self.opts, q_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % self.opts['encoder']
@@ -449,9 +451,11 @@ class VAE(Model):
                 z = mean
             elif self.opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
-                q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                 if resample:
+                    q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                     q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
+                else:
+                    q_params = tf.concat((mean, Sigma), axis=-1)
                 z = sample_gaussian(self.opts, q_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % self.opts['encoder']
@@ -521,19 +525,20 @@ class VAE(Model):
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
                                     inputs, sigma_scale, False, reuse=reuse,
                                     is_training=is_training)
-        pdb.set_trace()
         obs_cost = self.obs_cost(inputs, xs[0])
         latent_cost = self.latent_cost(dec_means[1:], dec_Sigmas[1:], zs[:-1],
                                     enc_means[:-1], enc_Sigmas[:-1])
-        dec_means, dec_Sigmas = np.split(self.pz_params, 2, axis=-1)
-        matching_penalty = self.matching_penalty(dec_means, dec_Sigmas,
+        pz_means, pz_Sigmas = np.split(self.pz_params, 2, axis=-1)
+        matching_penalty = self.matching_penalty(pz_means, pz_Sigmas,
                                     enc_means[-1], enc_Sigmas[-1])
+        pdb.set_trace()
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
 
     def obs_cost(self, inputs, reconstructions):
         # --- compute the reconstruction cost in the data space
+        inputs = tf.compat.v1.layers.flatten(inputs)
         cost = tf.nn.sigmoid_cross_entropy_with_logits(labels=inputs, logits=reconstructions)
         cost = -tf.reduce_sum(cost, axis=-1)
         return tf.reduce_mean(cost)
