@@ -37,8 +37,7 @@ parser.add_argument("--data_dir", type=str, default='../data',
                     help='directory in which data is stored')
 parser.add_argument("--num_it", type=int, default=300000,
                     help='iteration number')
-parser.add_argument("--batch_size", type=int, default=100,
-                    help='batch size')
+parser.add_argument("--batch_size", type=int, help='batch size')
 parser.add_argument("--lr", type=float, default=0.0001,
                     help='learning rate size')
 # pretraining
@@ -97,25 +96,23 @@ def main():
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
-    lambda_rec = [0.0005, 0.001, 0.05, 0.1, .5]
-    lamdba_match = [10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
-    pen_sigma = [False,] #[True, False]
-    lmba = list(itertools.product(pen_sigma,pen_sigma,lambda_rec,lamdba_match))
+    lambda_rec = [0.0005, 0.0001, 0.005, 0.001, 0.05, 0.1, .5]
+    lamdba_match = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+    zdims = [[32,16,8,4,2],[64,32,16,8,4]]
+    lmba = list(itertools.product(zdims,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
-    # lrec, lmatch, lsigma = lmba[id][0], lmba[id][1], lmba[id][2]
-    lrec, lmatch = lmba[id][2], lmba[id][3]
-    # opts['lambda'] = [lrec**n/opts['zdim'][n] for n in range(1,opts['nlatents'])] + [lmatch,]
-    # opts['lambda'] = [lrec*exp(-(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
-    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
-    opts['lambda_init'] = [lrec*log(n+1.0001) for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
-    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+    zdim, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
+    opts['zdim'] = zdim
+    opts['lambda_init'] = [lrec*log(n+1.0001)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
     opts['lambda'] = [lrec**(n+1)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
-    opts['enc_sigma_pen'] = lmba[id][0]
-    opts['dec_sigma_pen'] = lmba[id][1]
-    if lmba[id][0] or lmba[id][1]:
-        opts['lambda_sigma'] = [0.1*exp(-(n+1)) for n in range(opts['nlatents'])]
-    else:
-        opts['lambda_sigma'] = [1.,]*opts['nlatents']
+    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
+
+    # opts['enc_sigma_pen'] = lmba[id][0]
+    # opts['dec_sigma_pen'] = lmba[id][1]
+    # if lmba[id][0] or lmba[id][1]:
+    #     opts['lambda_sigma'] = [0.1*exp(-(n+1)) for n in range(opts['nlatents'])]
+    # else:
+    #     opts['lambda_sigma'] = [1.,]*opts['nlatents']
     # opts['nfilters'] = [int(lmba[id][3] / 2**n) for n in range(opts['nlatents'])]
     # opts['nfilters'] = [int(nfilters / 2**n) for n in range(opts['nlatents'])]
 
@@ -130,7 +127,8 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'] + '_nfilters2048')
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'eSigma'+str(lmba[id][0]) + '_dSigma'+str(lmba[id][1]))
+    # out_subdir = os.path.join(out_subdir, 'eSigma'+str(lmba[id][0]) + '_dSigma'+str(lmba[id][1]))
+    out_subdir = os.path.join(out_subdir, 'dz'+str(zdim[0]))
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
@@ -165,7 +163,8 @@ def main():
     opts['it_num'] = FLAGS.num_it
     opts['print_every'] = int(opts['it_num'] / 10)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
-    opts['batch_size'] = FLAGS.batch_size
+    if FLAGS.batch_size is not None:
+        opts['batch_size'] = FLAGS.batch_size
     opts['lr'] = FLAGS.lr
     opts['use_trained'] = FLAGS.use_trained
     opts['save_every'] = 10000000000

@@ -92,6 +92,9 @@ config_mnist['MNIST_data_source_url'] = 'http://yann.lecun.com/exdb/mnist/'
 config_mnist['dataset_size'] = 70000
 config_mnist['crop_style'] = 'closecrop' # closecrop, resizecrop
 
+# Experiment set up
+config_mnist['batch_size'] = 128
+
 # Model set up
 config_mnist['nlatents'] = 5
 config_mnist['sigma_scale'] = 100.*np.ones(1)

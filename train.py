@@ -283,7 +283,7 @@ class Run(object):
         # lr schedule
         decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
         # lambda schedule
-        annealed_warmup = 10000
+        annealed_warmup = 50000
         # lreg_init = self.opts['lambda_reg_init']
         # lreg_final = self.opts['lambda'][-1]
         # lmbd = self.opts['lambda'][:-1].append(lreg_init)
