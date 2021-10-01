@@ -169,7 +169,6 @@ def square_dist(opts, sample_x, sample_y):
     else:
         raise Exception('Unknown {} square distance'.format(self.opts['sqrdist']))
 
-
 def square_dist_dotprod(opts, sample_x, sample_y):
     """
     Wrapper to compute square distance

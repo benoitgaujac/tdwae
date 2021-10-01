@@ -111,13 +111,6 @@ class Run(object):
                                     True, self.opts['nresamples'], True, is_training=False)
         # reconstruct
         reconstruction = self.model.reconstruct(self.encoded)
-        # shape1 = lambda: [-1, self.model.opts['nresamples']] + self.data.data_shape
-        # shape2 = lambda: [-1,] + self.data.data_shape
-        # shape = tf.case([(self.resample, shape1)], default=shape2)
-        # if self.resample:
-        #     shape = [-1, self.model.opts['nresamples']] + self.data.data_shape
-        # else:
-        #     shape = [-1,] + self.data.data_shape
         shape = [-1, self.model.opts['nresamples']] + self.data.data_shape
         self.reconstruction = [tf.reshape(reconstruction[n], shape) for n in range(len(reconstruction))]
 

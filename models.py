@@ -477,10 +477,6 @@ class VAE(Model):
                 output_dim = datashapes[self.opts['dataset']][:-1]+[datashapes[self.opts['dataset']][-1],]
             else:
                 output_dim=[self.opts['zdim'][idx-1],]
-            # if self.opts['d_archi'][n]=='resnet_v2':
-            #     features_dim=self.features_dim[-1]
-            # else:
-            #     features_dim=self.features_dim[-2]
             z = zs[n]
             zshape = z.get_shape().as_list()[1:]
             if len(zshape)>1:
@@ -539,7 +535,7 @@ class VAE(Model):
         # --- compute the reconstruction cost in the data space
         inputs = tf.compat.v1.layers.flatten(inputs)
         cost = tf.nn.sigmoid_cross_entropy_with_logits(labels=inputs, logits=reconstructions)
-        cost = -tf.reduce_sum(cost, axis=-1)
+        cost = tf.reduce_sum(cost, axis=-1)
         return tf.reduce_mean(cost)
 
     def latent_cost(self, x_means, x_Sigmas, zs, z_means, z_Sigmas):
