@@ -29,6 +29,10 @@ parser.add_argument('--embedded', action='store_false', default=True,
                     help='plot embedded')
 parser.add_argument('--latents', action='store_false', default=True,
                     help='plot latents expl.')
+parser.add_argument('--grid', action='store_false', default=True,
+                    help='plot pz grid interpolation')
+parser.add_argument('--stoch', action='store_false', default=True,
+                    help='plot level of dec. stochasticity')
 parser.add_argument('--fid', action='store_true', default=False,
                     help='compute FID score')
 parser.add_argument("--dataset", default='mnist',
@@ -98,7 +102,8 @@ def main():
     # lamba
     lambda_rec = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, .5]
     lamdba_match = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    zdims = [[64,32,16,8,4], [32,16,8,4,2]]
+    # zdims = [[64,32,16,8,4], [32,16,8,4,2]]
+    zdims = [[32,16,8,4,2],]
     lmba = list(itertools.product(zdims,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
     zdim, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
@@ -123,11 +128,9 @@ def main():
     opts['out_dir'] = os.path.join(results_dir,FLAGS.out_dir)
     if not tf.io.gfile.isdir(opts['out_dir']):
         utils.create_dir(opts['out_dir'])
-    # out_subdir = os.path.join(opts['out_dir'], opts['model'] + '_nfilters' + str(nfilters))
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    # out_subdir = os.path.join(out_subdir, 'eSigma'+str(lmba[id][0]) + '_dSigma'+str(lmba[id][1]))
     out_subdir = os.path.join(out_subdir, 'dz'+str(zdim[0]))
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
@@ -158,9 +161,11 @@ def main():
     opts['vizu_fullrec'] = FLAGS.reconstructions
     opts['vizu_embedded'] = FLAGS.embedded
     opts['vizu_latent'] = FLAGS.latents
+    opts['vizu_pz_grid'] = FLAGS.grid
+    opts['vizu_stochasticity'] = FLAGS.stoch
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 10)
+    opts['print_every'] = int(opts['it_num'] / 5)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

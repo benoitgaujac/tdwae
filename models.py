@@ -29,29 +29,29 @@ class Model(object):
         pass
 
     # --- encode the inputs
-    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+    def decode(self, zs, sigma_scale, latent_id=None, reuse=False, is_training=True):
         pass
 
     # --- full path through the model
     def forward_pass(self, inputs, sigma_scale, resample, nresamples=1, reuse=False, is_training=True):
         # --- encoder-decoder foward pass
         zs, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, resample, nresamples, reuse, is_training)
-        xs, dec_means, dec_Sigmas = self.decode(zs, None, reuse, is_training)
+        xs, dec_means, dec_Sigmas = self.decode(zs, sigma_scale, None, reuse, is_training)
         return zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas
 
     # --- reconstruct for each layer
-    def reconstruct(self, zs):
+    def reconstruct(self, zs, sigma_scale):
         pass
 
     # --- sample from the model
-    def sample_x_from_prior(self, samples):
+    def sample_x_from_prior(self, samples, sigma_scale):
         pass
 
     # various metrics
     def MSE(self, inputs, sigma_scale):
         # --- compute MSE between inputs and reconstruction
         zs, _, _ = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
-        xs = self.reconstruct(zs)
+        xs = self.reconstruct(zs, sigma_scale)
         square_dist = tf.reduce_mean(tf.square(tf.compat.v1.layers.flatten(inputs) - xs[-1]), axis=-1)
         return tf.reduce_mean(square_dist)
 
@@ -97,7 +97,7 @@ class Model(object):
         # --- compute layer-wise KL(q(z_i|z_i-1,p(z_i|z_i+1))
         _, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
         pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
-        _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples)
+        _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples, sigma_scale)
         dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
         KL = []
         # latent layer up to N-1
@@ -124,10 +124,11 @@ class stackedWAE(Model):
             if n==0:
                 input = inputs
             else:
-                input = zs[-1]
-                # just keep one latent code
                 if resample:
-                    input = input[:,0]
+                    # when resampling for vizu, we just pass the mean
+                    input = means[-1]
+                else:
+                    input = zs[-1]
             mean, Sigma = Encoder(self.opts, input=input,
                                             archi=self.opts['archi'][n],
                                             nlayers=self.opts['nlayers'][n],
@@ -158,7 +159,7 @@ class stackedWAE(Model):
 
         return zs, means, Sigmas
 
-    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+    def decode(self, zs, sigma_scale, latent_id=None, reuse=False, is_training=True):
         # --- Decoding Loop
         xs, means, Sigmas = [], [], []
         for n in range(len(zs)):
@@ -201,7 +202,7 @@ class stackedWAE(Model):
                 x = mean
             elif self.opts['decoder'][idx] == 'gauss':
                 # - gaussian decoder
-                p_params = tf.concat((mean, Sigma),axis=-1)
+                p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
                 x = sample_gaussian(self.opts, p_params, 'tensorflow')
             else:
                 assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
@@ -254,23 +255,23 @@ class stackedWAE(Model):
             penalties.append(penalty)
         return penalties
 
-    def reconstruct(self, zs):
+    def reconstruct(self, zs, sigma_scale):
         # Reconstruct for each encoding layer
         reconstruction = []
         inputs = zs
         for m in range(len(zs)):
-            rec, _, _ = self.decode(inputs, None, True, False)
+            rec, _, _ = self.decode(inputs, sigma_scale, None, True, False)
             reconstruction.append(rec[0])
             inputs = rec[1:]
 
         return reconstruction
 
-    def sample_x_from_prior(self, samples):
+    def sample_x_from_prior(self, samples, sigma_scale):
         # --- sample from prior noise
         decoded, means, Sigmas = [], [], []
         inputs = samples
         for m in range(self.opts['nlatents']):
-            dec, mean, Sigma = self.decode([inputs,], self.opts['nlatents'] - (m+1), True, False)
+            dec, mean, Sigma = self.decode([inputs,], sigma_scale, self.opts['nlatents'] - (m+1), True, False)
             decoded.append(dec[0])
             means.append(mean[0])
             Sigmas.append(Sigma[0])
@@ -301,16 +302,18 @@ class WAE(Model):
             z = mean
         elif self.opts['encoder'][0] == 'gauss':
             # - gaussian encoder
-            q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
             if resample:
+                q_params = tf.concat((mean, sigma_scale*Sigma), axis=-1)
                 q_params = tf.stack([q_params for i in range(nresamples)],axis=1)
+            else:
+                q_params = tf.concat((mean, Sigma), axis=-1)
             z = sample_gaussian(self.opts, q_params, 'tensorflow')
         else:
             assert False, 'Unknown encoder %s' % self.opts['encoder']
 
         return [z,], [mean,], [Sigma,]
 
-    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+    def decode(self, zs, sigma_scale, latent_id=None, reuse=False, is_training=True):
         # --- Decoding Loop
         output_dim = datashapes[self.opts['dataset']][:-1]+[datashapes[self.opts['dataset']][-1],]
         z = zs[0]
@@ -339,7 +342,7 @@ class WAE(Model):
             x = mean
         elif self.opts['decoder'][0] == 'gauss':
             # - gaussian decoder
-            p_params = tf.concat((mean, Sigma),axis=-1)
+            p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
             x = sample_gaussian(self.opts, p_params, 'tensorflow')
         else:
             assert False, 'Unknown encoder %s' % self.opts['decoder'][idx]
@@ -401,21 +404,21 @@ class WAE(Model):
             penalties.append(penalty)
         return penalties
 
-    def reconstruct(self, zs):
+    def reconstruct(self, zs, sigma_scale):
         # Reconstruct for each encoding layer
         reconstruction = []
         inputs = zs
         for m in range(len(zs)):
-            rec, _, _ = self.decode(inputs, None, True, False)
+            rec, _, _ = self.decode(inputs, sigma_scale, None, True, False)
             reconstruction.append(rec[0])
             inputs = rec[1:]
 
         return reconstruction
 
-    def sample_x_from_prior(self, samples):
+    def sample_x_from_prior(self, samples, sigma_scale):
         # --- sample from prior noise
         outputs = self.decode_implicit_prior(samples, True, False)
-        decoded, means, Sigmas = self.decode([outputs,], reuse=True, is_training=False)
+        decoded, means, Sigmas = self.decode([outputs,], sigma_scale, reuse=True, is_training=False)
 
         return decoded, means, Sigmas
 
@@ -431,10 +434,11 @@ class VAE(Model):
             if n==0:
                 input = inputs
             else:
-                input = zs[-1]
-                # just keep one latent code
                 if resample:
-                    input = input[:,0]
+                    # when resampling for vizu, we just pass the mean
+                    input = means[-1]
+                else:
+                    input = zs[-1]
             mean, Sigma = Encoder(self.opts, input=input,
                                             archi=self.opts['archi'][n],
                                             nlayers=self.opts['nlayers'][n],
@@ -465,7 +469,7 @@ class VAE(Model):
 
         return zs, means, Sigmas
 
-    def decode(self, zs, latent_id=None, reuse=False, is_training=True):
+    def decode(self, zs, sigma_scale, latent_id=None, reuse=False, is_training=True):
         # --- Decoding Loop
         xs, means, Sigmas = [], [], []
         for n in range(len(zs)):
@@ -504,7 +508,7 @@ class VAE(Model):
                 x = mean
             elif self.opts['decoder'][idx] == 'gauss':
                 # - gaussian decoder
-                p_params = tf.concat((mean, Sigma),axis=-1)
+                p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
                 x = sample_gaussian(self.opts, p_params, 'tensorflow')
             elif self.opts['decoder'][idx] == 'bernoulli':
                 x = sample_bernoulli(mean)
@@ -561,23 +565,23 @@ class VAE(Model):
             penalties.append(penalty)
         return penalties
 
-    def reconstruct(self, zs):
+    def reconstruct(self, zs, sigma_scale):
         # Reconstruct for each encoding layer
         reconstruction = []
         inputs = zs
         for m in range(len(zs)):
-            rec, _, _ = self.decode(inputs, None, True, False)
+            rec, _, _ = self.decode(inputs, sigma_scale, None, True, False)
             reconstruction.append(rec[0])
             inputs = rec[1:]
 
         return reconstruction
 
-    def sample_x_from_prior(self, samples):
+    def sample_x_from_prior(self, samples, sigma_scale):
         # --- sample from prior noise
         decoded, means, Sigmas = [], [], []
         inputs = samples
         for m in range(self.opts['nlatents']):
-            dec, mean, Sigma = self.decode([inputs,], self.opts['nlatents'] - (m+1), True, False)
+            dec, mean, Sigma = self.decode([inputs,], sigma_scale, self.opts['nlatents'] - (m+1), True, False)
             decoded.append(dec[0])
             means.append(mean[0])
             Sigmas.append(Sigma[0])

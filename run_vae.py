@@ -94,7 +94,7 @@ def main():
 
     # lamba
     beta = [0.001, 0.01, 0.1, 1.]
-    zdims = [[64,32,16,8,4], [32,16,8,4,2]]
+    zdims = [[32,16,8,4,2],]
     lmba = list(itertools.product(zdims,beta))
     id = (FLAGS.id-1) % len(lmba)
     zdim, lreg = lmba[id][0], lmba[id][1]
@@ -140,7 +140,7 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 10)
+    opts['print_every'] = int(opts['it_num'] / 5)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

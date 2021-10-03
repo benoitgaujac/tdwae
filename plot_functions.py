@@ -59,25 +59,16 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         merged[w_ptr + 1] = rec[r_ptr]
         r_ptr += 1
         w_ptr += 2
-    for idx in range(num_pics):
-        if greyscale:
-            pics.append(1. - merged[idx, :, :, :])
-        else:
-            pics.append(merged[idx, :, :, :])
+    if greyscale:
+        pics = 1. - merged
     # Figuring out a layout
-    pics = np.array(pics)
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     img1 = np.concatenate(image, axis=0)
     # samples
     assert len(samples) == num_pics
-    pics = []
-    for idx in range(num_pics):
-        if greyscale:
-            pics.append(1. - samples[idx, :, :, :])
-        else:
-            pics.append(samples[idx, :, :, :])
+    if greyscale:
+        pics = 1. - samples
     # Figuring out a layout
-    pics = np.array(pics)
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     img2 = np.concatenate(image, axis=0)
 
@@ -344,13 +335,13 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, filename):
 
 ####### embedding #######
 def plot_embedded(opts, encoded, labels, exp_dir, filename):
-    npoints = len(encoded[0])
+    npoints = encoded[0].shape[0]
     nlatents = len(encoded)
     embeds = []
     for i in range(nlatents):
         # encods = np.concatenate([encoded[i],decoded[i]],axis=0)
         # encods = encoded[i]
-        codes= np.array(encoded[i])[:,0]
+        codes= encoded[i][:]
         if np.shape(codes)[-1]==2:
             embedding = codes
         else:
@@ -421,21 +412,15 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
 
     def preprocess_format_layout(img):
         # helper to format and create layout
-        pics = []
-        for idx in range(img.shape[0]):
-            if img.shape[-1]==1:
-                pics.append(1. - img[idx])
-            else:
-                pics.append(img[idx])
+        if img.shape[-1]==1:
+            img = 1. - img
         # Figuring out a layout
-        pics = np.array(pics)
-        pics = np.concatenate(np.split(pics, int(sqrt(npics))), axis=2)
-        # pics = np.concatenate(pics, axis=0)
+        pics = np.concatenate(np.split(img, int(sqrt(npics))), axis=2)
         return np.concatenate(pics, axis=0)
 
     # plotting
-    fig_height = 28*28*int(sqrt(npics))*nrows / float(mydpi)
-    fig_width = 28*28*int(sqrt(npics))*ncols / float(mydpi)
+    fig_height = 300*int(sqrt(npics))*nrows / float(mydpi)
+    fig_width = 300*int(sqrt(npics))*ncols / float(mydpi)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(fig_width, fig_height))
     for i in range(nrows):
         for j in range(ncols):
@@ -452,6 +437,97 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
             axes[i,j].axes.set_ylim([pics.shape[0], 0])
             axes[i,j].axes.set_xlim([0, pics.shape[1]])
             axes[i,j].axes.set_aspect(1)
+            if i==0:
+                axes[i,j].set_title('latent ' + str(j+1))
+    ### Saving plot
+    plots_dir = 'train_plots'
+    save_path = os.path.join(exp_dir, plots_dir)
+    utils.create_dir(save_path)
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.close()
+
+
+####### pz grid #######
+def plot_grid(opts, samples, exp_dir, filename):
+    '''
+    samples: [nrows, ncols, imshape]
+    '''
+
+    nrows, ncols = np.shape(samples)[:2]
+
+    def preprocess_format_layout(img):
+        # helper to format and create layout
+        if img.shape[-1]==1:
+            img = 1. - img
+        # Figuring out a layout
+        pics = np.concatenate(np.split(img, nrows), axis=2)
+        pics = pics[0]
+        pics = np.concatenate(np.split(pics, ncols), axis=2)
+        return pics[0]
+
+    # plotting
+    fig_height = 250*nrows / float(mydpi)
+    fig_width = 250*ncols / float(mydpi)
+    fig, axes = plt.subplots(figsize=(fig_width, fig_height))
+    pics = preprocess_format_layout(samples)
+    if pics.shape[-1]==1:
+        pics = pics[:, :, 0]
+        # in Greys higher values correspond to darker colors
+        axes.imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+    else:
+        axes.imshow(pics, interpolation='none', vmin=0., vmax=1.)
+    # Removing ticks
+    axes.axes.get_xaxis().set_ticks([])
+    axes.axes.get_yaxis().set_ticks([])
+    axes.axes.set_ylim([pics.shape[0], 0])
+    axes.axes.set_xlim([0, pics.shape[1]])
+    axes.axes.set_aspect(1)
+    ### Saving plot
+    plots_dir = 'train_plots'
+    save_path = os.path.join(exp_dir, plots_dir)
+    utils.create_dir(save_path)
+    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.close()
+
+
+####### Stochasticity of decoder #######
+def plot_stochasticity(opts, samples, exp_dir, filename):
+    '''
+    samples: [[npics, imshape,] x nplots]
+    '''
+
+    npics = np.shape(samples[0])[0]
+    nplots = len(samples)
+
+    def preprocess_format_layout(img):
+        # helper to format and create layout
+        if img.shape[-1]==1:
+            img =  1. - img
+        # Figuring out a layout
+        pics = np.concatenate(np.split(img, int(sqrt(npics))), axis=2)
+        pics = np.concatenate(np.split(pics, int(sqrt(npics))), axis=1)
+        return pics[0]
+
+    # plotting
+    fig_height = 200*int(sqrt(npics)) / float(mydpi)
+    fig_width = 200*int(sqrt(npics))*nplots / float(mydpi)
+    fig, axes = plt.subplots(nrows=1, ncols=nplots, figsize=(fig_width, fig_height))
+    for i in range(nplots):
+        pics = preprocess_format_layout(samples[i])
+        if pics.shape[-1]==1:
+            pics = pics[:, :, 0]
+            # in Greys higher values correspond to darker colors
+            axes[i].imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+        else:
+            axes[i].imshow(pics, interpolation='none', vmin=0., vmax=1.)
+        # Removing ticks
+        axes[i].axes.get_xaxis().set_ticks([])
+        axes[i].axes.get_yaxis().set_ticks([])
+        axes[i].axes.set_ylim([pics.shape[0], 0])
+        axes[i].axes.set_xlim([0, pics.shape[1]])
+        axes[i].axes.set_aspect(1)
+        axes[i].set_title(r'$\sigma=.1f'.format(opts['sigma_scale_stochasticity'][i]))
+
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)

@@ -19,8 +19,8 @@ import tensorflow as tf
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
 from models import WAE, stackedWAE, VAE
-from plot_functions import save_train, plot_splitloss, plot_fullrec, plot_embedded, plot_latent
-from plot_functions import save_latent_interpolation, save_vlae_experiment
+from plot_functions import save_train, save_latent_interpolation, save_vlae_experiment
+from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 
 # Path to inception model and stats for training set
 sys.path.append('../TTUR')
@@ -108,18 +108,27 @@ class Run(object):
         # --- encode and reconstruct
         # encode
         self.encoded, _, _ = self.model.encode(self.images, self.sigma_scale,
+                                    False, reuse=True, is_training=False)
+        # reconstruct
+        reconstruction = self.model.reconstruct(self.encoded, self.sigma_scale)
+        shape = [-1,] + self.data.data_shape
+        self.reconstruction = [tf.reshape(reconstruction[n], shape) for n in range(len(reconstruction))]
+
+        # --- Sampling from model (only for generation)
+        decoded, _, _ = self.model.sample_x_from_prior(self.pz_samples, self.sigma_scale)
+        self.samples = tf.reshape(decoded[-1], [-1,]+self.data.data_shape)
+
+        # --- encode multi samples and reconstruct
+        # encode
+        encoded, _, _ = self.model.encode(self.images, self.sigma_scale,
                                     True, self.opts['nresamples'], True, is_training=False)
         # reconstruct
-        reconstruction = self.model.reconstruct(self.encoded)
+        reconstruction = self.model.reconstruct(encoded, tf.ones(self.sigma_scale.get_shape()))
         shape = [-1, self.model.opts['nresamples']] + self.data.data_shape
-        self.reconstruction = [tf.reshape(reconstruction[n], shape) for n in range(len(reconstruction))]
+        self.resample_reconstruction = [tf.reshape(reconstruction[n], shape) for n in range(len(reconstruction))]
 
         # # --- Point interpolation for implicit-prior WAE (only for generation)
         # self.anchor_interpolation = self.anchor_interpolate()
-
-        # --- Sampling from model (only for generation)
-        decoded, _, _ = self.model.sample_x_from_prior(self.pz_samples)
-        self.samples = tf.reshape(decoded[-1], [-1,]+self.data.data_shape)
 
         # --- Optimizers
         self.add_optimizers()
@@ -441,8 +450,8 @@ class Run(object):
                                     feed_dict={self.images: batch,
                                                self.pz_samples: fixed_noise,
                                                 self.sigma_scale: np.ones(1)})
-                rec = [rec[n][:,0] for n in range(len(rec))]
-                encoded = encoded[:,0]
+                # rec = [rec[n][:,0] for n in range(len(rec))]
+                # encoded = encoded[:,0]
                 save_train(self.opts, batch, labels, rec[-1], samples,
                                     encoded, fixed_noise,
                                     teLoss, teLoss_obs,
@@ -463,7 +472,6 @@ class Run(object):
                     plot_fullrec(self.opts, batch[:10], [rec[n][:10] for n in range(len(rec))], exp_dir, 'rec_it%07d.png' % it)
 
                 if self.opts['vizu_embedded']:
-                    nencoded = 500
                     batchsize = 1000
                     # zs, ys = [], []
                     # for _ in range(int(nencoded/batchsize)):
@@ -478,9 +486,36 @@ class Run(object):
                 if self.opts['vizu_latent']:
                     idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
                     x, _ = self.data.sample_observations(idx)
-                    reconstruction = self.sess.run(self.reconstruction, feed_dict={self.images: x,
-                                    self.sigma_scale: self.opts['sigma_scale']})
+                    reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
+                                    self.images: x,
+                                    self.sigma_scale: self.opts['sigma_scale_resample']})
                     plot_latent(self.opts, reconstruction, exp_dir, 'latent_expl_it%07d.png' % it)
+
+                if self.opts['vizu_pz_grid']:
+                    num_cols = 10
+                    enc_mean = np.zeros(self.opts['zdim'][-1], dtype='float32')
+                    enc_var = np.ones(self.opts['zdim'][-1], dtype='float32')
+                    mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
+                    x = np.linspace(mins[0], maxs[0], num=num_cols, endpoint=True)
+                    xymin = np.stack([x,mins[1]*np.ones(num_cols)],axis=-1)
+                    xymax = np.stack([x,maxs[1]*np.ones(num_cols)],axis=-1)
+                    anchors = np.stack([xymin,xymax],axis=1)
+                    grid = linespace(self.opts, num_cols, anchors=anchors)
+                    grid = grid.reshape([-1,self.opts['zdim'][-1]])
+                    samples = self.sess.run(self.samples, feed_dict={
+                                    self.pz_samples: grid,
+                                    self.sigma_scale: np.ones(1)})
+                    samples = samples.reshape([-1,num_cols]+self.data.data_shape)
+                    plot_grid(self.opts, samples, exp_dir, 'pz_grid_it%07d.png' % it)
+
+                if self.opts['vizu_stochasticity']:
+                    Samples = []
+                    for n in range(len(self.opts['sigma_scale_stochasticity'])):
+                        samples = self.sess.run(self.samples, feed_dict={
+                                        self.pz_samples: fixed_noise[:25],
+                                        self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
+                        Samples.append(samples)
+                    plot_stochasticity(self.opts, Samples, exp_dir, 'stochasticity_it%07d.png' % it)
 
                 np.random.seed()
 
@@ -525,6 +560,7 @@ class Run(object):
                 #     else:
                 #         wait_lambda+=1
 
+        ##### saving #####
         # Save the final model
         if self.opts['save_final']:
             self.saver.save(self.sess, os.path.join(exp_dir,
@@ -537,10 +573,9 @@ class Run(object):
             save_path = os.path.join(exp_dir, data_dir)
             utils.create_dir(save_path)
             name = 'res_train_final'
-            np.savez(os.path.join(save_path, name),
-                        data=batch, labels=labels, rec=rec, samples=samples,
-                        encoded=encoded, teLoss=np.array(teLoss),
-                        teLoss_obs=np.array(teLoss_obs), teLoss_match=np.array(teLoss_match),
+            np.savez(os.path.join(save_path, name), teLoss=np.array(teLoss),
+                        teLoss_obs=np.array(teLoss_obs),
+                        teLoss_match=np.array(teLoss_match),
                         teenc_Sigma_reg=np.array(teenc_Sigma_reg),
                         tedec_Sigma_reg=np.array(tedec_Sigma_reg),
                         trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
