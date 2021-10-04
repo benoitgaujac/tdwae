@@ -94,12 +94,11 @@ def main():
 
     # lamba
     beta = [0.001, 0.01, 0.1, 1.]
-    zdims = [[32,16,8,4,2],]
-    lmba = list(itertools.product(zdims,beta))
-    id = (FLAGS.id-1) % len(lmba)
-    zdim, lreg = lmba[id][0], lmba[id][1]
-    opts['zdim'] = zdim
-    opts['lambda_init'] = [lreg for n in range(opts['nlatents'])]
+    # lmba = list(itertools.product(zdims,beta))
+    id = (FLAGS.id-1) % len(beta)
+    # zdim, lreg = lmba[id][0], lmba[id][1]
+    # opts['zdim'] = zdim
+    opts['lambda_init'] = [beta[id] for n in range(opts['nlatents'])]
     opts['lambda'] = [1. for n in range(opts['nlatents'])]
 
     # Create directories
@@ -112,12 +111,12 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'dz'+str(zdim[0]))
+    out_subdir = os.path.join(out_subdir, 'l'+ opts['lambda_schedule'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
     exp_dir = os.path.join(out_subdir,'{}_{}layers_lreg{}_{:%Y_%m_%d_%H_%M}'.format(
-                opts['exp_dir'], opts['nlatents'], lreg, datetime.now()))
+                opts['exp_dir'], opts['nlatents'], beta[id], datetime.now()))
     opts['exp_dir'] = exp_dir
     if not tf.io.gfile.isdir(exp_dir):
         utils.create_dir(exp_dir)
@@ -140,7 +139,7 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 5)
+    opts['print_every'] = int(opts['it_num'] / 4)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

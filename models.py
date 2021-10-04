@@ -452,7 +452,7 @@ class VAE(Model):
                                             is_training=is_training)
             if self.opts['encoder'][n] == 'det':
                 # - deterministic encoder
-                z = mean
+                z = tf.compat.v1.sigmoid(mean)
             elif self.opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
                 if resample:
