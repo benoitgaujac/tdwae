@@ -484,7 +484,8 @@ class Run(object):
                     plot_embedded(self.opts, z, y, exp_dir, 'emb_it%07d.png' % it)
 
                 if self.opts['vizu_latent']:
-                    idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
+                    # idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
+                    idx = np.random.randint(0, self.data.test_size, 4)
                     x, _ = self.data.sample_observations(idx)
                     reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
                                     self.images: x,
@@ -512,7 +513,7 @@ class Run(object):
                     Samples = []
                     for n in range(len(self.opts['sigma_scale_stochasticity'])):
                         samples = self.sess.run(self.samples, feed_dict={
-                                        self.pz_samples: fixed_noise[:25],
+                                        self.pz_samples: fixed_noise[:5],
                                         self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
                         Samples.append(samples)
                     plot_stochasticity(self.opts, Samples, exp_dir, 'stochasticity_it%07d.png' % it)

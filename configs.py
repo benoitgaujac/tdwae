@@ -101,7 +101,7 @@ config_mnist['batch_size'] = 128
 # Model set up
 config_mnist['nlatents'] = 5
 config_mnist['sigma_scale_resample'] = 16.*np.ones(1)
-config_mnist['sigma_scale_stochasticity'] = [eps*np.ones(1) for eps in [0.1,0.3,0.5,0.7,0.9,1.]]
+config_mnist['sigma_scale_stochasticity'] = [eps**2*np.ones(1) for eps in [0.01,0.05,0.1,0.5,1.,2.]]
 config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['resample'] = True
 config_mnist['nresamples'] = 9

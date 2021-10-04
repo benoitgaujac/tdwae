@@ -100,14 +100,13 @@ def main():
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
-    lambda_rec = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, .5]
-    lamdba_match = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-    # zdims = [[64,32,16,8,4], [32,16,8,4,2]]
-    zdims = [[32,16,8,4,2],]
-    lmba = list(itertools.product(zdims,lambda_rec,lamdba_match))
+    lambda_rec = [0.0001, 0.001, 0.01, 0.1]
+    lamdba_match = [0.0001, 0.001, 0.01, 0.1]
+    schedule = ['constant', 'adaptive']
+    lmba = list(itertools.product(schedule,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
-    zdim, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
-    opts['zdim'] = zdim
+    sche, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
+    opts['lambda_schedule'] = sche
     opts['lambda_init'] = [lrec*log(n+1.0001)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
     opts['lambda'] = [lrec**(n+1)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
@@ -131,7 +130,7 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'dz'+str(zdim[0]))
+    out_subdir = os.path.join(out_subdir, 'l'+ sche)
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
@@ -165,7 +164,7 @@ def main():
     opts['vizu_stochasticity'] = FLAGS.stoch
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 5)
+    opts['print_every'] = int(opts['it_num'] / 4)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

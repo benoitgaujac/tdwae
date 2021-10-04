@@ -60,7 +60,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         r_ptr += 1
         w_ptr += 2
     if greyscale:
-        pics = 1. - merged
+        pics = 1. - merged[:num_pics]
     # Figuring out a layout
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     img1 = np.concatenate(image, axis=0)
@@ -221,8 +221,8 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
@@ -274,8 +274,8 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
@@ -329,7 +329,7 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, filename):
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', box_inches='tight', pad_inches=0.0)
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
@@ -367,8 +367,8 @@ def plot_embedded(opts, encoded, labels, exp_dir, filename):
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.7,
                     c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
-        if i==len(embeds)-1:
-            plt.colorbar()
+        # if i==len(embeds)-1:
+        #     plt.colorbar()
         xmin = np.amin(embeds[i][:,0])
         xmax = np.amax(embeds[i][:,0])
         magnify = 0.01
@@ -390,19 +390,28 @@ def plot_embedded(opts, encoded, labels, exp_dir, filename):
         ax.axes.get_yaxis().set_ticks([])
         # ax.axes.set_xlim([0, width_pic])
         # ax.axes.set_ylim([height_pic, 0])
-        ax.axes.set_aspect(1)
+        x0,x1 = ax.axes.get_xlim()
+        y0,y1 = ax.axes.get_ylim()
+        ax.axes.set_aspect(abs(x1-x0)/abs(y1-y0))
+    # adjust space between subplots
+    plt.subplots_adjust(bottom=0.05, right=0.9, top=0.95)
+    cax = plt.axes([0.91, 0.165, 0.01, 0.7])
+    cbar = plt.colorbar(cax=cax)
+    cbar.ax.tick_params(labelsize=35)
+
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
 ####### latent exploration #######
 def plot_latent(opts, reconstruction, exp_dir, filename):
     '''
-    reconstruction: [[nimages, nresamples, imshape,] x nlatents]
+    reconstruction: [[nrows, nresamples, imshape,] x nlatents]
     '''
 
     nrows = np.shape(reconstruction[0])[0]
@@ -419,8 +428,8 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
         return np.concatenate(pics, axis=0)
 
     # plotting
-    fig_height = 300*int(sqrt(npics))*nrows / float(mydpi)
-    fig_width = 300*int(sqrt(npics))*ncols / float(mydpi)
+    fig_height = 100*int(sqrt(npics))*nrows / float(mydpi)
+    fig_width = 100*int(sqrt(npics))*ncols / float(mydpi)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(fig_width, fig_height))
     for i in range(nrows):
         for j in range(ncols):
@@ -437,13 +446,19 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
             axes[i,j].axes.set_ylim([pics.shape[0], 0])
             axes[i,j].axes.set_xlim([0, pics.shape[1]])
             axes[i,j].axes.set_aspect(1)
+            axes[i,j].axes.axis('off')
             if i==0:
                 axes[i,j].set_title('latent ' + str(j+1))
+    # adjust space between subplots
+    # plt.subplots_adjust(bottom=0.05, right=0.9, top=0.95, wspace=0.1, hspace=0.1)
+    plt.subplots_adjust(wspace=0.05, hspace=0.05)
+
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
@@ -482,57 +497,54 @@ def plot_grid(opts, samples, exp_dir, filename):
     axes.axes.set_ylim([pics.shape[0], 0])
     axes.axes.set_xlim([0, pics.shape[1]])
     axes.axes.set_aspect(1)
+    axes.axes.axis('off')
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
 ####### Stochasticity of decoder #######
 def plot_stochasticity(opts, samples, exp_dir, filename):
     '''
-    samples: [[npics, imshape,] x nplots]
+    samples: [[npics, imshape,] x ncols]
     '''
 
     npics = np.shape(samples[0])[0]
-    nplots = len(samples)
-
-    def preprocess_format_layout(img):
-        # helper to format and create layout
-        if img.shape[-1]==1:
-            img =  1. - img
-        # Figuring out a layout
-        pics = np.concatenate(np.split(img, int(sqrt(npics))), axis=2)
-        pics = np.concatenate(np.split(pics, int(sqrt(npics))), axis=1)
-        return pics[0]
-
+    ncols = len(samples)
+    pics = np.concatenate(samples, axis=2)
+    pics = np.concatenate(np.split(pics, npics), axis=1)
+    pics = pics[0]
+    if pics.shape[-1]==1:
+        pics =  1. - pics
     # plotting
-    fig_height = 200*int(sqrt(npics)) / float(mydpi)
-    fig_width = 200*int(sqrt(npics))*nplots / float(mydpi)
-    fig, axes = plt.subplots(nrows=1, ncols=nplots, figsize=(fig_width, fig_height))
-    for i in range(nplots):
-        pics = preprocess_format_layout(samples[i])
-        if pics.shape[-1]==1:
-            pics = pics[:, :, 0]
-            # in Greys higher values correspond to darker colors
-            axes[i].imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
-        else:
-            axes[i].imshow(pics, interpolation='none', vmin=0., vmax=1.)
-        # Removing ticks
-        axes[i].axes.get_xaxis().set_ticks([])
-        axes[i].axes.get_yaxis().set_ticks([])
-        axes[i].axes.set_ylim([pics.shape[0], 0])
-        axes[i].axes.set_xlim([0, pics.shape[1]])
-        axes[i].axes.set_aspect(1)
-        axes[i].set_title(r'$\sigma=.1f'.format(opts['sigma_scale_stochasticity'][i]))
+    fig_height = 200*npics / float(mydpi)
+    fig_width = 200*ncols / float(mydpi)
+    fig, axes = plt.subplots(figsize=(fig_width, fig_height))
+    if pics.shape[-1]==1:
+        pics = pics[:, :, 0]
+        # in Greys higher values correspond to darker colors
+        axes.imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+    else:
+        axes.imshow(pics, interpolation='none', vmin=0., vmax=1.)
+    # Removing ticks
+    axes.axes.get_xaxis().set_ticks([])
+    axes.axes.get_yaxis().set_ticks([])
+    axes.axes.set_ylim([pics.shape[0], 0])
+    axes.axes.set_xlim([0, pics.shape[1]])
+    axes.axes.set_aspect(1)
+    axes.axes.axis('off')
+    # axes.set_title(r'$\sigma=%.2f' % sqrt(opts['sigma_scale_stochasticity'][i]))
 
     ### Saving plot
     plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),dpi=mydpi,cformat='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 
@@ -550,8 +562,8 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
@@ -583,7 +595,8 @@ def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     plots_dir = 'train_plots'
     save_path = os.path.join(work_dir,plots_dir)
     utils.create_dir(save_path)
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),cformat='png')
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
 def save_latent_interpolation(opts, data_test, label_test, # data, labels
@@ -728,7 +741,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         # Saving
         filename = filename + '.png'
         plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                    dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+                    dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
         plt.close()
 
 
@@ -771,7 +784,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
             # Saving
             filename = filename + '.png'
             plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                        dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+                        dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
             plt.close()
 
     # # --- Embedings vizu
@@ -847,7 +860,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     # cbar.set_ticklabels([0,1,2,3,4,5,6,7,8,9])
     # cbar.ax.tick_params(labelsize=85 )
     # plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-    #             dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.01)
+    #             dpi=dpi, format='png', bbbox_inches='tight', pad_inches=0.01)
     # plt.close()
 
 def save_vlae_experiment(opts, decoded, work_dir):
@@ -920,7 +933,7 @@ def save_vlae_experiment(opts, decoded, work_dir):
     save_path = os.path.join(work_dir,plots_dir)
     utils.create_dir(save_path)
     filename = 'vlae_exp.png'
-    fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
                 dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
     plt.close()
 
@@ -1080,7 +1093,7 @@ def discrete_cmap(N, base_cmap=None):
 #         # Saving
 #         filename = filename + '.png'
 #         plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-#                     dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+#                     dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
 #         plt.close()
 #
 #     #Set size for following plots
@@ -1112,7 +1125,7 @@ def discrete_cmap(N, base_cmap=None):
 #     # Saving
 #     filename = 'probs.png'
 #     fig.savefig(utils.o_gfile((save_path, filename), 'wb'),
-#                 dpi=dpi, format='png', bbox_inches='tight')
+#                 dpi=dpi, format='png', bbbox_inches='tight')
 #     plt.close()
 #
 #     ###Sample plots
@@ -1151,7 +1164,7 @@ def discrete_cmap(N, base_cmap=None):
 #     # Saving
 #     filename = 'samples.png'
 #     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-#                 dpi=dpi, format='png', box_inches='tight', pad_inches=0.0)
+#                 dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
 #     plt.close()
 #
 #     ###UMAP visualization of the embedings

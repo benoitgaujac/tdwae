@@ -8,7 +8,7 @@
 #$ -l tmem=5G
 #$ -l h_rt=6:00:00
 
-#$ -t 1-40
+#$ -t 1-32
 
 #$ -N waemnist
 
@@ -16,7 +16,7 @@ source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
 
-python3 run_wae.py --num_it 500000 --out_dir mnist --save_model --save_data --id $SGE_TASK_ID
+python3 run_wae.py --num_it 500000 --out_dir mnist --losses --id $SGE_TASK_ID
 # python3 run_vae.py --num_it 500000 --out_dir mnist --save_model --save_data --id $SGE_TASK_ID
 
 # python3 run.py --num_it 200 --out_dir mnist_test --save_model --id 1
