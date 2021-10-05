@@ -200,6 +200,8 @@ class stackedWAE(Model):
             if self.opts['decoder'][idx] == 'det':
                 # - deterministic decoder
                 x = mean
+                if self.opts['use_sigmoid']:
+                    x = tf.compat.v1.sigmoid(x)
             elif self.opts['decoder'][idx] == 'gauss':
                 # - gaussian decoder
                 p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
@@ -340,6 +342,8 @@ class WAE(Model):
         if self.opts['decoder'][0] == 'det':
             # - deterministic decoder
             x = mean
+            if self.opts['use_sigmoid']:
+                x = tf.compat.v1.sigmoid(x)
         elif self.opts['decoder'][0] == 'gauss':
             # - gaussian decoder
             p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
@@ -452,7 +456,7 @@ class VAE(Model):
                                             is_training=is_training)
             if self.opts['encoder'][n] == 'det':
                 # - deterministic encoder
-                z = tf.compat.v1.sigmoid(mean)
+                z = mean
             elif self.opts['encoder'][n] == 'gauss':
                 # - gaussian encoder
                 if resample:
@@ -506,6 +510,8 @@ class VAE(Model):
             if self.opts['decoder'][idx] == 'det':
                 # - deterministic decoder
                 x = mean
+                if self.opts['use_sigmoid']:
+                    x = tf.compat.v1.sigmoid(x)
             elif self.opts['decoder'][idx] == 'gauss':
                 # - gaussian decoder
                 p_params = tf.concat((mean, sigma_scale*Sigma),axis=-1)
@@ -525,7 +531,7 @@ class VAE(Model):
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
                                     inputs, sigma_scale, False, reuse=reuse,
                                     is_training=is_training)
-        obs_cost = self.obs_cost(inputs, xs[0])
+        obs_cost = self.obs_cost(inputs, dec_means[0])
         latent_cost = self.latent_cost(dec_means[1:], dec_Sigmas[1:], zs[:-1],
                                     enc_means[:-1], enc_Sigmas[:-1])
         pz_means, pz_Sigmas = np.split(self.pz_params, 2, axis=-1)

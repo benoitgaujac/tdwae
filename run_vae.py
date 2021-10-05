@@ -52,6 +52,8 @@ parser.add_argument("--res_dir", type=str, default='res',
 # model setup
 parser.add_argument("--encoder", type=str, default='gauss',
                     help='encoder type')
+parser.add_argument("--sigmoid", action='store_false', default=True,
+                    help='use sigmoid activation for det rec.')
 parser.add_argument("--net_archi", type=str, default='mlp',
                     help='networks architecture [mlp/conv_locatello/conv_rae]')
 parser.add_argument('--lmba_schedule', type=str, default='constant',
@@ -87,6 +89,7 @@ def main():
     # model
     opts['model'] = FLAGS.model
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
+    opts['use_sigmoid'] = FLAGS.sigmoid
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
     opts['lambda_schedule'] = FLAGS.lmba_schedule
     opts['enc_sigma_pen'] = FLAGS.enc_sigma_pen
@@ -147,8 +150,8 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 4)
-    opts['evaluate_every'] = int(opts['it_num'] / 50)
+    opts['print_every'] = 5 #int(opts['it_num'] / 4)
+    opts['evaluate_every'] = 5 #int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size
     opts['lr'] = FLAGS.lr
