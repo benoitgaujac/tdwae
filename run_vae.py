@@ -95,22 +95,22 @@ def main():
     opts['enc_sigma_pen'] = FLAGS.enc_sigma_pen
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
-    opts['nlatents'] = 1
-    zdims = [2,4,8,16]
-    id = (FLAGS.id-1) % len(zdims)
-    opts['zdim'] = [zdims[id],]
-    opts['lambda_init'] = [1,]
-    opts['lambda'] = [1.,]
-    lreg = 1.
-    opts['lambda_sigma'] = [1.,]
+    # opts['nlatents'] = 1
+    # zdims = [2,4,8,16]
+    # id = (FLAGS.id-1) % len(zdims)
+    # opts['zdim'] = [zdims[id],]
+    # opts['lambda_init'] = [1,]
+    # opts['lambda'] = [1.,]
+    # lreg = 1.
+    # opts['lambda_sigma'] = [1.,]
 
     # # lamba
-    # beta = [0.001, 0.01, 0.1, 1.]
+    beta = [0.001, 0.01, 0.1, 1.]
+    id = (FLAGS.id-1) % len(beta)
     # lmba = list(itertools.product(zdims,beta))
     # zdim, lreg = lmba[id][0], lmba[id][1]
-    # opts['zdim'] = zdim
-    # opts['lambda_init'] = [lreg for n in range(opts['nlatents'])]
-    # opts['lambda'] = [1. for n in range(opts['nlatents'])]
+    opts['lambda_init'] = [beta[id] for n in range(opts['nlatents'])]
+    opts['lambda'] = [1. for n in range(opts['nlatents'])]
 
     # Create directories
     results_dir = 'results'
@@ -122,9 +122,9 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'dz'+str(zdims[id]))
-    if not tf.io.gfile.isdir(out_subdir):
-        utils.create_dir(out_subdir)
+    # out_subdir = os.path.join(out_subdir, 'dz'+str(zdims[id]))
+    # if not tf.io.gfile.isdir(out_subdir):
+    #     utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
     exp_dir = os.path.join(out_subdir,'{}_{}layers_lreg{}_{:%Y_%m_%d_%H_%M}'.format(
                 opts['exp_dir'], opts['nlatents'], lreg, datetime.now()))
