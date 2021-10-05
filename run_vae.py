@@ -127,7 +127,7 @@ def main():
     #     utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
     exp_dir = os.path.join(out_subdir,'{}_{}layers_lreg{}_{:%Y_%m_%d_%H_%M}'.format(
-                opts['exp_dir'], opts['nlatents'], lreg, datetime.now()))
+                opts['exp_dir'], opts['nlatents'], beta[id], datetime.now()))
     opts['exp_dir'] = exp_dir
     if not tf.io.gfile.isdir(exp_dir):
         utils.create_dir(exp_dir)
@@ -150,8 +150,8 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = 5 #int(opts['it_num'] / 4)
-    opts['evaluate_every'] = 5 #int(opts['it_num'] / 50)
+    opts['print_every'] = int(opts['it_num'] / 4)
+    opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size
     opts['lr'] = FLAGS.lr
