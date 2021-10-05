@@ -56,6 +56,8 @@ parser.add_argument("--res_dir", type=str, default='res',
 # model setup
 parser.add_argument("--encoder", type=str, default='gauss',
                     help='encoder type')
+parser.add_argument("--sigmoid", action='store_false', default=True,
+                    help='use sigmoid activation for det rec.')
 parser.add_argument("--net_archi", type=str, default='mlp',
                     help='networks architecture [mlp/conv_locatello/conv_rae]')
 parser.add_argument("--cost", type=str, default='l2sq',
@@ -93,6 +95,7 @@ def main():
     # model
     opts['model'] = FLAGS.model
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
+    opts['use_sigmoid'] = FLAGS.sigmoid
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
     opts['obs_cost'] = FLAGS.cost
     opts['lambda_schedule'] = FLAGS.lmba_schedule
@@ -102,7 +105,7 @@ def main():
     # lamba
     lambda_rec = [0.0001, 0.001, 0.01, 0.1]
     lamdba_match = [0.0001, 0.001, 0.01, 0.1]
-    schedule = ['constant', 'adaptive']
+    schedule = ['constant',]
     lmba = list(itertools.product(schedule,lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
     sche, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
@@ -130,7 +133,7 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'l'+ sche)
+    out_subdir = os.path.join(out_subdir, 'l'+sche+'_sigmoid')
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
