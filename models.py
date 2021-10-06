@@ -95,10 +95,13 @@ class Model(object):
 
     def layerwise_kl(self, inputs, sigma_scale):
         # --- compute layer-wise KL(q(z_i|z_i-1,p(z_i|z_i+1))
-        _, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
-        pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
-        _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples, sigma_scale)
-        dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
+        _, enc_means, enc_Sigmas, _, dec_means, dec_Sigmas = self.forward_pass(
+                                    inputs, sigma_scale, False, reuse=True,
+                                    is_training=False)
+        # _, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
+        # pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
+        # _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples, sigma_scale)
+        # dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
         KL = []
         # latent layer up to N-1
         for n in range(len(enc_means)-1):

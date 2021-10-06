@@ -95,7 +95,7 @@ def main():
     # model
     opts['model'] = FLAGS.model
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
-    opts['use_sigmoid'] = FLAGS.sigmoid
+    # opts['use_sigmoid'] = FLAGS.sigmoid
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
     opts['obs_cost'] = FLAGS.cost
     opts['lambda_schedule'] = FLAGS.lmba_schedule
@@ -105,11 +105,13 @@ def main():
     # lamba
     lambda_rec = [0.0001, 0.001, 0.01, 0.1]
     lamdba_match = [0.0001, 0.001, 0.01, 0.1]
-    schedule = ['constant',]
-    lmba = list(itertools.product(schedule,lambda_rec,lamdba_match))
+    schedule = ['constant','adaptive']
+    sigmoid = [False, True]
+    lmba = list(itertools.product(schedule, sigmoid, lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
-    sche, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2]
+    sche, sig, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2], lmba[id][3]
     opts['lambda_schedule'] = sche
+    opts['use_sigmoid'] = sig
     opts['lambda_init'] = [lrec*log(n+1.0001)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
     opts['lambda'] = [lrec**(n+1)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
     # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
@@ -133,7 +135,7 @@ def main():
     out_subdir = os.path.join(opts['out_dir'], opts['model'])
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
-    out_subdir = os.path.join(out_subdir, 'l'+sche+'_sigmoid')
+    out_subdir = os.path.join(out_subdir, 'l'+sche+'_sig'+str(sig))
     if not tf.io.gfile.isdir(out_subdir):
         utils.create_dir(out_subdir)
     opts['exp_dir'] = FLAGS.res_dir
