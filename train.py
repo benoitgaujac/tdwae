@@ -20,6 +20,7 @@ import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
 from models import WAE, stackedWAE, VAE
 from plot_functions import save_train, save_latent_interpolation, save_vlae_experiment
+# from plot_functions import plot_splitloss, plot_samples, plot_kl, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 
 # Path to inception model and stats for training set
@@ -464,15 +465,15 @@ class Run(object):
                                     trLoss_latent, trLoss_match,
                                     teMSE, teBlurr, teKL,
                                     trMSE, trBlurr, trKL,
-                                    exp_dir, 'res_it%07d.png' % it)
+                                    exp_dir, 'train_plots', 'res_it%07d.png' % it)
 
                 if self.opts['vizu_splitloss']:
                     plot_splitloss(self.opts, teLoss_obs, teLoss_latent, teLoss_match,
                                     teenc_Sigma_reg, tedec_Sigma_reg,
-                                    exp_dir, 'losses_it%07d.png' % it)
+                                    exp_dir, 'train_plots', 'losses_it%07d.png' % it)
 
                 if self.opts['vizu_fullrec']:
-                    plot_fullrec(self.opts, batch[:10], [rec[n][:10] for n in range(len(rec))], exp_dir, 'rec_it%07d.png' % it)
+                    plot_fullrec(self.opts, batch[:10], [rec[n][:10] for n in range(len(rec))], exp_dir, 'train_plots', 'rec_it%07d.png' % it)
 
                 if self.opts['vizu_embedded']:
                     batchsize = 1000
@@ -484,7 +485,7 @@ class Run(object):
                                     self.sigma_scale: np.ones(1)})
                         # zs += [z[n][:,0] for n in range(len(z))]
                         # ys += y
-                    plot_embedded(self.opts, z, y, exp_dir, 'emb_it%07d.png' % it)
+                    plot_embedded(self.opts, z, y, exp_dir, 'train_plots', 'emb_it%07d.png' % it)
 
                 if self.opts['vizu_latent']:
                     # idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
@@ -493,7 +494,7 @@ class Run(object):
                     reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
                                     self.images: x,
                                     self.sigma_scale: self.opts['sigma_scale_resample']})
-                    plot_latent(self.opts, reconstruction, exp_dir, 'latent_expl_it%07d.png' % it)
+                    plot_latent(self.opts, reconstruction, exp_dir, 'train_plots', 'latent_expl_it%07d.png' % it)
 
                 if self.opts['vizu_pz_grid']:
                     num_cols = 10
@@ -510,7 +511,7 @@ class Run(object):
                                     self.pz_samples: grid,
                                     self.sigma_scale: np.ones(1)})
                     samples = samples.reshape([-1,num_cols]+self.data.data_shape)
-                    plot_grid(self.opts, samples, exp_dir, 'pz_grid_it%07d.png' % it)
+                    plot_grid(self.opts, samples, exp_dir, 'train_plots', 'pz_grid_it%07d.png' % it)
 
                 if self.opts['vizu_stochasticity']:
                     Samples = []
@@ -519,7 +520,7 @@ class Run(object):
                                         self.pz_samples: fixed_noise[:5],
                                         self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
                         Samples.append(samples)
-                    plot_stochasticity(self.opts, Samples, exp_dir, 'stochasticity_it%07d.png' % it)
+                    plot_stochasticity(self.opts, Samples, exp_dir, 'train_plots', 'stochasticity_it%07d.png' % it)
 
                 np.random.seed()
 
@@ -587,16 +588,19 @@ class Run(object):
                         teBlurr=np.array(teBlurr), teKL=np.array(teKL),
                         trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
 
-    def plot_test(self, WEIGHTS_PATH=None):
+    def test(self, WEIGHTS_PATH=None):
         """
-        Train top-down model with chosen method
+        Test and plot
         """
 
         logging.error('\nTraining  {} with {} latent layers\n'.format(self.opts['model'], self.opts['nlatents']))
         exp_dir = self.opts['exp_dir']
 
+        # Init model hyper params
         npics = self.opts['plot_num_pics']
         fixed_noise = sample_pz(self.opts, self.pz_params, npics)
+        lmbd = self.opts['lambda']
+        lmbd_sigma = self.opts['lambda_sigma']
 
         # Compute blurriness of real data
         idx = np.random.randint(0, high=self.data.test_size, size=1000)
@@ -605,313 +609,166 @@ class Run(object):
         logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
         print('')
 
-        # Init all monitoring variables
-        trLoss, trLoss_obs, trLoss_latent, trLoss_match = 0., 0., 0., 0.
-        teLoss, teLoss_obs, teLoss_latent, teLoss_match = 0., 0., 0., 0.
-        trMSE, trBlurr, trKL = 0., 0., 0.
-        teMSE, teBlurr, teKL =0., 0., 0.
-        # lr schedule
-        decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
-        # lambda schedule
-        annealed_warmup = 50000
-        # lreg_init = self.opts['lambda_reg_init']
-        # lreg_final = self.opts['lambda'][-1]
-        # lmbd = self.opts['lambda'][:-1].append(lreg_init)
-        lmbd = self.opts['lambda_init']
-        lmbd_sigma = self.opts['lambda_sigma']
 
         # - Init sess and load trained weights if needed
-        if self.opts['use_trained']:
-            if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
-                raise Exception("weights file doesn't exist")
-            self.saver.restore(self.sess, WEIGHTS_PATH)
-        else:
-            self.sess.run(self.initializer)
-            # if self.opts['pretrain']:
-            #     logging.error('Pretraining the encoder\n')
-            #     self.pretrain_encoder(data)
-            #     print('')
+        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            raise Exception("weights file doesn't exist")
+        self.saver.restore(self.sess, WEIGHTS_PATH)
+        ##### TESTING LOOP #####
+        # Init all monitoring variables
+        trLoss, trLoss_obs, trLoss_match = 0., 0., 0.
+        teLoss, teLoss_obs, teLoss_match = 0., 0., 0.
+        trLoss_latent = np.zeros(len(self.opts['nlatents'])-1)
+        teLoss_latent = np.zeros(len(self.opts['nlatents'])-1)
+        trMSE, trBlurr, teMSE, teBlurr = 0., 0., 0., 0.
+        trKL = np.zeros(len(self.opts['nlatents']))
+        teKL = np.zeros(len(self.opts['nlatents']))
 
-        ##### TRAINING LOOP #####
-        for it in range(self.opts['it_num']):
-            # Saver
-            if it > 0 and it % self.opts['save_every'] == 0:
-                self.saver.save(self.sess, os.path.join(
-                                    exp_dir,
-                                    'checkpoints',
-                                    'trained-wae'),
-                                    global_step=it)
-
-            # optimization step
-            it += 1
-            _ = self.sess.run(self.opt, feed_dict={self.data.handle: self.train_handle,
-                                    self.sigma_scale: np.ones(1),
-                                    self.lmbd: lmbd,
-                                    self.lmbd_sigma: lmbd_sigma,
-                                    self.lr_decay: decay,
-                                    self.is_training: True})
-
-
-            ##### TESTING LOOP #####
-            if it % self.opts['evaluate_every'] == 0:
-                logging.error('\nIteration {}/{}'.format(it, self.opts['it_num']))
-                # training losses
-                [loss, obs_cost, latent_costs, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty] = self.sess.run(
-                                    [self.objective,
-                                    self.obs_cost,
-                                    self.latent_costs,
-                                    self.matching_penalty,
-                                    self.enc_Sigma_penalty,
-                                    self.dec_Sigma_penalty],
-                                    feed_dict={self.data.handle: self.train_handle,
-                                                self.sigma_scale: np.ones(1),
-                                                self.lmbd: lmbd,
-                                                self.lmbd_sigma: lmbd_sigma,
-                                                self.is_training: False})
-                trLoss.append(loss)
-                trLoss_obs.append(obs_cost)
-                trLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
-                trLoss_match.append(lmbd[-1]*matching_penalty)
-                trenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
-                trdec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
-                # training metrics
-                idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
-                batch, _ = self.data.sample_observations(idx, 'train')
-                [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
-                                    feed_dict={self.data.handle: self.train_handle,
-                                                self.images: batch,
-                                                self.sigma_scale: np.ones(1),})
-                trMSE.append(mse)
-                trBlurr.append(blurr)
-                trKL.append(kl)
-                # init testing losses & metrics
-                test_it_num = int(self.data.test_size / self.opts['batch_size'])
-                loss, obs_cost, matching_penalty = 0., 0., 0.
-                enc_Sigma_penalty, dec_Sigma_penalty = np.zeros(len(enc_Sigma_penalty)), np.zeros(len(dec_Sigma_penalty))
-                latent_costs = np.zeros(len(latent_costs))
-                mse, blurr, kl = 0., 0., np.zeros(len(kl))
-                for it_ in range(test_it_num):
-                    # testing losses
-                    [l, obs, latent, match, eSigma, dSigma] = self.sess.run([self.objective,
-                                    self.obs_cost,
-                                    self.latent_costs,
-                                    self.matching_penalty,
-                                    self.enc_Sigma_penalty,
-                                    self.dec_Sigma_penalty],
-                                    feed_dict={self.data.handle: self.test_handle,
-                                                self.sigma_scale: np.ones(1),
-                                                self.lmbd: lmbd,
-                                                self.lmbd_sigma: lmbd_sigma,
-                                                self.is_training: False})
-                    loss += l / test_it_num
-                    obs_cost += obs / test_it_num
-                    matching_penalty += match / test_it_num
-                    enc_Sigma_penalty += np.array(eSigma) / test_it_num
-                    dec_Sigma_penalty += np.array(dSigma) / test_it_num
-                    latent_costs += np.array(latent) / test_it_num
-                    # testing metrics
-                    idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
-                    batch, _ = self.data.sample_observations(idx)
-                    [m, b, k] = self.sess.run([self.mse, self.blurriness, self.KL],
-                                    feed_dict={self.data.handle: self.test_handle,
-                                                self.images: batch,
-                                                self.sigma_scale: np.ones(1)})
-                    mse += m / test_it_num
-                    blurr += b / test_it_num
-                    kl += np.array(k) / test_it_num
-                teLoss.append(loss)
-                teLoss_obs.append(obs_cost)
-                teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
-                teLoss_match.append(lmbd[-1]*matching_penalty)
-                teenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
-                tedec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
-                teMSE.append(mse)
-                teBlurr.append(blurr)
-                teKL.append(kl)
-                # log output
-                debug_str = 'ITER: %d/%d, ' % (it, self.opts['it_num'])
-                logging.error(debug_str)
-                debug_str = 'teLOSS=%.3f, trLOSS=%.3f' % (teLoss[-1], trLoss[-1])
-                logging.error(debug_str)
-                debug_str = 'REC=%.3f, LATENT=%.3f, MATCH=%10.3e, eSIGMA=%10.3e, dSIGMA=%10.3e'  % (
-                                    teLoss_obs[-1],
-                                    np.sum(teLoss_latent[-1]),
-                                    teLoss_match[-1],
-                                    np.sum(teenc_Sigma_reg[-1]),
-                                    np.sum(tedec_Sigma_reg[-1]))
-                logging.error(debug_str)
-                debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
-                                    teMSE[-1],
-                                    teBlurr[-1],
-                                    np.mean(teKL[-1]/self.opts['zdim']))
-                logging.error(debug_str)
-
-                # Compute FID score
-                if self.opts['fid']:
-                    fid = 0
-                    for it_ in range(test_it_num):
-                        # First convert to RGB
-                        if np.shape(flat_samples)[-1] == 1:
-                            # We have greyscale
-                            flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
-                        preds_incep = self.inception_sess.run(self.inception_layer,
-                                      feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
-                        preds_incep = preds_incep.reshape((npics,-1))
-                        mu_gen = np.mean(preds_incep, axis=0)
-                        sigma_gen = np.cov(preds_incep, rowvar=False)
-                        fid_score = fid.calculate_frechet_distance(mu_gen,
-                                    sigma_gen,
-                                    self.mu_train,
-                                    self.sigma_train,
-                                    eps=1e-6)
-                    fid_scores.append(fid_score)
+        it_num = int(self.data.test_size / self.opts['batch_size'])
+        for it in range(test_it_num):
+            # training losses
+            [l, obs, latent, match] = self.sess.run(
+                                [self.objective,
+                                self.obs_cost,
+                                self.latent_costs,
+                                self.matching_penalty],
+                                feed_dict={self.data.handle: self.train_handle,
+                                            self.sigma_scale: np.ones(1),
+                                            self.lmbd: lmbd,
+                                            self.lmbd_sigma: lmbd_sigma,
+                                            self.is_training: False})
+            trLoss += l / it_num
+            trLoss_obs += obs / it_num
+            trLoss_match += match / it_num
+            trLoss_latent += np.array(latent) / it_num
+            # training metrics
+            idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
+            batch, _ = self.data.sample_observations(idx, 'train')
+            [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+                                feed_dict={self.data.handle: self.train_handle,
+                                            self.images: batch,
+                                            self.sigma_scale: np.ones(1),})
+            trMSE += mse / it_num
+            trBlurr += blurr / it_num
+            trKL += np.array(kl) / it_num
+            # testing losses
+            [l, obs, latent, match] = self.sess.run([self.objective,
+                            self.obs_cost,
+                            self.latent_costs,
+                            self.matching_penalty],
+                            feed_dict={self.data.handle: self.test_handle,
+                                        self.sigma_scale: np.ones(1),
+                                        self.lmbd: lmbd,
+                                        self.lmbd_sigma: lmbd_sigma,
+                                        self.is_training: False})
+            teLoss += l / it_num
+            teLoss_obs += obs / it_num
+            teLoss_match += match / it_num
+            teLoss_latent += np.array(latent) / it_num
+            # testing metrics
+            idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
+            batch, _ = self.data.sample_observations(idx)
+            [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+                            feed_dict={self.data.handle: self.test_handle,
+                                        self.images: batch,
+                                        self.sigma_scale: np.ones(1)})
+            teMSE += mse / it_num
+            teBlurr += blurr / it_num
+            teKL += np.array(kl) / it_num
+        trLoss_latent *= lmbd
+        teLoss_latent *= lmbd
+        # logging output
+        debug_str = 'teLOSS=%.3f, trLOSS=%.3f' % (teLoss, trLoss)
+        logging.error(debug_str)
+        debug_str = 'REC=%.3f, LATENT=%.3f, MATCH=%10.3e'  % (
+                            teLoss_obs,
+                            np.sum(teLoss_latent),
+                            teLoss_match)
+        logging.error(debug_str)
+        debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
+                            teMSE,
+                            teBlurr,
+                            np.mean(teKL/self.opts['zdim']))
+        logging.error(debug_str)
+        # save test data
+        data_dir = 'test_data'
+        save_path = os.path.join(exp_dir, data_dir)
+        utils.create_dir(save_path)
+        name = 'res_final'
+        np.savez(os.path.join(save_path, name), teLoss=np.array(teLoss),
+                    teLoss_obs=np.array(teLoss_obs),
+                    teLoss_match=np.array(teLoss_match),
+                    trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
+                    trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
+                    teBlurr=np.array(teBlurr), teKL=np.array(teKL),
+                    trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
 
 
-            ##### Vizu #####
-            if it % self.opts['print_every'] == 0:
-                np.random.seed(1234)
-                # Auto-encoding test images & samples generated by the model
-                idx = np.random.randint(0, self.data.test_size, npics)
-                batch, labels = self.data.sample_observations(idx)
-                [rec, encoded, samples] = self.sess.run([self.reconstruction,
-                                    self.encoded[-1],
-                                    self.samples],
-                                    feed_dict={self.images: batch,
-                                               self.pz_samples: fixed_noise,
-                                                self.sigma_scale: np.ones(1)})
-                # rec = [rec[n][:,0] for n in range(len(rec))]
-                # encoded = encoded[:,0]
-                save_train(self.opts, batch, labels, rec[-1], samples,
-                                    encoded, fixed_noise,
-                                    teLoss, teLoss_obs,
-                                    teLoss_latent, teLoss_match,
-                                    teenc_Sigma_reg, tedec_Sigma_reg,
-                                    trLoss, trLoss_obs,
-                                    trLoss_latent, trLoss_match,
-                                    teMSE, teBlurr, teKL,
-                                    trMSE, trBlurr, trKL,
-                                    exp_dir, 'res_it%07d.png' % it)
-
-                if self.opts['vizu_splitloss']:
-                    plot_splitloss(self.opts, teLoss_obs, teLoss_latent, teLoss_match,
-                                    teenc_Sigma_reg, tedec_Sigma_reg,
-                                    exp_dir, 'losses_it%07d.png' % it)
-
-                if self.opts['vizu_fullrec']:
-                    plot_fullrec(self.opts, batch[:10], [rec[n][:10] for n in range(len(rec))], exp_dir, 'rec_it%07d.png' % it)
-
-                if self.opts['vizu_embedded']:
-                    batchsize = 1000
-                    # zs, ys = [], []
-                    # for _ in range(int(nencoded/batchsize)):
-                    idx = np.random.randint(0, self.data.test_size, batchsize)
-                    x, y = self.data.sample_observations(idx)
-                    z = self.sess.run(self.encoded, feed_dict={self.images: x,
-                                    self.sigma_scale: np.ones(1)})
-                        # zs += [z[n][:,0] for n in range(len(z))]
-                        # ys += y
-                    plot_embedded(self.opts, z, y, exp_dir, 'emb_it%07d.png' % it)
-
-                if self.opts['vizu_latent']:
-                    # idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
-                    idx = np.random.randint(0, self.data.test_size, 4)
-                    x, _ = self.data.sample_observations(idx)
-                    reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
-                                    self.images: x,
-                                    self.sigma_scale: self.opts['sigma_scale_resample']})
-                    plot_latent(self.opts, reconstruction, exp_dir, 'latent_expl_it%07d.png' % it)
-
-                if self.opts['vizu_pz_grid']:
-                    num_cols = 10
-                    enc_mean = np.zeros(self.opts['zdim'][-1], dtype='float32')
-                    enc_var = np.ones(self.opts['zdim'][-1], dtype='float32')
-                    mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
-                    x = np.linspace(mins[0], maxs[0], num=num_cols, endpoint=True)
-                    xymin = np.stack([x,mins[1]*np.ones(num_cols)],axis=-1)
-                    xymax = np.stack([x,maxs[1]*np.ones(num_cols)],axis=-1)
-                    anchors = np.stack([xymin,xymax],axis=1)
-                    grid = linespace(self.opts, num_cols, anchors=anchors)
-                    grid = grid.reshape([-1,self.opts['zdim'][-1]])
-                    samples = self.sess.run(self.samples, feed_dict={
-                                    self.pz_samples: grid,
-                                    self.sigma_scale: np.ones(1)})
-                    samples = samples.reshape([-1,num_cols]+self.data.data_shape)
-                    plot_grid(self.opts, samples, exp_dir, 'pz_grid_it%07d.png' % it)
-
-                if self.opts['vizu_stochasticity']:
-                    Samples = []
-                    for n in range(len(self.opts['sigma_scale_stochasticity'])):
-                        samples = self.sess.run(self.samples, feed_dict={
-                                        self.pz_samples: fixed_noise[:5],
-                                        self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
-                        Samples.append(samples)
-                    plot_stochasticity(self.opts, Samples, exp_dir, 'stochasticity_it%07d.png' % it)
-
-                np.random.seed()
+        if self.opts['vizu_kl']:
+            plot_kl(self.opts, teKL, trKL, exp_dir, 'test_plots', 'layer_wise.png')
 
 
-            ##### lr #####
-            #Update learning rate if necessary and counter
-            # First 150 epochs do nothing
-            if it >= decay_warmup and it % decay_steps == 0:
-                decay = decay_rate ** (int(it / decay_steps))
-                logging.error('Reduction in lr: %f\n' % decay)
-                """
-                # If no significant progress was made in last 20 epochs
-                # then decrease the learning rate.
-                if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
-                    wait = 0
-                else:
-                    wait += 1
-                if wait > 20 * batches_num:
-                    decay = max(decay  / 1.33, 1e-6)
-                    logging.error('Reduction in lr: %f\n' % decay)
-                    print('')
-                    wait = 0
-                """
+        ##### Vizu #####
+        if self.opts['vizu_samples']:
+            samples = self.sess.run(self.samples, feed_dict={
+                            self.pz_samples: fixed_noise,
+                            self.sigma_scale: np.ones(1)})
+            plot_samples(self.opts, samples, exp_dir, 'test_plots', 'samples.png')
 
-            ##### lambda #####
-            # Update regularizer if necessary
-            if self.opts['lambda_schedule'] == 'adaptive':
-                lmbd = [min(self.opts['lambda'][n], self.opts['lambda_init'][n]+it*(self.opts['lambda'][n]-self.opts['lambda_init'][n])/annealed_warmup) for n in range(len(lmbd))]
-                if it%2000==0:
-                    debug_str = 'Lambda update: l1=%10.3e, l2=%10.3e, l3=%10.3e, l4=%10.3e, l5=%10.3e\n'  % (
-                                    lmbd[0], lmbd[1], lmbd[2], lmbd[3], lmbd[4])
-                    logging.error(debug_str)
+        if self.opts['vizu_fullrec']:
+            # idx = np.random.randint(0, self.data.test_size, npics)
+            idx = [21, 7, 24, 18, 28, 12, 75, 82, 32]
+            batch, _ = self.data.sample_observations(idx)
+            rec = self.sess.run(self.reconstruction, feed_dict={
+                            self.images: batch,
+                            self.sigma_scale: np.ones(1)})
+            plot_fullrec(self.opts, batch, rec, exp_dir, 'test_plots', 'rec.png')
 
-                # if it > 1 and len(teLoss) > 0:
-                #     if wait_lambda > 50000 + 1:
-                #         # opts['lambda'] = list(2*np.array(opts['lambda']))
-                #         self.opts['lambda'][-1] = 2*self.opts['lambda'][-1]
-                #         wae_lambda = self.opts['lambda']
-                #         logging.error('Lambda updated to %s\n' % wae_lambda)
-                #         print('')
-                #         wait_lambda = 0
-                #     else:
-                #         wait_lambda+=1
+        if self.opts['vizu_embedded']:
+            batchsize = 5000
+            # zs, ys = [], []
+            # for _ in range(int(nencoded/batchsize)):
+            idx = np.random.randint(0, self.data.test_size, batchsize)
+            x, y = self.data.sample_observations(idx)
+            z = self.sess.run(self.encoded, feed_dict={self.images: x,
+                            self.sigma_scale: np.ones(1)})
+            plot_embedded(self.opts, z, y, exp_dir, 'test_plots', 'emb.png' % it)
 
-        ##### saving #####
-        # Save the final model
-        if self.opts['save_final']:
-            self.saver.save(self.sess, os.path.join(exp_dir,
-                                                'checkpoints',
-                                                'trained-wae-final'),
-                                                global_step=it)
-        # save training data
-        if self.opts['save_train_data']:
-            data_dir = 'train_data'
-            save_path = os.path.join(exp_dir, data_dir)
-            utils.create_dir(save_path)
-            name = 'res_train_final'
-            np.savez(os.path.join(save_path, name), teLoss=np.array(teLoss),
-                        teLoss_obs=np.array(teLoss_obs),
-                        teLoss_match=np.array(teLoss_match),
-                        teenc_Sigma_reg=np.array(teenc_Sigma_reg),
-                        tedec_Sigma_reg=np.array(tedec_Sigma_reg),
-                        trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
-                        trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
-                        teBlurr=np.array(teBlurr), teKL=np.array(teKL),
-                        trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
+        if self.opts['vizu_latent']:
+            np.random.seed(1234)
+            idx = np.random.randint(0, self.data.test_size, 4)
+            x, _ = self.data.sample_observations(idx)
+            reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
+                            self.images: x,
+                            self.sigma_scale: self.opts['sigma_scale_resample']})
+            plot_latent(self.opts, reconstruction, exp_dir, 'test_plots', 'latent_expl.png' % it)
+            np.random.seed()
+
+        if self.opts['vizu_pz_grid']:
+            num_cols = 10
+            enc_mean = np.zeros(self.opts['zdim'][-1], dtype='float32')
+            enc_var = np.ones(self.opts['zdim'][-1], dtype='float32')
+            mins, maxs = enc_mean - 2.*np.sqrt(enc_var), enc_mean + 2.*np.sqrt(enc_var)
+            x = np.linspace(mins[0], maxs[0], num=num_cols, endpoint=True)
+            xymin = np.stack([x,mins[1]*np.ones(num_cols)],axis=-1)
+            xymax = np.stack([x,maxs[1]*np.ones(num_cols)],axis=-1)
+            anchors = np.stack([xymin,xymax],axis=1)
+            grid = linespace(self.opts, num_cols, anchors=anchors)
+            grid = grid.reshape([-1,self.opts['zdim'][-1]])
+            samples = self.sess.run(self.samples, feed_dict={
+                            self.pz_samples: grid,
+                            self.sigma_scale: np.ones(1)})
+            samples = samples.reshape([-1,num_cols]+self.data.data_shape)
+            plot_grid(self.opts, samples, exp_dir, 'test_plots', 'pz_grid.png' % it)
+
+        if self.opts['vizu_stochasticity']:
+            Samples = []
+            for n in range(len(self.opts['sigma_scale_stochasticity'])):
+                samples = self.sess.run(self.samples, feed_dict={
+                                self.pz_samples: fixed_noise[:5],
+                                self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
+                Samples.append(samples)
+            plot_stochasticity(self.opts, Samples, exp_dir, 'test_plots', 'stochasticity.png' % it)
 
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):

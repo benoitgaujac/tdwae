@@ -101,7 +101,7 @@ def main():
     # opts['zdim'] = [zdims[id],]
     # opts['lambda_init'] = [1,]
     # opts['lambda'] = [1.,]
-    # lreg = 1.
+    # beta = opts['lambda']
     # opts['lambda_sigma'] = [1.,]
 
     # # lamba

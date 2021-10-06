@@ -20,7 +20,7 @@ mydpi = 100
 def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                 teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
                 tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
-                teMSE, teBlurr, teKL, trMSE, trBlurr, trKL, exp_dir, filename):
+                teMSE, teBlurr, teKL, trMSE, trBlurr, trKL, exp_dir, plots_dir, filename):
 
     """ Generates and saves the plot of the following layout:
         img1 | img2 | img3
@@ -218,7 +218,6 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
 
     ### Saving plots and data
     # Plot
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -227,7 +226,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
 
 
 ####### split losses #######
-def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_Sigma_reg, exp_dir, filename):
+def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_Sigma_reg, exp_dir, plots_dir, filename):
 
     Loss_obs = np.array(Loss_obs)
     Loss_match = np.array(Loss_match)
@@ -271,7 +270,6 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
     plt.legend(loc='best')
     plt.title('Losses curves')
     # saving plots and data
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -280,7 +278,7 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
 
 
 ####### full reconstruction #######
-def plot_fullrec(opts, images, reconstruction, exp_dir, filename):
+def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
 
     if opts['input_normalize_sym']:
         images = images / 2. + 0.5
@@ -325,7 +323,6 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, filename):
             hspace = 0, wspace = 0)
     # Saving
     filename = filename + '.png'
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -334,7 +331,7 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, filename):
 
 
 ####### embedding #######
-def plot_embedded(opts, encoded, labels, exp_dir, filename):
+def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
     npoints = encoded[0].shape[0]
     nlatents = len(encoded)
     embeds = []
@@ -400,7 +397,6 @@ def plot_embedded(opts, encoded, labels, exp_dir, filename):
     cbar.ax.tick_params(labelsize=35)
 
     ### Saving plot
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -409,7 +405,7 @@ def plot_embedded(opts, encoded, labels, exp_dir, filename):
 
 
 ####### latent exploration #######
-def plot_latent(opts, reconstruction, exp_dir, filename):
+def plot_latent(opts, reconstruction, exp_dir, plots_dir, filename):
     '''
     reconstruction: [[nrows, nresamples, imshape,] x nlatents]
     '''
@@ -454,7 +450,6 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
 
     ### Saving plot
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -463,7 +458,7 @@ def plot_latent(opts, reconstruction, exp_dir, filename):
 
 
 ####### pz grid #######
-def plot_grid(opts, samples, exp_dir, filename):
+def plot_grid(opts, samples, exp_dir, plots_dir, filename):
     '''
     samples: [nrows, ncols, imshape]
     '''
@@ -499,7 +494,6 @@ def plot_grid(opts, samples, exp_dir, filename):
     axes.axes.set_aspect(1)
     axes.axes.axis('off')
     ### Saving plot
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
@@ -508,7 +502,7 @@ def plot_grid(opts, samples, exp_dir, filename):
 
 
 ####### Stochasticity of decoder #######
-def plot_stochasticity(opts, samples, exp_dir, filename):
+def plot_stochasticity(opts, samples, exp_dir,  plots_dir, filename):
     '''
     samples: [[npics, imshape,] x ncols]
     '''
@@ -540,7 +534,6 @@ def plot_stochasticity(opts, samples, exp_dir, filename):
     # axes.set_title(r'$\sigma=%.2f' % sqrt(opts['sigma_scale_stochasticity'][i]))
 
     ### Saving plot
-    plots_dir = 'train_plots'
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
