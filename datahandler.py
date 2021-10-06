@@ -225,15 +225,15 @@ class DataHandler(object):
     corresponds to (2,1,1). The shape is contained in self.data_shape
     """
 
-    def __init__(self, opts):
+    def __init__(self, opts, seed=None):
         self.dataset = opts['dataset']
         self.crop_style = opts['crop_style']
         # load data
         logging.error('\n Loading {}.'.format(self.dataset))
-        self._create_tfdataset(opts)
+        self._create_tfdataset(opts, seed)
         logging.error('Loading Done.')
 
-    def _create_tfdataset(self, opts):
+    def _create_tfdataset(self, opts, seed=None):
         """Crete tfdataset and fill all the necessary variables.
 
         """
@@ -254,7 +254,7 @@ class DataHandler(object):
         # batch size
         self.batch_size = opts['batch_size']
         # splitting and fill var
-        train, test = self._split(opts, data, labels)
+        train, test = self._split(opts, data, labels, seed)
         self.data_train, self.labels_train = train[0], train[1]
         self.data_test, self.labels_test = test[0], test[1]
         # build tf.dataset
@@ -352,14 +352,16 @@ class DataHandler(object):
 
         return X, None
 
-    def _split(self, opts, data, labels=None):
+    def _split(self, opts, data, labels=None, seed=None):
         """Helper to split data
 
         """
 
         # splitting data
-        np.random.seed()
+        if seed is not None:
+            np.random.seed(seed)
         idx_random = np.random.permutation(self.data_size)
+        np.random.seed()
         if opts['train_dataset_size']==-1 or opts['train_dataset_size']>self.data_size-10000:
             tr_stop = self.data_size - 10000
         else:

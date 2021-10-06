@@ -105,8 +105,8 @@ def main():
     # lamba
     lambda_rec = [0.0001, 0.001, 0.01, 0.1]
     lamdba_match = [0.0001, 0.001, 0.01, 0.1]
-    schedule = ['constant','adaptive']
-    sigmoid = [False, True]
+    schedule = ['constant',]
+    sigmoid = [False,]
     lmba = list(itertools.product(schedule, sigmoid, lambda_rec,lamdba_match))
     id = (FLAGS.id-1) % len(lmba)
     sche, sig, lrec, lmatch = lmba[id][0], lmba[id][1], lmba[id][2], lmba[id][3]
