@@ -150,7 +150,7 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 4)
+    opts['print_every'] = int(opts['it_num'] / 20)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

@@ -277,6 +277,47 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
     plt.close()
 
 
+####### samples #######
+def plot_samples(opts, samples, plots_dir, filename):
+
+    if opts['input_normalize_sym']:
+        samples = samples / 2. + 0.5
+
+    num_cols = int(sqrt(np.shape(samples)[0]))
+    if samples.shape[-1]==1:
+        samples = 1. - samples
+    # Figuring out a layout
+    image = np.concatenate(np.split(samples, num_cols), axis=2)
+    image = np.concatenate(image, axis=0)
+    # plotting
+    fig_height = 10*image.shape[0] / float(mydpi)
+    fig_width = 10*image.shape[1] / float(mydpi)
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    if image.shape[-1]==1:
+        image = image[:, :, 0]
+        # in Greys higher values correspond to darker colors
+        ax.imshow(image, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+    else:
+        ax.imshow(image, interpolation='none', vmin=0., vmax=1.)
+    # Removing ticks
+    ax.axes.get_xaxis().set_ticks([])
+    ax.axes.get_yaxis().set_ticks([])
+    ax.axes.set_ylim([image.shape[0], 0])
+    ax.axes.set_xlim([0, image.shape[1]])
+    ax.axes.set_aspect(1)
+    ax.axes.axis('off')
+
+    # adjust space between subplots
+    plt.subplots_adjust(wspace=0.05, hspace=0.05)
+
+    ### Saving plot
+    save_path = os.path.join(exp_dir, plots_dir)
+    utils.create_dir(save_path)
+    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
+                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.close()
+
+
 ####### full reconstruction #######
 def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
 

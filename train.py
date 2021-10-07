@@ -20,8 +20,8 @@ import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_unif, linespace
 from models import WAE, stackedWAE, VAE
 from plot_functions import save_train, save_latent_interpolation, save_vlae_experiment
-# from plot_functions import plot_splitloss, plot_samples, plot_kl, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
-from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
+from plot_functions import plot_splitloss, plot_samples, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
+# from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 
 # Path to inception model and stats for training set
 sys.path.append('../TTUR')
@@ -702,11 +702,6 @@ class Run(object):
                     trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
                     teBlurr=np.array(teBlurr), teKL=np.array(teKL),
                     trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
-
-
-        if self.opts['vizu_kl']:
-            plot_kl(self.opts, teKL, trKL, exp_dir, 'test_plots', 'layer_wise.png')
-
 
         ##### Vizu #####
         if self.opts['vizu_samples']:
