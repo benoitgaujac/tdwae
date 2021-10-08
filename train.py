@@ -286,9 +286,6 @@ class Run(object):
         decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
         # lambda schedule
         annealed_warmup = 50000
-        # lreg_init = self.opts['lambda_reg_init']
-        # lreg_final = self.opts['lambda'][-1]
-        # lmbd = self.opts['lambda'][:-1].append(lreg_init)
         if self.opts['lambda_schedule'] == 'adaptive':
             lmbd = self.opts['lambda_init']
         else:
@@ -347,6 +344,7 @@ class Run(object):
                 trLoss_obs.append(obs_cost)
                 trLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 trLoss_match.append(lmbd[-1]*matching_penalty)
+                # trKL.append(-np.concatenate([latent_costs,[matching_penalty]]))
                 trenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
                 trdec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 # training metrics
@@ -356,6 +354,10 @@ class Run(object):
                                     feed_dict={self.data.handle: self.train_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1),})
+                # [mse, blurr] = self.sess.run([self.mse, self.blurriness],
+                #                     feed_dict={self.data.handle: self.train_handle,
+                #                                 self.images: batch,
+                #                                 self.sigma_scale: np.ones(1),})
                 trMSE.append(mse)
                 trBlurr.append(blurr)
                 trKL.append(kl)
@@ -365,6 +367,7 @@ class Run(object):
                 enc_Sigma_penalty, dec_Sigma_penalty = np.zeros(len(enc_Sigma_penalty)), np.zeros(len(dec_Sigma_penalty))
                 latent_costs = np.zeros(len(latent_costs))
                 mse, blurr, kl = 0., 0., np.zeros(len(kl))
+                # mse, blurr = 0., 0.
                 for it_ in range(test_it_num):
                     # testing losses
                     [l, obs, latent, match, eSigma, dSigma] = self.sess.run([self.objective,
@@ -391,6 +394,10 @@ class Run(object):
                                     feed_dict={self.data.handle: self.test_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1)})
+                    # [m, b] = self.sess.run([self.mse, self.blurriness],
+                    #                 feed_dict={self.data.handle: self.test_handle,
+                    #                             self.images: batch,
+                    #                             self.sigma_scale: np.ones(1)})
                     mse += m / test_it_num
                     blurr += b / test_it_num
                     kl += np.array(k) / test_it_num
@@ -398,6 +405,7 @@ class Run(object):
                 teLoss_obs.append(obs_cost)
                 teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 teLoss_match.append(lmbd[-1]*matching_penalty)
+                # teKL.append(-np.concatenate([latent_costs,[matching_penalty]]))
                 teenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
                 tedec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 teMSE.append(mse)
@@ -465,6 +473,8 @@ class Run(object):
                                     trLoss_latent, trLoss_match,
                                     teMSE, teBlurr, teKL,
                                     trMSE, trBlurr, trKL,
+                                    # teMSE, teBlurr,
+                                    # trMSE, trBlurr,
                                     exp_dir, 'train_plots', 'res_it%07d.png' % it)
 
                 if self.opts['vizu_splitloss']:

@@ -11,8 +11,16 @@ from ops._ops import logsumexp, logsumexp_v2
 
 import pdb
 
+
 ### --- Latent penalty --- ###
-def kl_penalty(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
+def log_normal(z, mean, sigma, eps=1e-10):
+    """
+    Compute gaussian log-density
+    """
+    c = - 0.5 * tf.compat.v1.log(2*pi)
+    return c - tf.compat.v1.log(sigma)/2 - tf.square(z - mean) / (2*sigma + eps)
+
+def kl(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
     """
     Compute KL divergence between gaussian prior and variational distribution
     """
@@ -31,22 +39,6 @@ def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
         - tf.square(samples - p_mean) / p_Sigma
     kl = -0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
-
-def xentropy_penalty(samples, mean, sigma):
-    """
-    Compute Xentropy for gaussian using MC
-    """
-    loglikelihood = tf.compat.v1.log(2*pi) + tf.compat.v1.log(sigma) + tf.square(samples-mean) / sigma
-    loglikelihood = -0.5 * tf.reduce_sum(loglikelihood,axis=-1)
-    return tf.reduce_mean(loglikelihood)
-
-def entropy_penalty(mean, sigma):
-    """
-    Compute entropy for gaussian
-    """
-    entropy = tf.compat.v1.log(sigma) + 1. + tf.compat.v1.log(2*pi)
-    entropy = 0.5 * tf.reduce_sum(entropy,axis=-1)
-    return tf.reduce_mean(entropy)
 
 def matching_penalty(opts, samples_pz, samples_qz):
     """

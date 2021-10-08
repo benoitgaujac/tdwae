@@ -20,6 +20,7 @@ mydpi = 100
 def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                 teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
                 tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
+                # teMSE, teBlurr, trMSE, trBlurr, exp_dir, plots_dir, filename):
                 teMSE, teBlurr, teKL, trMSE, trBlurr, trKL, exp_dir, plots_dir, filename):
 
     """ Generates and saves the plot of the following layout:
@@ -155,7 +156,11 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         total_num = len(loss)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
-        y = np.log(loss[::x_step])
+        if opts['model']=='vae':
+            y = -np.array(loss[::x_step])
+        else:
+            y = np.array(loss[::x_step])
+        # y = loss[::x_step]
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
     if opts['enc_sigma_pen']:
         loss = np.sum(teenc_Sigma_reg, axis=-1)
@@ -208,7 +213,8 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
             total_num = len(kl[:,i])
             x_step = max(int(total_num / 500), 1)
             x = np.arange(1, len(kl[:,i]) + 1, x_step)
-            y = np.log(kl[::x_step, i] / opts['zdim'][i])
+            # y = np.log(kl[::x_step, i] / opts['zdim'][i])
+            y = kl[::x_step, i]# / opts['zdim'][i]
             plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
     plt.ylabel(r'kl(q$_i$|p$_i$)')
     plt.grid(axis='y')
