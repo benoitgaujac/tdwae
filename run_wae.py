@@ -61,7 +61,7 @@ parser.add_argument("--sigmoid", action='store_false', default=True,
 parser.add_argument("--net_archi", type=str, default='mlp',
                     help='networks architecture [mlp/conv_locatello/conv_rae]')
 parser.add_argument("--cost", type=str, default='l2sq',
-                    help='ground cost [l2, l2sq, l2sq_norm, l1, xentropy]')
+                    help='ground cost [l2, l2sq, l2sq_norm, l1, cross_entropy]')
 parser.add_argument('--lmba_schedule', type=str, default='constant',
                     help='reg schedule')
 parser.add_argument('--enc_sigma_pen', action='store_true', default=False,

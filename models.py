@@ -6,7 +6,7 @@ import tensorflow as tf
 import utils
 from sampling_functions import sample_pz, sample_gaussian, sample_bernoulli, sample_unif, linespace
 from loss_functions import matching_penalty, obs_reconstruction_loss, latent_reconstruction_loss
-from loss_functions import kl, log_normal
+from loss_functions import KL, log_normal
 from encoder import Encoder
 from decoder import Decoder
 from datahandler import datashapes
@@ -102,24 +102,26 @@ class Model(object):
         # pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
         # _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples, sigma_scale)
         # dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
-        KL = []
+        kls = []
         # latent layer up to N-1
         for n in range(len(enc_means)-1):
-            logp = log_normal(xs[n+1], dec_means[n+1], dec_Sigmas[n+1])
-            logq = log_normal(zs[n], enc_means[n], enc_Sigmas[n])
-            kl = -tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
-            KL.append(kl)
+            # logp = log_normal(xs[n+1], dec_means[n+1], dec_Sigmas[n+1])
+            # logq = log_normal(zs[n], enc_means[n], enc_Sigmas[n])
+            # kl = -tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+            kl = KL(enc_means[n], enc_Sigmas[n], dec_means[n+1], dec_Sigmas[n+1])
+            kls.append(kl)
         # deepest layer
         pz_mean, pz_Sigma = tf.split(self.pz_params,2,axis=-1)
-        pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
         pz_mean = tf.expand_dims(pz_mean, axis=0)
         pz_Sigma = tf.expand_dims(pz_Sigma, axis=0)
-        logp = log_normal(pz_samples, pz_mean, pz_Sigma)
-        logq = log_normal(zs[-1], enc_means[-1], enc_Sigmas[-1])
-        kl = -tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
-        KL.append(kl)
+        # pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
+        # logp = log_normal(pz_samples, pz_mean, pz_Sigma)
+        # logq = log_normal(zs[-1], enc_means[-1], enc_Sigmas[-1])
+        # kl = -tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+        kl = KL(enc_means[-1], enc_Sigmas[-1], pz_mean, pz_Sigma)
+        kls.append(kl)
 
-        return KL
+        return kls
 
 class stackedWAE(Model):
 
@@ -228,7 +230,7 @@ class stackedWAE(Model):
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
                                     inputs, sigma_scale, False, reuse=reuse,
                                     is_training=is_training)
-        obs_cost = self.obs_cost(inputs, xs[0])
+        obs_cost = obs_reconstruction_loss(self.opts, inputs, xs[0])
         latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
                                             zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
         pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
@@ -236,14 +238,10 @@ class stackedWAE(Model):
         #     qz_samples = zs[-1][:,0]
         # else:
         #     qz_samples = zs[-1]
-        matching_penalty = self.matching_penalty(zs[-1], pz_samples)
+        matching_penalty = matching_penalty(self.opts, zs[-1], pz_samples)
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
-
-    def obs_cost(self, inputs, reconstructions):
-        # --- compute the reconstruction cost in the data space
-        return obs_reconstruction_loss(self.opts, inputs, reconstructions)
 
     def latent_cost(self, xs, x_means, x_Sigmas, zs, z_means, z_Sigmas):
         # --- compute the latent cost for each latent layer last one
@@ -253,10 +251,6 @@ class stackedWAE(Model):
                                             xs[n], x_means[n], x_Sigmas[n],
                                             zs[n], z_means[n], z_Sigmas[n]))
         return costs
-
-    def matching_penalty(self, qz, pz):
-        # --- compute the latent penalty for the deepest latent layer
-        return matching_penalty(self.opts, qz, pz)
 
     def Sigma_penalty(self, Sigmas):
         # -- compute the encoder Sigmas penalty
@@ -389,7 +383,7 @@ class WAE(Model):
         zs, _, enc_Sigmas, xs, _, _ = self.forward_pass(
                                             inputs, sigma_scale, resample,
                                             nresamples, reuse, is_training)
-        obs_cost = self.obs_cost(inputs, xs[0])
+        obs_cost = obs_reconstruction_loss(self.opts, inputs, xs[0])
         latent_cost = []
         pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
         pz_samples = self.decode_implicit_prior(pz_samples, reuse, is_training)
@@ -397,17 +391,9 @@ class WAE(Model):
             qz_samples = zs[-1][:,0]
         else:
             qz_samples = zs[-1]
-        matching_penalty = self.matching_penalty(qz_samples, pz_samples)
+        matching_penalty = self.matching_penalty(self.opts, qz_samples, pz_samples)
         Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         return obs_cost, latent_cost, matching_penalty, Sigma_penalty
-
-    def obs_cost(self, inputs, reconstructions):
-        # --- compute the reconstruction cost in the data space
-        return obs_reconstruction_loss(self.opts, inputs, reconstructions)
-
-    def matching_penalty(self, qz, pz):
-        # --- compute the latent penalty for the deepest latent layer
-        return matching_penalty(self.opts, qz, pz)
 
     def Sigma_penalty(self, Sigmas):
         # -- compute the encoder Sigmas penalty
@@ -541,44 +527,39 @@ class VAE(Model):
                                     inputs, sigma_scale, False, reuse=reuse,
                                     is_training=is_training)
         # obs
-        obs_cost = self.obs_cost(inputs, dec_means[0])
+        obs_cost = obs_reconstruction_loss(self.opts, inputs, dec_means[0])
         # latent
         latent_cost = self.latent_cost(xs[1:], dec_means[1:], dec_Sigmas[1:],
                                     zs[:-1], enc_means[:-1], enc_Sigmas[:-1])
         # match
         pz_mean, pz_Sigma = np.split(self.pz_params, 2, axis=-1)
-        pz_sample = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
-        matching_penalty = self.matching_penalty(pz_sample, pz_mean, pz_Sigma,
-                                    zs[-1], enc_means[-1], enc_Sigmas[-1])
+        # pz_sample = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
+        matching_penalty = self.matching_penalty(enc_means[-1], enc_Sigmas[-1],
+                                    pz_mean, pz_Sigma)
         # sigma
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
         return obs_cost, latent_cost, matching_penalty, enc_Sigma_penalty, dec_Sigma_penalty
 
-    def obs_cost(self, inputs, reconstructions):
-        # --- compute the reconstruction cost in the data space
-        inputs = tf.compat.v1.layers.flatten(inputs)
-        cost = tf.nn.sigmoid_cross_entropy_with_logits(labels=inputs, logits=reconstructions)
-        cost = tf.reduce_sum(cost, axis=-1)
-        return tf.reduce_mean(cost)
-
     def latent_cost(self, xs, x_means, x_Sigmas, zs, z_means, z_Sigmas):
         # --- compute the latent cost for each latent layer last one
         costs = []
         for n in range(len(xs)):
-            logp = log_normal(xs[n], x_means[n], x_Sigmas[n])
-            logq = log_normal(zs[n], z_means[n], z_Sigmas[n])
-            kl = tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+            # logp = log_normal(xs[n], x_means[n], x_Sigmas[n])
+            # logq = log_normal(zs[n], z_means[n], z_Sigmas[n])
+            # kl = tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+            kl = KL(z_means[n], z_Sigmas[n], x_means[n], x_Sigmas[n])
             costs.append(kl)
         return costs
 
-    def matching_penalty(self, x, x_mean, x_Sigma, z, z_mean, z_Sigma):
+    def matching_penalty(self, z_mean, z_Sigma, x_mean, x_Sigma):
         # --- compute the latent penalty for the deepest latent layer
         x_mean = tf.expand_dims(x_mean, axis=0)
         x_Sigma = tf.expand_dims(x_Sigma, axis=0)
-        logp = log_normal(x, x_mean, x_Sigma)
-        logq = log_normal(z, z_mean, z_Sigma)
-        kl = tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+        # logp = log_normal(x, x_mean, x_Sigma)
+        # logq = log_normal(z, z_mean, z_Sigma)
+        # kl = tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
+        kl = KL(z_mean, z_Sigma, x_mean, x_Sigma)
         return kl
 
     def Sigma_penalty(self, Sigmas):

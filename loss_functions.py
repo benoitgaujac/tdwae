@@ -20,13 +20,11 @@ def log_normal(z, mean, sigma, eps=1e-10):
     c = - 0.5 * tf.compat.v1.log(2*pi)
     return c - tf.compat.v1.log(sigma)/2 - tf.square(z - mean) / (2*sigma + eps)
 
-def kl(encoded_mean, encoded_sigma, pz_mean, pz_sigma):
+def KL(mu0, cov0, mu1, cov1):
     """
     Compute KL divergence between gaussian prior and variational distribution
     """
-    kl = encoded_sigma / pz_sigma \
-        + tf.square(pz_mean - encoded_mean) / pz_sigma - 1. \
-        + tf.compat.v1.log(pz_sigma) - tf.compat.v1.log(1e-10+encoded_sigma)
+    kl = cov0 / cov1 + tf.square(mu1 - mu0)/cov1 + tf.compat.v1.log(cov1/(1e-5+cov0)) - 1
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
@@ -205,6 +203,8 @@ def obs_reconstruction_loss(opts, x1, x2):
         cost = l2sq_norm_cost(x1, x2)
     elif opts['obs_cost'] == 'l1':
         cost = l1_cost(x1, x2)
+    elif opts['obs_cost'] == 'cross_entropy':
+        cost = cross_entropy_cost(x1, x2)
     else:
         assert False, 'Unknown cost function %s' % opts['obs_cost']
     # Compute loss
@@ -337,6 +337,10 @@ def l1_cost(x1, x2):
     #     return tf.reduce_mean(cost,axis=1)
     # else:
     #     return cost
+
+def cross_entropy_cost(x1, x2):
+    cost = tf.nn.sigmoid_cross_entropy_with_logits(labels=x1, logits=x2)
+    return tf.reduce_sum(cost, axis=-1)
 
 
 ### --- various losses --- ###

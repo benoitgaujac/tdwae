@@ -46,7 +46,7 @@ config['batch_norm_eps'] = 1e-05
 config['batch_norm_momentum'] = 0.99
 
 # Objective set up
-config['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1
+config['obs_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l1, cross_entropy
 config['latent_cost'] = 'l2sq' #l2, l2sq, l2sq_norm, l2sq_gauss, l1
 config['penalty'] = 'mmd' #sinkhorn, mmd
 config['mmd_kernel'] = 'IMQ' # RBF, IMQ

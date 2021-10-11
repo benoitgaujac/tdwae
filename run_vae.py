@@ -56,6 +56,8 @@ parser.add_argument("--sigmoid", action='store_false', default=True,
                     help='use sigmoid activation for det rec.')
 parser.add_argument("--net_archi", type=str, default='mlp',
                     help='networks architecture [mlp/conv_locatello/conv_rae]')
+parser.add_argument("--cost", type=str, default='cross_entropy',
+                    help='ground cost [l2, l2sq, l2sq_norm, l1, cross_entropy]')
 parser.add_argument('--lmba_schedule', type=str, default='constant',
                     help='reg schedule')
 parser.add_argument('--enc_sigma_pen', action='store_true', default=False,
@@ -91,9 +93,11 @@ def main():
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']
     opts['use_sigmoid'] = FLAGS.sigmoid
     opts['archi'] = [FLAGS.net_archi,]*opts['nlatents']
+    opts['obs_cost'] = FLAGS.cost
     opts['lambda_schedule'] = FLAGS.lmba_schedule
     opts['enc_sigma_pen'] = FLAGS.enc_sigma_pen
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
+
 
     # opts['nlatents'] = 1
     # zdims = [2,4,8,16]
@@ -104,11 +108,9 @@ def main():
     # beta = opts['lambda']
     # opts['lambda_sigma'] = [1.,]
 
-    # # lamba
+    # lamba
     beta = [0.001, 0.01, 0.1, 1.]
     id = (FLAGS.id-1) % len(beta)
-    # lmba = list(itertools.product(zdims,beta))
-    # zdim, lreg = lmba[id][0], lmba[id][1]
     opts['lambda_init'] = [beta[id] for n in range(opts['nlatents'])]
     opts['lambda'] = [1. for n in range(opts['nlatents'])]
 
