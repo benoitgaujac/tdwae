@@ -38,7 +38,7 @@ def mc_kl_penalty(samples, q_mean, q_Sigma, p_mean, p_Sigma):
     kl = -0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 
-def matching_penalty(opts, samples_pz, samples_qz):
+def latent_penalty(opts, samples_pz, samples_qz):
     """
     Compute the WAE's matching penalty
     (add here other penalty if any)

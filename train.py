@@ -283,9 +283,10 @@ class Run(object):
         teMSE, teBlurr, teKL = [], [], []
         FID = []
         # lr schedule
-        decay, decay_warmup, decay_steps, decay_rate = 1., 10000, 10000, 0.99
+        decay, decay_rate = 1., 0.99
+        decay_warmup, decay_steps = int(0.5*self.opts['it_num']), int(0.1*self.opts['it_num'])
         # lambda schedule
-        annealed_warmup = 50000
+        annealed_warmup = int(0.25*self.opts['it_num'])
         if self.opts['lambda_schedule'] == 'adaptive':
             lmbd = self.opts['lambda_init']
         else:
@@ -559,7 +560,7 @@ class Run(object):
             # Update regularizer if necessary
             if self.opts['lambda_schedule'] == 'adaptive':
                 lmbd = [min(self.opts['lambda'][n], self.opts['lambda_init'][n]+it*(self.opts['lambda'][n]-self.opts['lambda_init'][n])/annealed_warmup) for n in range(len(lmbd))]
-                if it%2000==0:
+                if it%10000==0:
                     debug_str = 'Lambda update: l1=%10.3e, l2=%10.3e, l3=%10.3e, l4=%10.3e, l5=%10.3e\n'  % (
                                     lmbd[0], lmbd[1], lmbd[2], lmbd[3], lmbd[4])
                     logging.error(debug_str)

@@ -103,8 +103,8 @@ def main():
     opts['dec_sigma_pen'] = FLAGS.dec_sigma_pen
 
     # lamba
-    lambda_rec = [0.0001, 0.001, 0.01, 0.1]
-    lamdba_match = [0.0001, 0.001, 0.01, 0.1]
+    lambda_rec = [0.01, 0.1]
+    lamdba_match = [0.0001, 0.001, 0.01]
     schedule = ['constant',]
     sigmoid = [False,]
     lmba = list(itertools.product(schedule, sigmoid, lambda_rec,lamdba_match))
