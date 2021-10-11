@@ -531,7 +531,7 @@ class VAE(Model):
         pz_mean, pz_Sigma = np.split(self.pz_params, 2, axis=-1)
         pz_mean = tf.expand_dims(pz_mean, axis=0)
         pz_Sigma = tf.expand_dims(pz_Sigma, axis=0)
-        matching_penalty = -KL(enc_means[-1], enc_Sigmas[-1], pz_mean, pz_Sigma)
+        matching_penalty = KL(enc_means[-1], enc_Sigmas[-1], pz_mean, pz_Sigma)
         # sigma
         enc_Sigma_penalty = self.Sigma_penalty(enc_Sigmas)
         dec_Sigma_penalty = self.Sigma_penalty(dec_Sigmas[1:])
@@ -541,7 +541,7 @@ class VAE(Model):
         # --- compute the latent cost for each latent layer last one
         costs = []
         for n in range(len(xs)):
-            kl = -KL(z_means[n], z_Sigmas[n], x_means[n], x_Sigmas[n])
+            kl = KL(z_means[n], z_Sigmas[n], x_means[n], x_Sigmas[n])
             costs.append(kl)
         return costs
 
