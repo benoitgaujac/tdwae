@@ -17,8 +17,8 @@ def log_normal(z, mean, sigma, eps=1e-10):
     """
     Compute gaussian log-density
     """
-    c = - 0.5 * tf.compat.v1.log(2*pi)
-    return c - tf.compat.v1.log(sigma)/2 - tf.square(z - mean) / (2*sigma + eps)
+    c = tf.compat.v1.log(2*pi)
+    return -0.5*(c + tf.compat.v1.log(sigma) + tf.square(z - mean) / (sigma + eps))
 
 def KL(mu0, cov0, mu1, cov1):
     """

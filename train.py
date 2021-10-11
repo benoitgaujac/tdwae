@@ -98,8 +98,10 @@ class Run(object):
         # layerwise KL
         if self.opts['model'] == 'wae':
             self.KL = [tf.ones([]) for i in range(self.opts['nlatents'])]
+            self.agg_KL = [tf.ones([]) for i in range(self.opts['nlatents'])]
         else:
             self.KL = self.model.layerwise_kl(x, self.sigma_scale)
+            self.aggKL = self.model.layerwise_agg_kl(x, self.sigma_scale)
         # FID
         if opts['fid']:
             self.inception_graph = tf.Graph()
@@ -277,10 +279,10 @@ class Run(object):
         # Init all monitoring variables
         trLoss, trLoss_obs, trLoss_latent, trLoss_match = [], [], [], []
         trenc_Sigma_reg, trdec_Sigma_reg = [], []
-        trMSE, trBlurr, trKL = [], [], []
+        trMSE, trBlurr, trKL, traggKL = [], [], [], []
         teLoss, teLoss_obs, teLoss_latent, teLoss_match = [], [], [], []
         teenc_Sigma_reg, tedec_Sigma_reg = [], []
-        teMSE, teBlurr, teKL = [], [], []
+        teMSE, teBlurr, teKL, teaggKL = [], [], [], []
         FID = []
         # lr schedule
         decay, decay_rate = 1., 0.99
@@ -351,7 +353,10 @@ class Run(object):
                 # training metrics
                 idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
                 batch, _ = self.data.sample_observations(idx, 'train')
-                [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+                [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
+                                    self.blurriness,
+                                    self.KL,
+                                    self.aggKL],
                                     feed_dict={self.data.handle: self.train_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1),})
@@ -362,12 +367,13 @@ class Run(object):
                 trMSE.append(mse)
                 trBlurr.append(blurr)
                 trKL.append(kl)
+                traggKL.append(aggkl)
                 # init testing losses & metrics
                 test_it_num = int(self.data.test_size / self.opts['batch_size'])
                 loss, obs_cost, matching_penalty = 0., 0., 0.
                 enc_Sigma_penalty, dec_Sigma_penalty = np.zeros(len(enc_Sigma_penalty)), np.zeros(len(dec_Sigma_penalty))
                 latent_costs = np.zeros(len(latent_costs))
-                mse, blurr, kl = 0., 0., np.zeros(len(kl))
+                mse, blurr, kl, aggkl = 0., 0., np.zeros(len(kl)), np.zeros(len(kl))
                 # mse, blurr = 0., 0.
                 for it_ in range(test_it_num):
                     # testing losses
@@ -391,7 +397,10 @@ class Run(object):
                     # testing metrics
                     idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
                     batch, _ = self.data.sample_observations(idx)
-                    [m, b, k] = self.sess.run([self.mse, self.blurriness, self.KL],
+                    [m, b, k, ak] = self.sess.run([self.mse,
+                                    self.blurriness,
+                                    self.KL,
+                                    self.aggKL],
                                     feed_dict={self.data.handle: self.test_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1)})
@@ -402,6 +411,7 @@ class Run(object):
                     mse += m / test_it_num
                     blurr += b / test_it_num
                     kl += np.array(k) / test_it_num
+                    aggkl += np.array(ak) / test_it_num
                 teLoss.append(loss)
                 teLoss_obs.append(obs_cost)
                 teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
@@ -412,6 +422,7 @@ class Run(object):
                 teMSE.append(mse)
                 teBlurr.append(blurr)
                 teKL.append(kl)
+                teaggKL.append(aggkl)
                 # log output
                 debug_str = 'ITER: %d/%d, ' % (it, self.opts['it_num'])
                 logging.error(debug_str)
@@ -424,10 +435,11 @@ class Run(object):
                                     np.sum(teenc_Sigma_reg[-1]),
                                     np.sum(tedec_Sigma_reg[-1]))
                 logging.error(debug_str)
-                debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
+                debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e, agg. KL=%10.3e\n '  % (
                                     teMSE[-1],
                                     teBlurr[-1],
-                                    np.mean(teKL[-1]/self.opts['zdim']))
+                                    np.mean(teKL[-1]/self.opts['zdim']),
+                                    np.mean(teaggKL[-1]/self.opts['zdim']))
                 logging.error(debug_str)
 
                 # Compute FID score
@@ -472,10 +484,8 @@ class Run(object):
                                     teenc_Sigma_reg, tedec_Sigma_reg,
                                     trLoss, trLoss_obs,
                                     trLoss_latent, trLoss_match,
-                                    teMSE, teBlurr, teKL,
-                                    trMSE, trBlurr, trKL,
-                                    # teMSE, teBlurr,
-                                    # trMSE, trBlurr,
+                                    teMSE, teBlurr, teKL, teaggKL,
+                                    trMSE, trBlurr, trKL, traggKL,
                                     exp_dir, 'train_plots', 'res_it%07d.png' % it)
 
                 if self.opts['vizu_splitloss']:
@@ -596,8 +606,8 @@ class Run(object):
                         tedec_Sigma_reg=np.array(tedec_Sigma_reg),
                         trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
                         trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
-                        teBlurr=np.array(teBlurr), teKL=np.array(teKL),
-                        trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
+                        teBlurr=np.array(teBlurr), teKL=np.array(teKL), teggKL=np.array(teaggKL),
+                        trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL), trggKL=np.array(traggKL))
 
     def test(self, WEIGHTS_PATH=None):
         """

@@ -20,8 +20,8 @@ mydpi = 100
 def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                 teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
                 tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
-                # teMSE, teBlurr, trMSE, trBlurr, exp_dir, plots_dir, filename):
-                teMSE, teBlurr, teKL, trMSE, trBlurr, trKL, exp_dir, plots_dir, filename):
+                teMSE, teBlurr, teKL, teaggKL, trMSE, trBlurr, trKL, traggKL,
+                exp_dir, plots_dir, filename):
 
     """ Generates and saves the plot of the following layout:
         img1 | img2 | img3
@@ -33,6 +33,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         img4    -   loss curves
         img5    -   metrics
         img6    -   kl
+        img7    -   download_file_from_google_drivekl
 
     """
     num_pics = opts['plot_num_pics']
@@ -77,9 +78,9 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     height_pic = img1.shape[0]
     width_pic = img1.shape[1]
     fig_height = 4 * 2*height_pic / float(mydpi)
-    fig_width = 6 * 2*width_pic / float(mydpi)
+    fig_width = 7 * 2*width_pic / float(mydpi)
     fig = plt.figure(figsize=(fig_width, fig_height))
-    gs = matplotlib.gridspec.GridSpec(2, 3)
+    gs = matplotlib.gridspec.GridSpec(2, 4)
 
     # Filling in separate parts of the plot
     for img, (gi, gj, title) in zip([img1, img2],
@@ -213,15 +214,38 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
             total_num = len(kl[:,i])
             x_step = max(int(total_num / 500), 1)
             x = np.arange(1, len(kl[:,i]) + 1, x_step)
-            # y = np.log(kl[::x_step, i] / opts['zdim'][i])
-            y = kl[::x_step, i]# / opts['zdim'][i]
+            y = np.log(kl[::x_step, i] / opts['zdim'][i])
+            # y = kl[::x_step, i]# / opts['zdim'][i]
             plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
-    plt.ylabel(r'kl(q$_i$|p$_i$)')
+    plt.ylabel(r'logg kl(q$_i$|p$_i$)')
     plt.grid(axis='y')
     plt.legend(loc='upper right')
     plt.text(0.47, 1., 'KL', ha="center", va="bottom",
                                 size=20, transform=ax.transAxes)
 
+
+    ### aggkl curves
+    teaggKL, traggKL = np.array(teaggKL), np.array(traggKL)
+    base = plt.cm.get_cmap('tab10')
+    color_list = base(np.linspace(0, 1, 6))
+    ax = plt.subplot(gs[1, 3])
+    for kl, (label, style) in zip([teaggKL, traggKL], [(True, '-'), (False, '--')]):
+        for i in range(kl.shape[-1]):
+            if label:
+                label = 'latent ' + str(i+1)
+            else:
+                label=None
+            total_num = len(kl[:,i])
+            x_step = max(int(total_num / 500), 1)
+            x = np.arange(1, len(kl[:,i]) + 1, x_step)
+            # y = np.log(kl[::x_step, i] / opts['zdim'][i])
+            y = kl[::x_step, i]# / opts['zdim'][i]
+            plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
+    plt.ylabel(r'kl(q$^{agg}_i$|p$_i$)')
+    plt.grid(axis='y')
+    plt.legend(loc='upper right')
+    plt.text(0.47, 1., 'KL', ha="center", va="bottom",
+                                size=20, transform=ax.transAxes)
     ### Saving plots and data
     # Plot
     save_path = os.path.join(exp_dir,plots_dir)

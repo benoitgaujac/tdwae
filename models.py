@@ -98,16 +98,9 @@ class Model(object):
         zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
                                     inputs, sigma_scale, False, reuse=True,
                                     is_training=False)
-        # _, enc_means, enc_Sigmas = self.encode(inputs, sigma_scale, False, reuse=True, is_training=False)
-        # pz_samples = tf.convert_to_tensor(sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size']))
-        # _, dec_means, dec_Sigmas = self.sample_x_from_prior(pz_samples, sigma_scale)
-        # dec_means, dec_Sigmas = dec_means[::-1], dec_Sigmas[::-1]
         kls = []
         # latent layer up to N-1
         for n in range(len(enc_means)-1):
-            # logp = log_normal(xs[n+1], dec_means[n+1], dec_Sigmas[n+1])
-            # logq = log_normal(zs[n], enc_means[n], enc_Sigmas[n])
-            # kl = -tf.reduce_mean(tf.reduce_sum(logp - logq,axis=-1))
             kl = KL(enc_means[n], enc_Sigmas[n], dec_means[n+1], dec_Sigmas[n+1])
             kls.append(kl)
         # deepest layer
@@ -118,6 +111,49 @@ class Model(object):
         kls.append(kl)
 
         return kls
+
+    def layerwise_agg_kl(self, inputs, sigma_scale):
+        # --- compute layer-wise KL(q(z_i|z_i-1,p(z_i|z_i+1))
+        zs, enc_means, enc_Sigmas, xs, dec_means, dec_Sigmas = self.forward_pass(
+                                    inputs, sigma_scale, False, reuse=True,
+                                    is_training=False)
+        kls = []
+        # latent layer up to N-1
+        for n in range(len(enc_means)-1):
+            logp_prob = log_normal(tf.expand_dims(xs[n+1], 1),
+                                    tf.expand_dims(dec_means[n+1], 0),
+                                    tf.expand_dims(dec_Sigmas[n+1], 0))
+            logp = tf.reduce_logsumexp(tf.reduce_sum(logp_prob,
+                                    axis=2, keepdims=False),
+                                    axis=1, keepdims=False)
+            logq_prob = log_normal(tf.expand_dims(zs[n], 1),
+                                    tf.expand_dims(enc_means[n], 0),
+                                    tf.expand_dims(enc_Sigmas[n], 0))
+            logq = tf.reduce_logsumexp(tf.reduce_sum(logq_prob,
+                                    axis=2, keepdims=False),
+                                    axis=1, keepdims=False)
+            kl = tf.reduce_mean(logp - logq)
+            kls.append(kl)
+        # deepest layer
+        pz_mean, pz_Sigma = tf.split(self.pz_params,2,axis=-1)
+        pz_samples = sample_gaussian(self.opts, self.pz_params, 'numpy', self.opts['batch_size'])
+        logp_prob = log_normal(tf.expand_dims(pz_samples, 1),
+                                tf.expand_dims(tf.expand_dims(pz_mean,axis=0), 0),
+                                tf.expand_dims(tf.expand_dims(pz_Sigma,axis=0), 0))
+        logp = tf.reduce_logsumexp(tf.reduce_sum(logp_prob,
+                                axis=2, keepdims=False),
+                                axis=1, keepdims=False)
+        logq_prob = log_normal(tf.expand_dims(zs[-1], 1),
+                                tf.expand_dims(enc_means[-1], 0),
+                                tf.expand_dims(enc_Sigmas[-1], 0))
+        logq = tf.reduce_logsumexp(tf.reduce_sum(logq_prob,
+                                axis=2, keepdims=False),
+                                axis=1, keepdims=False)
+        kl = tf.reduce_mean(logp - logq)
+        kls.append(kl)
+
+        return kls
+
 
 class stackedWAE(Model):
 
