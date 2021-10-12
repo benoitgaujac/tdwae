@@ -8,16 +8,21 @@
 #$ -l tmem=5G
 #$ -l h_rt=6:00:00
 
-#$ -t 1-6
+#$ -t 1-10
 
-#$ -N waemnist
+#$ -N vaemnist
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
+### train ###
 
-python3 run_wae.py --num_it 500000 --out_dir mnist --losses --id $SGE_TASK_ID
-# python3 run_vae.py --num_it 500000 --out_dir mnist --losses --latent --lmba_schedule adaptive --id $SGE_TASK_ID
+# python3 run_wae.py --num_it 500000 --out_dir mnist --losses --id $SGE_TASK_ID
+python3 run_vae.py --num_it 500000 --out_dir mnist --latent --lmba_schedule adaptive --id $SGE_TASK_ID
 
 # python3 run_wae.py --num_it 1000 --out_dir mnist_test --save_model --save_data --id 6 --res_dir res --lr 0.001 --losses --latent --sigmooid --stoch
 # python3 run_vae.py --num_it 1000 --out_dir mnist_test --model vae --save_model --save_data --id 1 --res_dir res --lr 0.001 --losses --latent
+
+### test ###
+# python3 run_test.py --out_dir mnist --sigmoid --lrec 0.1 --lmatch 0.001 --res_dir res_5layers_lrec0.01_lmatch0.0001_2021_10_11_17_36
+# python3 run_test.py --model vae --out_dir mnist --cost cross_entropy --lrec 0.001 --weights_file trained-wae-final-500000 --res_dir res_5layers_lreg0.001_2021_10_11_14_52

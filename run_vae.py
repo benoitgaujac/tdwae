@@ -109,7 +109,7 @@ def main():
     # opts['lambda_sigma'] = [1.,]
 
     # lamba
-    beta = [0.001, 0.01, 0.1, 1.]
+    beta = [0.0001, 1.]
     id = (FLAGS.id-1) % len(beta)
     opts['lambda_init'] = [beta[id] for n in range(opts['nlatents'])]
     opts['lambda'] = [1. for n in range(opts['nlatents'])]
@@ -152,7 +152,7 @@ def main():
     opts['vizu_latent'] = FLAGS.latents
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = int(opts['it_num'] / 20)
+    opts['print_every'] = int(opts['it_num'] / 4)
     opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size

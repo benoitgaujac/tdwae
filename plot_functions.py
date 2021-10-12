@@ -308,7 +308,7 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
 
 
 ####### samples #######
-def plot_samples(opts, samples, plots_dir, filename):
+def plot_samples(opts, samples, exp_dir, plots_dir, filename):
 
     if opts['input_normalize_sym']:
         samples = samples / 2. + 0.5
@@ -393,7 +393,6 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
     plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
             hspace = 0, wspace = 0)
     # Saving
-    filename = filename + '.png'
     save_path = os.path.join(exp_dir,plots_dir)
     utils.create_dir(save_path)
     plt.savefig(utils.o_gfile((save_path, filename), 'wb'),

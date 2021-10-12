@@ -297,7 +297,7 @@ class Run(object):
 
         # - Init sess and load trained weights if needed
         if self.opts['use_trained']:
-            if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+            if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
                 raise Exception("weights file doesn't exist")
             self.saver.restore(self.sess, WEIGHTS_PATH)
         else:
@@ -614,7 +614,7 @@ class Run(object):
         Test and plot
         """
 
-        logging.error('\nTraining  {} with {} latent layers\n'.format(self.opts['model'], self.opts['nlatents']))
+        logging.error('\nTesting  {} with {} latent layers\n'.format(self.opts['model'], self.opts['nlatents']))
         exp_dir = self.opts['exp_dir']
 
         # Init model hyper params
@@ -632,21 +632,21 @@ class Run(object):
 
 
         # - Init sess and load trained weights if needed
-        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
         self.saver.restore(self.sess, WEIGHTS_PATH)
         ##### TESTING LOOP #####
         # Init all monitoring variables
         trLoss, trLoss_obs, trLoss_match = 0., 0., 0.
         teLoss, teLoss_obs, teLoss_match = 0., 0., 0.
-        trLoss_latent = np.zeros(len(self.opts['nlatents'])-1)
-        teLoss_latent = np.zeros(len(self.opts['nlatents'])-1)
+        trLoss_latent = np.zeros(self.opts['nlatents']-1)
+        teLoss_latent = np.zeros(self.opts['nlatents']-1)
         trMSE, trBlurr, teMSE, teBlurr = 0., 0., 0., 0.
-        trKL = np.zeros(len(self.opts['nlatents']))
-        teKL = np.zeros(len(self.opts['nlatents']))
+        trKL, traggKL = np.zeros(self.opts['nlatents']), np.zeros(self.opts['nlatents'])
+        teKL, teaggKL = np.zeros(self.opts['nlatents']), np.zeros(self.opts['nlatents'])
 
         it_num = int(self.data.test_size / self.opts['batch_size'])
-        for it in range(test_it_num):
+        for it in range(it_num):
             # training losses
             [l, obs, latent, match] = self.sess.run(
                                 [self.objective,
@@ -665,13 +665,17 @@ class Run(object):
             # training metrics
             idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
             batch, _ = self.data.sample_observations(idx, 'train')
-            [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+            [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
+                                self.blurriness,
+                                self.KL,
+                                self.aggKL],
                                 feed_dict={self.data.handle: self.train_handle,
                                             self.images: batch,
                                             self.sigma_scale: np.ones(1),})
             trMSE += mse / it_num
             trBlurr += blurr / it_num
             trKL += np.array(kl) / it_num
+            traggKL += np.array(aggkl) / it_num
             # testing losses
             [l, obs, latent, match] = self.sess.run([self.objective,
                             self.obs_cost,
@@ -689,15 +693,19 @@ class Run(object):
             # testing metrics
             idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
             batch, _ = self.data.sample_observations(idx)
-            [mse, blurr, kl] = self.sess.run([self.mse, self.blurriness, self.KL],
+            [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
+                            self.blurriness,
+                            self.KL,
+                            self.aggKL],
                             feed_dict={self.data.handle: self.test_handle,
                                         self.images: batch,
                                         self.sigma_scale: np.ones(1)})
             teMSE += mse / it_num
             teBlurr += blurr / it_num
             teKL += np.array(kl) / it_num
-        trLoss_latent *= lmbd
-        teLoss_latent *= lmbd
+            teaggKL += np.array(aggkl) / it_num
+        trLoss_latent *= lmbd[-1]
+        teLoss_latent *= lmbd[-1]
         # logging output
         debug_str = 'teLOSS=%.3f, trLOSS=%.3f' % (teLoss, trLoss)
         logging.error(debug_str)
@@ -706,7 +714,7 @@ class Run(object):
                             np.sum(teLoss_latent),
                             teLoss_match)
         logging.error(debug_str)
-        debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n '  % (
+        debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n'  % (
                             teMSE,
                             teBlurr,
                             np.mean(teKL/self.opts['zdim']))
@@ -721,8 +729,8 @@ class Run(object):
                     teLoss_match=np.array(teLoss_match),
                     trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
                     trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
-                    teBlurr=np.array(teBlurr), teKL=np.array(teKL),
-                    trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL))
+                    teBlurr=np.array(teBlurr), teKL=np.array(teKL), teaggKL=np.array(teaggKL),
+                    trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL), traggKL=np.array(traggKL))
 
         ##### Vizu #####
         if self.opts['vizu_samples']:
@@ -748,7 +756,7 @@ class Run(object):
             x, y = self.data.sample_observations(idx)
             z = self.sess.run(self.encoded, feed_dict={self.images: x,
                             self.sigma_scale: np.ones(1)})
-            plot_embedded(self.opts, z, y, exp_dir, 'test_plots', 'emb.png' % it)
+            plot_embedded(self.opts, z, y, exp_dir, 'test_plots', 'emb.png')
 
         if self.opts['vizu_latent']:
             np.random.seed(1234)
@@ -757,7 +765,7 @@ class Run(object):
             reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={
                             self.images: x,
                             self.sigma_scale: self.opts['sigma_scale_resample']})
-            plot_latent(self.opts, reconstruction, exp_dir, 'test_plots', 'latent_expl.png' % it)
+            plot_latent(self.opts, reconstruction, exp_dir, 'test_plots', 'latent_expl.png')
             np.random.seed()
 
         if self.opts['vizu_pz_grid']:
@@ -775,7 +783,7 @@ class Run(object):
                             self.pz_samples: grid,
                             self.sigma_scale: np.ones(1)})
             samples = samples.reshape([-1,num_cols]+self.data.data_shape)
-            plot_grid(self.opts, samples, exp_dir, 'test_plots', 'pz_grid.png' % it)
+            plot_grid(self.opts, samples, exp_dir, 'test_plots', 'pz_grid.png')
 
         if self.opts['vizu_stochasticity']:
             Samples = []
@@ -784,7 +792,7 @@ class Run(object):
                                 self.pz_samples: fixed_noise[:5],
                                 self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
                 Samples.append(samples)
-            plot_stochasticity(self.opts, Samples, exp_dir, 'test_plots', 'stochasticity.png' % it)
+            plot_stochasticity(self.opts, Samples, exp_dir, 'test_plots', 'stochasticity.png')
 
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
@@ -795,10 +803,10 @@ class Run(object):
         opts = self.opts
 
         # --- Load trained weights
-        if not tf.gfile.IsDirectory(MODEL_PATH):
+        if not tf.io.gfile.IsDirectory(MODEL_PATH):
             raise Exception("model doesn't exist")
         WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
         self.saver.restore(self.sess, WEIGHTS_PATH)
         # Set up
@@ -986,10 +994,10 @@ class Run(object):
             self.vlae_decoded.append(decoded)
 
         # --- Load trained weights
-        if not tf.gfile.IsDirectory(MODEL_PATH):
+        if not tf.io.gfile.IsDirectory(MODEL_PATH):
             raise Exception("model doesn't exist")
         WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
         self.saver.restore(self.sess, WEIGHTS_PATH)
 
@@ -1008,10 +1016,10 @@ class Run(object):
         opts = self.opts
 
         # --- Load trained weights
-        if not tf.gfile.IsDirectory(MODEL_PATH):
+        if not tf.io.gfile.IsDirectory(MODEL_PATH):
             raise Exception("model doesn't exist")
         WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
         self.saver.restore(self.sess, WEIGHTS_PATH)
 
@@ -1082,10 +1090,10 @@ class Run(object):
         opts = self.opts
 
         # --- Load trained weights
-        if not tf.gfile.IsDirectory(MODEL_PATH):
+        if not tf.io.gfile.IsDirectory(MODEL_PATH):
             raise Exception("model doesn't exist")
         WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.gfile.Exists(WEIGHTS_PATH+".meta"):
+        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
         self.saver.restore(self.sess, WEIGHTS_PATH)
         work_dir = opts['work_dir']
