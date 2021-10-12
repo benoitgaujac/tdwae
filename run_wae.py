@@ -104,7 +104,7 @@ def main():
 
     # lamba
     lambda_rec = [0.01, 0.1]
-    lamdba_match = [0.0001, 0.001, 0.01]
+    lamdba_match = [0.0001, 0.001]
     schedule = ['constant',]
     sigmoid = [False,]
     lmba = list(itertools.product(schedule, sigmoid, lambda_rec,lamdba_match))
@@ -114,16 +114,6 @@ def main():
     opts['use_sigmoid'] = sig
     opts['lambda_init'] = [lrec*log(n+1.0001)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch/100,]
     opts['lambda'] = [lrec**(n+1)/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
-    # opts['lambda'] = [lrec*exp(-1/(n+1))/opts['zdim'][n] for n in range(0,opts['nlatents']-1)] + [lmatch,]
-
-    # opts['enc_sigma_pen'] = lmba[id][0]
-    # opts['dec_sigma_pen'] = lmba[id][1]
-    # if lmba[id][0] or lmba[id][1]:
-    #     opts['lambda_sigma'] = [0.1*exp(-(n+1)) for n in range(opts['nlatents'])]
-    # else:
-    #     opts['lambda_sigma'] = [1.,]*opts['nlatents']
-    # opts['nfilters'] = [int(lmba[id][3] / 2**n) for n in range(opts['nlatents'])]
-    # opts['nfilters'] = [int(nfilters / 2**n) for n in range(opts['nlatents'])]
 
     # Create directories
     results_dir = 'results'
