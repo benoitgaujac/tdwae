@@ -624,11 +624,12 @@ class Run(object):
         lmbd_sigma = self.opts['lambda_sigma']
 
         # Compute blurriness of real data
-        idx = np.random.randint(0, high=self.data.test_size, size=1000)
-        images = self.data.data_test[idx]
-        real_blurr = self.sess.run(self.real_blurriness, feed_dict={self.images: images})
-        logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
-        print('')
+        if self.opts['blur']:
+            idx = np.random.randint(0, high=self.data.test_size, size=1000)
+            images = self.data.data_test[idx]
+            real_blurr = self.sess.run(self.real_blurriness, feed_dict={self.images: images})
+            logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
+            print('')
 
 
         # - Init sess and load trained weights if needed
@@ -665,17 +666,21 @@ class Run(object):
             # training metrics
             idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
             batch, _ = self.data.sample_observations(idx, 'train')
-            [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
-                                self.blurriness,
+            [mse, kl, aggkl] = self.sess.run([self.mse,
                                 self.KL,
                                 self.aggKL],
                                 feed_dict={self.data.handle: self.train_handle,
                                             self.images: batch,
                                             self.sigma_scale: np.ones(1),})
             trMSE += mse / it_num
-            trBlurr += blurr / it_num
             trKL += np.array(kl) / it_num
             traggKL += np.array(aggkl) / it_num
+            if self.opts['blur']:
+                blurr = self.sess.run(self.blurriness,
+                                    feed_dict={self.data.handle: self.train_handle,
+                                                self.images: batch,
+                                                self.sigma_scale: np.ones(1),})
+                trBlurr += blurr / it_num
             # testing losses
             [l, obs, latent, match] = self.sess.run([self.objective,
                             self.obs_cost,
@@ -693,17 +698,21 @@ class Run(object):
             # testing metrics
             idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
             batch, _ = self.data.sample_observations(idx)
-            [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
-                            self.blurriness,
+            [mse, kl, aggkl] = self.sess.run([self.mse,
                             self.KL,
                             self.aggKL],
                             feed_dict={self.data.handle: self.test_handle,
                                         self.images: batch,
                                         self.sigma_scale: np.ones(1)})
             teMSE += mse / it_num
-            teBlurr += blurr / it_num
             teKL += np.array(kl) / it_num
             teaggKL += np.array(aggkl) / it_num
+            if self.opts['blur']:
+                blurr = self.sess.run(self.blurriness,
+                                    feed_dict={self.data.handle: self.test_handle,
+                                                self.images: batch,
+                                                self.sigma_scale: np.ones(1),})
+                teBlurr += blurr / it_num
         trLoss_latent *= lmbd[-1]
         teLoss_latent *= lmbd[-1]
         # logging output

@@ -13,18 +13,18 @@ import pdb
 
 
 ### --- Latent penalty --- ###
-def log_normal(z, mean, sigma, eps=1e-10):
+def log_normal(z, mean, sigma, eps=1e-6):
     """
     Compute gaussian log-density
     """
     c = tf.compat.v1.log(2*pi)
-    return -0.5*(c + tf.compat.v1.log(sigma) + tf.square(z - mean) / (sigma + eps))
+    return -0.5*(c + tf.compat.v1.log(eps+sigma) + tf.square(z - mean) / (1e-5+sigma))
 
-def KL(mu0, cov0, mu1, cov1):
+def KL(mu0, cov0, mu1, cov1, eps=1e-6):
     """
     Compute KL divergence between gaussian prior and variational distribution
     """
-    kl = cov0 / cov1 + tf.square(mu1 - mu0)/cov1 + tf.compat.v1.log(cov1/(1e-5+cov0)) - 1
+    kl = (cov0) / (eps+cov1) + tf.square(mu1 - mu0)/(eps+cov1) + tf.compat.v1.log((eps+cov1)/(eps+cov0)) - 1
     kl = 0.5 * tf.reduce_sum(kl,axis=-1)
     return tf.reduce_mean(kl)
 

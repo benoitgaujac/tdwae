@@ -26,14 +26,14 @@ def sample_gaussian(opts, params, typ='numpy', batch_size=100):
         means, covs = tf.split(params,2,axis=-1)
         shape = tf.shape(means)
         eps = tf.compat.v1.random_normal(shape, dtype=tf.float32)
-        noise = means + tf.multiply(eps,tf.sqrt(1e-5+covs))
+        noise = means + tf.multiply(eps,tf.sqrt(1e-6+covs))
     elif typ =='numpy':
         means, covs = np.split(params,2,axis=-1)
         # means = means[:,0]
         # covs = covs[:,0]
         shape = (batch_size,)+np.shape(means)
         eps = np.random.normal(0.,1.,shape).astype(np.float32)
-        noise = means + np.multiply(eps,np.sqrt(1e-5+covs))
+        noise = means + np.multiply(eps,np.sqrt(1e-6+covs))
     return noise
 
 def sample_dirichlet(opts, alpha, batch_size=100):
