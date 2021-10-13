@@ -18,7 +18,7 @@ source /share/apps/examples/source_files/cuda/cuda-10.0.source
 ### train ###
 
 # python3 run_wae.py --num_it 500000 --out_dir mnist --losses --id $SGE_TASK_ID
-python3 run_vae.py --num_it 500000 --out_dir mnist -losses --latent --lmba_schedule adaptive --id $SGE_TASK_ID
+python3 run_vae.py --num_it 500000 --out_dir mnist --losses --latent --lmba_schedule adaptive --id $SGE_TASK_ID
 
 # python3 run_wae.py --num_it 1000 --out_dir mnist_test --save_model --save_data --id 6 --res_dir res --lr 0.001 --losses --latent --sigmooid --stoch
 # python3 run_vae.py --num_it 1000 --out_dir mnist_test --model vae --save_model --save_data --id 1 --res_dir res --lr 0.001 --losses --latent
