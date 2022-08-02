@@ -99,8 +99,8 @@ config_mnist['crop_style'] = 'closecrop' # closecrop, resizecrop
 config_mnist['batch_size'] = 128
 
 # Model set up
-config_mnist['nlatents'] = 2 #5
-config_mnist['zdim'] = [8,4] #[32,16,8,4,2]
+config_mnist['nlatents'] = 5
+config_mnist['zdim'] = [32,16,8,4,2]
 config_mnist['sigma_scale_resample'] = 16.*np.ones(1)
 config_mnist['sigma_scale_stochasticity'] = [eps**2*np.ones(1) for eps in [0.01,0.05,0.1,0.5,1.,2.]]
 config_mnist['resample'] = True
@@ -118,7 +118,7 @@ config_mnist['lambda_sigma'] = [exp(1-i) for i in range(config_mnist['nlatents']
 # NN set up
 config_mnist['archi'] = ['mlp',]*config['nlatents'] # mlp, dcgan
 config_mnist['nlayers'] = [2,]*config['nlatents']
-config_mnist['nfilters'] = [256,128] #[2048,1024,512,256,128]
+config_mnist['nfilters'] = [2048,1024,512,256,128]
 config_mnist['filters_size'] = [3,]*config['nlatents']
 config_mnist['nonlinearity'] = 'elu' # soft_plus, relu, leaky_relu, tanh
 config_mnist['output_layer'] = ['mlp',]*config['nlatents'] # dense, conv, conv1x1
