@@ -159,8 +159,8 @@ def main():
     opts['vizu_stochasticity'] = FLAGS.stoch
     opts['fid'] = FLAGS.fid
     opts['it_num'] = FLAGS.num_it
-    opts['print_every'] = 5 #int(opts['it_num'] / 4)
-    opts['evaluate_every'] = 5 #int(opts['it_num'] / 50)
+    opts['print_every'] = int(opts['it_num'] / 4)
+    opts['evaluate_every'] = int(opts['it_num'] / 50)
     if FLAGS.batch_size is not None:
         opts['batch_size'] = FLAGS.batch_size
     opts['lr'] = FLAGS.lr
