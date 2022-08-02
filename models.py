@@ -11,10 +11,6 @@ from encoder import Encoder
 from decoder import Decoder
 from datahandler import datashapes
 
-# add fid path
-sys.path.append('../TTUR')
-sys.path.append('../inception')
-
 import pdb
 
 

@@ -23,7 +23,7 @@ from plot_functions import save_train, save_latent_interpolation, save_vlae_expe
 from plot_functions import plot_splitloss, plot_samples, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 # from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 
-from fid.fid import calculate_frechet_distance
+from fid.fid_helper import calculate_frechet_distance
 # # Path to inception model and stats for training set
 # sys.path.append('../TTUR')
 # sys.path.append('../inception')
