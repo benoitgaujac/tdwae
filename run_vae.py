@@ -88,6 +88,7 @@ def main():
     else:
         assert False, 'Unknown dataset'
 
+
     # model
     opts['model'] = FLAGS.model
     opts['encoder'] = [FLAGS.encoder,]*opts['nlatents']

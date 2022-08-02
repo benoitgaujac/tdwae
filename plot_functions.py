@@ -20,7 +20,7 @@ mydpi = 100
 def save_train(opts, data, label, rec, samples, encoded, samples_prior,
                 teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
                 tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
-                teMSE, teBlurr, teKL, teaggKL, trMSE, trBlurr, trKL, traggKL,
+                teMSE, teKL, teaggKL, trMSE, trKL, traggKL,
                 exp_dir, plots_dir, filename):
 
     """ Generates and saves the plot of the following layout:
@@ -52,7 +52,6 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     # reconstruction
     assert len(data) == num_pics
     assert len(data) == len(rec)
-    pics = []
     merged = np.vstack([rec, data])
     r_ptr = 0
     w_ptr = 0
@@ -63,6 +62,8 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         w_ptr += 2
     if greyscale:
         pics = 1. - merged[:num_pics]
+    else:
+        pics = merged[:num_pics]
     # Figuring out a layout
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     img1 = np.concatenate(image, axis=0)
@@ -70,6 +71,8 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     assert len(samples) == num_pics
     if greyscale:
         pics = 1. - samples
+    else:
+        pics = samples
     # Figuring out a layout
     image = np.concatenate(np.split(pics, num_cols), axis=2)
     img2 = np.concatenate(image, axis=0)
@@ -105,7 +108,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         ax.axes.set_aspect(1)
 
     ###UMAP visualization of the embedings
-    if encoded.shape[-1]==samples_prior.shape[-1]:
+    if encoded.shape[-1]==samples_prior.shape[-1] and label is not None:
         base = plt.cm.get_cmap('tab10')
         color_list = base(np.linspace(0, 1, 10))
         num_pics = np.shape(encoded)[0]
@@ -186,15 +189,14 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
 
     ### metric curves
     ax = plt.subplot(gs[1, 1])
-    for metric, (label, color, style) in zip([teMSE, trMSE, teBlurr,  trBlurr],
-                                            [('mse', 'b', '-'), (None, 'b', '--'),
-                                            ('blurr', 'r', '-'), (None, 'r', '--')]):
+    for metric, (label, color, style) in zip([teMSE, trMSE],
+                                            [('mse', 'b', '-'), (None, 'b', '--')]):
         total_num = len(metric)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(metric) + 1, x_step)
         y = np.log(metric[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
-    plt.ylabel('mse/blurriness')
+    plt.ylabel('mse')
     plt.grid(axis='y')
     plt.legend(loc='upper right')
     plt.text(0.47, 1., 'Metrics', ha="center", va="bottom",
@@ -353,7 +355,7 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
 
     if opts['input_normalize_sym']:
         images = images / 2. + 0.5
-        reconstruction = reconstruction / 2. + 0.5
+        reconstruction = [rec / 2. + 0.5 for rec in reconstruction]
 
     # formating and layout
     img = [images,] + reconstruction
@@ -379,7 +381,7 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
     width_pic = pics.shape[1]
     fig_height = height_pic / 20
     fig_width = width_pic / 20
-    fig = plt.figure(figsize=(fig_width, fig_height))
+    # fig = plt.figure(figsize=(fig_width, fig_height))
     if images.shape[-1]==1:
         pics = pics[:, :, 0]
         # in Greys higher values correspond to darker colors
@@ -422,8 +424,8 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
                 assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
         embeds.append(embedding)
     # Creating a pyplot fig
-    height_pic = 300
-    width_pic = 300
+    height_pic = 35
+    width_pic = 35
     fig_height = 4*height_pic / float(mydpi)
     fig_width = 4*len(embeds) * height_pic  / float(mydpi)
     fig = plt.figure(figsize=(fig_width, fig_height))
@@ -432,7 +434,7 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
         plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.7,
-                    c=labels, s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
+                    c=labels, s=1,cmap=discrete_cmap(10, base_cmap='tab10'))
                     # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         # if i==len(embeds)-1:
         #     plt.colorbar()
@@ -449,22 +451,24 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
         ymax = ymax + width * magnify
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
-        plt.legend(loc='best')
-        plt.text(0.47, 1., 'UMAP latent %d' % (i+1), ha="center", va="bottom",
-                                                size=20, transform=ax.transAxes)
+        # plt.legend(loc='best', fontsize=20, handletextpad=0.1, handlelength=0.2, markerscale=4)
+        # plt.title(r'$\mathcal{Z}_%d$'%(i+1),fontsize=20)
+        # plt.text(0.47, 1., ' %d' % (i+1), ha="center", va="bottom",
+        #                                         size=25, transform=ax.transAxes)
         # Removing ticks
-        ax.axes.get_xaxis().set_ticks([])
-        ax.axes.get_yaxis().set_ticks([])
+        # ax.axes.get_xaxis().set_ticks([])
+        # ax.axes.get_yaxis().set_ticks([])
         # ax.axes.set_xlim([0, width_pic])
         # ax.axes.set_ylim([height_pic, 0])
         x0,x1 = ax.axes.get_xlim()
         y0,y1 = ax.axes.get_ylim()
         ax.axes.set_aspect(abs(x1-x0)/abs(y1-y0))
+        ax.axis("off")
     # adjust space between subplots
-    plt.subplots_adjust(bottom=0.05, right=0.9, top=0.95)
-    cax = plt.axes([0.91, 0.165, 0.01, 0.7])
-    cbar = plt.colorbar(cax=cax)
-    cbar.ax.tick_params(labelsize=35)
+    plt.subplots_adjust(bottom=0.05, left=0.05, right=0.95, top=0.95, wspace=0.2)
+    # cax = plt.axes([0.91, 0.165, 0.01, 0.7])
+    # cbar = plt.colorbar(cax=cax)
+    # cbar.ax.tick_params(labelsize=12)
 
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)

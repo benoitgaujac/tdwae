@@ -54,7 +54,7 @@ def non_linear(inputs,type):
     elif type=='relu':
         return tf.nn.relu(inputs)
     elif type=='leaky_relu':
-        return tf.nn.leaky_relu(features, alpha=0.2)
+        return tf.nn.leaky_relu(inputs, alpha=0.2)
     elif type=='soft_plus':
         return tf.nn.softplus(inputs)
     elif type=='tanh':

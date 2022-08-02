@@ -240,21 +240,21 @@ class DataHandler(object):
 
         # load data
         if self.dataset == 'mnist':
-            data, labels = self._load_mnist(opts)
+            self.data, labels = self._load_mnist(opts)
         elif self.dataset == 'smallNORB':
-            data, labels = self._load_smallNORB(opts)
+            self.data, labels = self._load_smallNORB(opts)
         elif self.dataset == 'celebA':
-            data, labels = self._load_celebA(opts)
+            self.data, labels = self._load_celebA(opts)
         else:
             raise ValueError('Unknown %s' % self.dataset)
         # data size
-        self.data_size = data.shape[0]
+        self.data_size = self.data.shape[0]
         # datashape
         self.data_shape = datashapes[self.dataset]
         # batch size
         self.batch_size = opts['batch_size']
         # splitting and fill var
-        train, test = self._split(opts, data, labels, seed)
+        train, test = self._split(opts, self.data, labels, seed)
         self.data_train, self.labels_train = train[0], train[1]
         self.data_test, self.labels_test = test[0], test[1]
         # build tf.dataset
@@ -385,7 +385,7 @@ class DataHandler(object):
             """Helper to map files paths to image with tf.io.decode_jpeg
             """
             # reading .jpg file
-            image_file = tf.read_file(file_path)
+            image_file = tf.io.read_file(file_path)
             im_decoded = tf.cast(tf.image.decode_jpeg(image_file, channels=3), dtype=tf.dtypes.float32)
             # crop and resize
             width = 178
@@ -411,7 +411,7 @@ class DataHandler(object):
         dataset = tf.data.Dataset.from_tensor_slices(data)
         # process path if celeba
         if opts['dataset']=='celebA':
-            dataset = dataset.map(process_path,
+            dataset = dataset.map(_process_path,
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
         # normalize data if needed
         if opts['input_normalize_sym']:
@@ -437,7 +437,7 @@ class DataHandler(object):
 
         return train_handle, test_handle
 
-    def  sample_observations(self, keys, dataset='test'):
+    def sample_observations(self, keys, dataset='test'):
         if dataset=='test':
             data, labels = self.data_test, self.labels_test
         elif dataset=='train':

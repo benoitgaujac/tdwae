@@ -55,16 +55,6 @@ class Model(object):
         square_dist = tf.reduce_mean(tf.square(tf.compat.v1.layers.flatten(inputs) - xs[-1]), axis=-1)
         return tf.reduce_mean(square_dist)
 
-    def blurriness(self, inputs):
-        # --- compute blurriness of samples
-        # convolve with the Laplace filter
-        lap_filter = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
-        lap_filter = lap_filter.reshape([3, 3, 1, 1])
-        conv = tf.nn.conv2d(inputs, lap_filter, strides=[1, 1, 1, 1],
-                                                padding='VALID')
-        _, blurriness = tf.nn.moments(conv, axes=[1, 2, 3])
-        return tf.reduce_mean(blurriness)
-
     def inception_Net(self, sess, graph):
         # --- get inception net output
         inception_path = '../inception'

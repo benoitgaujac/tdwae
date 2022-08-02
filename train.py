@@ -23,13 +23,14 @@ from plot_functions import save_train, save_latent_interpolation, save_vlae_expe
 from plot_functions import plot_splitloss, plot_samples, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 # from plot_functions import plot_splitloss, plot_fullrec, plot_embedded, plot_latent, plot_grid, plot_stochasticity
 
-# Path to inception model and stats for training set
-sys.path.append('../TTUR')
-sys.path.append('../inception')
-import fid
-inception_path = '../inception'
-inception_model = os.path.join(inception_path, 'classify_image_graph_def.pb')
-layername = 'FID_Inception_Net/pool_3:0'
+from fid.fid import calculate_frechet_distance
+# # Path to inception model and stats for training set
+# sys.path.append('../TTUR')
+# sys.path.append('../inception')
+# import fid
+# inception_path = '../inception'
+# inception_model = os.path.join(inception_path, 'classify_image_graph_def.pb')
+# layername = 'FID_Inception_Net/pool_3:0'
 
 import pdb
 
@@ -91,10 +92,6 @@ class Run(object):
         # --- Various metrics
         # MSE
         self.mse = self.model.MSE(x, self.sigma_scale)
-        # blurriness
-        self.blurriness = self.model.blurriness(x)
-        # real imagesnblurriness
-        self.real_blurriness = self.model.blurriness(self.images)
         # layerwise KL
         if self.opts['model'] == 'wae':
             self.KL = [tf.ones([]) for i in range(self.opts['nlatents'])]
@@ -102,11 +99,13 @@ class Run(object):
         else:
             self.KL = self.model.layerwise_kl(x, self.sigma_scale)
             self.aggKL = self.model.layerwise_agg_kl(x, self.sigma_scale)
-        # FID
+        # FID score
         if opts['fid']:
             self.inception_graph = tf.Graph()
             self.inception_sess = tf.compat.v1.Session(graph=self.inception_graph)
-            self.inception_layer = self.model.inception_Net(self.inception_sess, self.inception_graph)
+            with self.inception_graph.as_default():
+                self.create_inception_graph()
+            self.inception_layer = self._get_inception_layer()
 
         # --- encode and reconstruct
         # encode
@@ -172,6 +171,33 @@ class Run(object):
             self.anchors_points = tf.compat.v1.placeholder(tf.float32,
                                     [None] + [self.opts['zdim'][0],],
                                     name='anchors_ph')
+
+    def create_inception_graph(self):
+        inception_model = 'classify_image_graph_def.pb'
+        inception_path = os.path.join('fid', inception_model)
+        # Create inception graph
+        with tf.compat.v1.gfile.FastGFile(inception_path, 'rb') as f:
+            graph_def = tf.compat.v1.GraphDef()
+            graph_def.ParseFromString( f.read())
+            _ = tf.import_graph_def( graph_def, name='FID_Inception_Net')
+
+    def _get_inception_layer(self):
+        # Get inception activation layer (and reshape for batching)
+        layername = 'FID_Inception_Net/pool_3:0'
+        pool3 = self.inception_sess.graph.get_tensor_by_name(layername)
+        ops_pool3 = pool3.graph.get_operations()
+        for op_idx, op in enumerate(ops_pool3):
+            for o in op.outputs:
+                shape = o.get_shape().as_list()
+                if shape != []:
+                  new_shape = []
+                  for j, s in enumerate(shape):
+                    if s == 1 and j == 0:
+                      new_shape.append(None)
+                    else:
+                      new_shape.append(s)
+                  o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
+        return pool3
 
     # def anchor_interpolate(self):
     #     # Anchor interpolation for 1-layer encoder
@@ -259,31 +285,23 @@ class Run(object):
         npics = self.opts['plot_num_pics']
         fixed_noise = sample_pz(self.opts, self.pz_params, npics)
 
-        # Compute blurriness of real data
-        idx = np.random.randint(0, high=self.data.test_size, size=1000)
-        images = self.data.data_test[idx]
-        real_blurr = self.sess.run(self.real_blurriness, feed_dict={self.images: images})
-        logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
-        print('')
-
-
         # - FID
-        if self.opts['fid']:
-            # Load inception mean samples for train set
-            trained_stats = os.path.join(inception_path, 'fid_stats.npz')
-            # Load trained stats
-            f = np.load(trained_stats)
-            self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
-            f.close()
+        # if self.opts['fid']:
+        #     # Load inception mean samples for train set
+        #     trained_stats = os.path.join(inception_path, 'fid_stats.npz')
+        #     # Load trained stats
+        #     f = np.load(trained_stats)
+        #     self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
+        #     f.close()
 
         # Init all monitoring variables
         trLoss, trLoss_obs, trLoss_latent, trLoss_match = [], [], [], []
         trenc_Sigma_reg, trdec_Sigma_reg = [], []
-        trMSE, trBlurr, trKL, traggKL = [], [], [], []
+        trMSE, trKL, traggKL = [], [], []
         teLoss, teLoss_obs, teLoss_latent, teLoss_match = [], [], [], []
         teenc_Sigma_reg, tedec_Sigma_reg = [], []
-        teMSE, teBlurr, teKL, teaggKL = [], [], [], []
-        FID = []
+        teMSE, teKL, teaggKL = [], [], []
+        FID_rec, FID_gen = [], []
         # lr schedule
         decay, decay_rate = 1., 0.99
         decay_warmup, decay_steps = int(0.5*self.opts['it_num']), int(0.1*self.opts['it_num'])
@@ -347,25 +365,18 @@ class Run(object):
                 trLoss_obs.append(obs_cost)
                 trLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 trLoss_match.append(lmbd[-1]*matching_penalty)
-                # trKL.append(-np.concatenate([latent_costs,[matching_penalty]]))
                 trenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
                 trdec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 # training metrics
                 idx = np.random.randint(0, self.data.train_size, self.opts['batch_size'])
                 batch, _ = self.data.sample_observations(idx, 'train')
-                [mse, blurr, kl, aggkl] = self.sess.run([self.mse,
-                                    self.blurriness,
+                [mse, kl, aggkl] = self.sess.run([self.mse,
                                     self.KL,
                                     self.aggKL],
                                     feed_dict={self.data.handle: self.train_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1),})
-                # [mse, blurr] = self.sess.run([self.mse, self.blurriness],
-                #                     feed_dict={self.data.handle: self.train_handle,
-                #                                 self.images: batch,
-                #                                 self.sigma_scale: np.ones(1),})
                 trMSE.append(mse)
-                trBlurr.append(blurr)
                 trKL.append(kl)
                 traggKL.append(aggkl)
                 # init testing losses & metrics
@@ -373,8 +384,7 @@ class Run(object):
                 loss, obs_cost, matching_penalty = 0., 0., 0.
                 enc_Sigma_penalty, dec_Sigma_penalty = np.zeros(len(enc_Sigma_penalty)), np.zeros(len(dec_Sigma_penalty))
                 latent_costs = np.zeros(len(latent_costs))
-                mse, blurr, kl, aggkl = 0., 0., np.zeros(len(kl)), np.zeros(len(kl))
-                # mse, blurr = 0., 0.
+                mse, kl, aggkl = 0., np.zeros(len(kl)), np.zeros(len(kl))
                 for it_ in range(test_it_num):
                     # testing losses
                     [l, obs, latent, match, eSigma, dSigma] = self.sess.run([self.objective,
@@ -397,19 +407,13 @@ class Run(object):
                     # testing metrics
                     idx = np.random.randint(0, self.data.test_size, self.opts['batch_size'])
                     batch, _ = self.data.sample_observations(idx)
-                    [m, b, k, ak] = self.sess.run([self.mse,
-                                    self.blurriness,
+                    [m, k, ak] = self.sess.run([self.mse,
                                     self.KL,
                                     self.aggKL],
                                     feed_dict={self.data.handle: self.test_handle,
                                                 self.images: batch,
                                                 self.sigma_scale: np.ones(1)})
-                    # [m, b] = self.sess.run([self.mse, self.blurriness],
-                    #                 feed_dict={self.data.handle: self.test_handle,
-                    #                             self.images: batch,
-                    #                             self.sigma_scale: np.ones(1)})
                     mse += m / test_it_num
-                    blurr += b / test_it_num
                     kl += np.array(k) / test_it_num
                     aggkl += np.array(ak) / test_it_num
                 teLoss.append(loss)
@@ -420,7 +424,6 @@ class Run(object):
                 teenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
                 tedec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 teMSE.append(mse)
-                teBlurr.append(blurr)
                 teKL.append(kl)
                 teaggKL.append(aggkl)
                 # log output
@@ -435,32 +438,36 @@ class Run(object):
                                     np.sum(teenc_Sigma_reg[-1]),
                                     np.sum(tedec_Sigma_reg[-1]))
                 logging.error(debug_str)
-                debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e, agg. KL=%10.3e\n '  % (
+                debug_str = 'MSE=%.3f,KL=%10.3e, agg. KL=%10.3e\n '  % (
                                     teMSE[-1],
-                                    teBlurr[-1],
                                     np.mean(teKL[-1]/self.opts['zdim']),
                                     np.mean(teaggKL[-1]/self.opts['zdim']))
                 logging.error(debug_str)
 
                 # Compute FID score
-                if self.opts['fid']:
-                    fid = 0
-                    for it_ in range(test_it_num):
-                        # First convert to RGB
-                        if np.shape(flat_samples)[-1] == 1:
-                            # We have greyscale
-                            flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
-                        preds_incep = self.inception_sess.run(self.inception_layer,
-                                      feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
-                        preds_incep = preds_incep.reshape((npics,-1))
-                        mu_gen = np.mean(preds_incep, axis=0)
-                        sigma_gen = np.cov(preds_incep, rowvar=False)
-                        fid_score = fid.calculate_frechet_distance(mu_gen,
-                                    sigma_gen,
-                                    self.mu_train,
-                                    self.sigma_train,
-                                    eps=1e-6)
-                    fid_scores.append(fid_score)
+                if self.opts['fid']:                    
+                    fid_rec = self.fid_score(fid_inputs='reconstruction')
+                    FID_rec.append(fid_rec)
+                    fid_gen = self.fid_score(fid_inputs='samples')
+                    FID_gen.append(fid_gen)
+                # if self.opts['fid']:
+                #     fid = 0
+                #     for it_ in range(test_it_num):
+                #         # First convert to RGB
+                #         if np.shape(flat_samples)[-1] == 1:
+                #             # We have greyscale
+                #             flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
+                #         preds_incep = self.inception_sess.run(self.inception_layer,
+                #                       feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
+                #         preds_incep = preds_incep.reshape((npics,-1))
+                #         mu_gen = np.mean(preds_incep, axis=0)
+                #         sigma_gen = np.cov(preds_incep, rowvar=False)
+                #         fid_score = fid.calculate_frechet_distance(mu_gen,
+                #                     sigma_gen,
+                #                     self.mu_train,
+                #                     self.sigma_train,
+                #                     eps=1e-6)
+                #     fid_scores.append(fid_score)
 
 
             ##### Vizu #####
@@ -484,8 +491,8 @@ class Run(object):
                                     teenc_Sigma_reg, tedec_Sigma_reg,
                                     trLoss, trLoss_obs,
                                     trLoss_latent, trLoss_match,
-                                    teMSE, teBlurr, teKL, teaggKL,
-                                    trMSE, trBlurr, trKL, traggKL,
+                                    teMSE, teKL, teaggKL,
+                                    trMSE, trKL, traggKL,
                                     exp_dir, 'train_plots', 'res_it%07d.png' % it)
 
                 if self.opts['vizu_splitloss']:
@@ -552,19 +559,17 @@ class Run(object):
             if it >= decay_warmup and it % decay_steps == 0:
                 decay = decay_rate ** (int(it / decay_steps))
                 logging.error('Reduction in lr: %f\n' % decay)
-                """
-                # If no significant progress was made in last 20 epochs
-                # then decrease the learning rate.
-                if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
-                    wait = 0
-                else:
-                    wait += 1
-                if wait > 20 * batches_num:
-                    decay = max(decay  / 1.33, 1e-6)
-                    logging.error('Reduction in lr: %f\n' % decay)
-                    print('')
-                    wait = 0
-                """
+                # # If no significant progress was made in last 20 epochs
+                # # then decrease the learning rate.
+                # if np.mean(Loss_rec[-20:]) < np.mean(Loss_rec[-20 * batches_num:])-1.*np.var(Loss_rec[-20 * batches_num:]):
+                #     wait = 0
+                # else:
+                #     wait += 1
+                # if wait > 20 * batches_num:
+                #     decay = max(decay  / 1.33, 1e-6)
+                #     logging.error('Reduction in lr: %f\n' % decay)
+                #     print('')
+                #     wait = 0
 
             ##### lambda #####
             # Update regularizer if necessary
@@ -606,8 +611,8 @@ class Run(object):
                         tedec_Sigma_reg=np.array(tedec_Sigma_reg),
                         trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
                         trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
-                        teBlurr=np.array(teBlurr), teKL=np.array(teKL), teggKL=np.array(teaggKL),
-                        trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL), trggKL=np.array(traggKL))
+                        teKL=np.array(teKL), teggKL=np.array(teaggKL),
+                        trMSE=np.array(trMSE), trKL=np.array(trKL), trggKL=np.array(traggKL))
 
     def test(self, WEIGHTS_PATH=None):
         """
@@ -623,15 +628,6 @@ class Run(object):
         lmbd = self.opts['lambda']
         lmbd_sigma = self.opts['lambda_sigma']
 
-        # Compute blurriness of real data
-        if self.opts['blur']:
-            idx = np.random.randint(0, high=self.data.test_size, size=1000)
-            images = self.data.data_test[idx]
-            real_blurr = self.sess.run(self.real_blurriness, feed_dict={self.images: images})
-            logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
-            print('')
-
-
         # - Init sess and load trained weights if needed
         if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
             raise Exception("weights file doesn't exist")
@@ -642,7 +638,7 @@ class Run(object):
         teLoss, teLoss_obs, teLoss_match = 0., 0., 0.
         trLoss_latent = np.zeros(self.opts['nlatents']-1)
         teLoss_latent = np.zeros(self.opts['nlatents']-1)
-        trMSE, trBlurr, teMSE, teBlurr = 0., 0., 0., 0.
+        trMSE, teMSE = 0., 0.
         trKL, traggKL = np.zeros(self.opts['nlatents']), np.zeros(self.opts['nlatents'])
         teKL, teaggKL = np.zeros(self.opts['nlatents']), np.zeros(self.opts['nlatents'])
 
@@ -675,12 +671,6 @@ class Run(object):
             trMSE += mse / it_num
             trKL += np.array(kl) / it_num
             traggKL += np.array(aggkl) / it_num
-            if self.opts['blur']:
-                blurr = self.sess.run(self.blurriness,
-                                    feed_dict={self.data.handle: self.train_handle,
-                                                self.images: batch,
-                                                self.sigma_scale: np.ones(1),})
-                trBlurr += blurr / it_num
             # testing losses
             [l, obs, latent, match] = self.sess.run([self.objective,
                             self.obs_cost,
@@ -707,12 +697,6 @@ class Run(object):
             teMSE += mse / it_num
             teKL += np.array(kl) / it_num
             teaggKL += np.array(aggkl) / it_num
-            if self.opts['blur']:
-                blurr = self.sess.run(self.blurriness,
-                                    feed_dict={self.data.handle: self.test_handle,
-                                                self.images: batch,
-                                                self.sigma_scale: np.ones(1),})
-                teBlurr += blurr / it_num
         trLoss_latent *= lmbd[-1]
         teLoss_latent *= lmbd[-1]
         # logging output
@@ -723,9 +707,8 @@ class Run(object):
                             np.sum(teLoss_latent),
                             teLoss_match)
         logging.error(debug_str)
-        debug_str = 'MSE=%.3f, BLURR=%.3f, KL=%10.3e\n'  % (
+        debug_str = 'MSE=%.3f, KL=%10.3e\n'  % (
                             teMSE,
-                            teBlurr,
                             np.mean(teKL/self.opts['zdim']))
         logging.error(debug_str)
         # save test data
@@ -738,8 +721,8 @@ class Run(object):
                     teLoss_match=np.array(teLoss_match),
                     trLoss=np.array(trLoss), trLoss_obs=np.array(trLoss_obs),
                     trLoss_match=np.array(trLoss_match), teMSE=np.array(teMSE),
-                    teBlurr=np.array(teBlurr), teKL=np.array(teKL), teaggKL=np.array(teaggKL),
-                    trMSE=np.array(trMSE), trBlurr=np.array(trBlurr), trKL=np.array(trKL), traggKL=np.array(traggKL))
+                    teKL=np.array(teKL), teaggKL=np.array(teaggKL),
+                    trMSE=np.array(trMSE), trKL=np.array(trKL), traggKL=np.array(traggKL))
 
         ##### Vizu #####
         if self.opts['vizu_samples']:
@@ -750,7 +733,7 @@ class Run(object):
 
         if self.opts['vizu_fullrec']:
             # idx = np.random.randint(0, self.data.test_size, npics)
-            idx = [21, 7, 24, 18, 28, 12, 75, 82, 32]
+            idx = np.arange(0,self.data.test_size, int(self.data.test_size/20)) #[21, 7, 24, 18, 28, 12, 75, 82, 32, ]
             batch, _ = self.data.sample_observations(idx)
             rec = self.sess.run(self.reconstruction, feed_dict={
                             self.images: batch,
@@ -802,7 +785,6 @@ class Run(object):
                                 self.sigma_scale: self.opts['sigma_scale_stochasticity'][n]})
                 Samples.append(samples)
             plot_stochasticity(self.opts, Samples, exp_dir, 'test_plots', 'stochasticity.png')
-
 
     def latent_interpolation(self, data, MODEL_PATH, WEIGHTS_FILE):
         """
@@ -1017,7 +999,11 @@ class Run(object):
         # logging.error('Saving images..')
         save_vlae_experiment(opts, decoded, MODEL_PATH)
 
-    def fid_score(self, data, MODEL_PATH, WEIGHTS_FILE):
+    def fid_score(self, load_trained_model=False, MODEL_PATH=None,
+                                        WEIGHTS_FILE=None,
+                                        compute_dataset_statistics=False,
+                                        fid_inputs='samples',
+                                        save_score=False):
         """
         Compute FID score
         """
@@ -1025,156 +1011,119 @@ class Run(object):
         opts = self.opts
 
         # --- Load trained weights
-        if not tf.io.gfile.IsDirectory(MODEL_PATH):
-            raise Exception("model doesn't exist")
-        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
-            raise Exception("weights file doesn't exist")
-        self.saver.restore(self.sess, WEIGHTS_PATH)
+        if load_trained_model:
+            if not tf.io.gfile.IsDirectory(MODEL_PATH):
+                raise Exception("model doesn't exist")
+            WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
+            if not tf.io.gfile.Exists(WEIGHTS_PATH+".meta"):
+                raise Exception("weights file doesn't exist")
+            self.saver.restore(self.sess, WEIGHTS_PATH)
 
-        # Setup
-        batch_size = 1000
-        batches_num = 1
+        if self.data.dataset == 'celebA':
+            compare_dataset_name = 'celeba_stats.npz'
+        elif self.data.dataset == '3Dchairs':
+            compare_dataset_name = '3Dchairs_stats.npz'
+        elif self.data.dataset == 'cifar10':
+            compare_dataset_name = 'cifar10_stats.npz'
+        elif self.data.dataset == 'svhn':
+            compare_dataset_name = 'svhn_stats.npz'
+        elif self.data.dataset == 'mnist':
+            compare_dataset_name = 'mnist_stats.npz'
+        else:
+            assert False, 'FID not implemented for {} dataset.'.format(self.data.dataset)
 
-        # Load inception mean samples for train set
-        trained_stats = os.path.join(inception_path, 'fid_stats.npz')
-        # Load trained stats
-        f = np.load(trained_stats)
-        self.mu_train, self.sigma_train = f['mu'][:], f['sigma'][:]
-        f.close()
-        # Compute bluriness of real data
-        real_blurr = self.sess.run(self.blurriness, feed_dict={
-                                                self.points: data.test_data[:batch_size]})
-        real_blurr = np.mean(real_blurr)
-        # logging.error('Real pictures sharpness = %10.4e' % np.min(real_blurr))
-        # print('')
+        # --- setup
+        full_size = self.data.train_size + self.data.test_size
+        test_size = 1000
+        batch_size = 100
+        batch_num = 2 #int(test_size/batch_size)
+        fid_dir = 'fid'
+        stats_path = os.path.join(fid_dir, compare_dataset_name)
 
-        # Test loop
-        now = time.time()
-        mean_blurr, fid_scores = 0., 0.
-        for it_ in range(batches_num):
-            # Samples
-            noise = sample_pz(opts, self.pz_params, batch_size)
-            # Sampling
-            samples = self.sess.run(self.decoded[-1],
-                                        feed_dict={self.samples: noise,
-                                        self.is_training:False})
-            # compute blur
-            gen_blurr = self.sess.run(self.blurriness,
-                                        feed_dict={self.points: samples})
-            mean_blurr+= (np.mean(gen_blurr) / batches_num)
-            # Compute FID score
-            # First convert to RGB
-            if np.shape(samples)[-1] == 1:
-                # We have greyscale
-                samples = self.sess.run(tf.image.grayscale_to_rgb(samples))
-            preds_incep = self.inception_sess.run(self.inception_layer,
-                          feed_dict={'FID_Inception_Net/ExpandDims:0': samples})
-            preds_incep = preds_incep.reshape((batch_size,-1))
-            mu_gen = np.mean(preds_incep, axis=0)
-            sigma_gen = np.cov(preds_incep, rowvar=False)
-            fid_score = fid.calculate_frechet_distance(mu_gen,
-                                        sigma_gen,
-                                        self.mu_train,
-                                        self.sigma_train,
-                                        eps=1e-6)
-            fid_scores+= (fid_score / batches_num)
+        # --- Compute stats on real dataset if needed
+        if not os.path.isfile(stats_path) or compute_dataset_statistics:
+            preds_list = []
+            for n in range(batch_num):
+                batch_id = np.random.randint(test_size, size=batch_size)
+                batch, _ = self.data.sample_observations(batch_id)
+                # rescale inputs in [0,255]
+                if self.opts['input_normalize_sym']:
+                    batch = batch / 2. + 0.5
+                batch *= 255.
+                # Convert to RGB if needed
+                if np.shape(batch)[-1] == 1:
+                    batch = np.repeat(batch, 3, axis=-1)
+                preds_incep = self.inception_sess.run(self.inception_layer,
+                              feed_dict={'FID_Inception_Net/ExpandDims:0': batch})
+                preds_incep = preds_incep.reshape((batch_size,-1))
+                preds_list.append(preds_incep)
+            preds_list = np.concatenate(preds_list, axis=0)
+            mu = np.mean(preds_list, axis=0)
+            sigma = np.cov(preds_list, rowvar=False)
+            # saving stats
+            np.savez(stats_path, m=mu, s=sigma)
+        else:
+            stats = np.load(stats_path)
+            mu = stats['m']
+            sigma = stats['s']
 
-            # Logging
-            debug_str = 'FID=%.3f, BLUR=%10.3e, REAL BLUR=%10.3e' % (
-                                    fid_scores,
-                                    mean_blurr,
-                                    real_blurr)
-            logging.error(debug_str)
-        name = 'fid'
-        np.savez(os.path.join(work_dir,name),
-                    fid=np.array(fid_scores),
-                    blur=np.array(mean_blurr))
+        # --- Compute stats for reconstructions or samples
+        if fid_inputs == 'reconstruction':
+            preds_list = []
+            for n in range(batch_num):
+                batch_id = np.random.randint(test_size, size=batch_size)
+                batch, _ = self.data.sample_observations(batch_id)
+                recons = self.sess.run(self.reconstruction[0], feed_dict={
+                                        self.images: batch,
+                                        self.is_training: False})
+                # rescale recons in [0,255]
+                if self.opts['input_normalize_sym']:
+                    recons = recons / 2. + 0.5
+                recons *= 255.
+                if np.shape(recons)[-1] == 1:
+                    recons = np.repeat(recons, 3, axis=-1)
+                preds_incep = self.inception_sess.run(self.inception_layer,
+                              feed_dict={'FID_Inception_Net/ExpandDims:0': recons})
+                preds_incep = preds_incep.reshape((batch_size,-1))
+                preds_list.append(preds_incep)
+            preds_list = np.concatenate(preds_list, axis=0)
+            mu_model = np.mean(preds_list, axis=0)
+            sigma_model = np.cov(preds_list, rowvar=False)
+        elif fid_inputs == 'samples':
+            preds_list = []
+            for n in range(batch_num):
+                batch = sample_pz(opts, self.pz_params, batch_size)
+                samples = self.sess.run(self.samples, feed_dict={
+                                        self.pz_samples: batch,
+                                        self.is_training: False,
+                                        self.sigma_scale: np.ones(1)})
+                # rescale samples in [0,255]
+                if self.opts['input_normalize_sym']:
+                    samples = samples / 2. + 0.5
+                samples *= 255.
+                if np.shape(samples)[-1] == 1:
+                    samples = np.repeat(samples, 3, axis=-1)
+                preds_incep = self.inception_sess.run(self.inception_layer,
+                              feed_dict={'FID_Inception_Net/ExpandDims:0': samples})
+                preds_incep = preds_incep.reshape((batch_size,-1))
+                preds_list.append(preds_incep)
+            preds_list = np.concatenate(preds_list, axis=0)
+            mu_model = np.mean(preds_list, axis=0)
+            sigma_model = np.cov(preds_list, rowvar=False)
 
-    def test_losses(self, data, MODEL_PATH, WEIGHTS_FILE):
-        """
-        Compute losses
-        """
+        # --- Compute FID between real stats and model stats
+        fid_scores = calculate_frechet_distance(mu, sigma, mu_model, sigma_model)
 
-        opts = self.opts
-
-        # --- Load trained weights
-        if not tf.io.gfile.IsDirectory(MODEL_PATH):
-            raise Exception("model doesn't exist")
-        WEIGHTS_PATH = os.path.join(MODEL_PATH,'checkpoints',WEIGHTS_FILE)
-        if not tf.io.gfile.exists(WEIGHTS_PATH+".meta"):
-            raise Exception("weights file doesn't exist")
-        self.saver.restore(self.sess, WEIGHTS_PATH)
-        work_dir = opts['work_dir']
-
-        # Setup
-        now = time.time()
-        batch_size_te = 200
-        test_size = np.shape(data.test_data)[0]
-        batches_num_te = int(test_size/batch_size_te)
-        train_size = data.num_points
-        # Logging stat
-        debug_str = 'TEST SIZE=%d, BATCH NUM=%d' % (
-                                test_size,
-                                batches_num_te)
+        # --- Logging
+        debug_str = 'FID={:.3f} for {} data'.format(fid_scores, test_size)
         logging.error(debug_str)
 
-        # Test loss
-        wae_lambda = opts['lambda']
-        loss, loss_test = 0., 0.
-        loss_rec, loss_rec_test = 0., 0.
-        loss_match, loss_match_test = 0., 0.
-        for it_ in range(batches_num_te):
-            # Sample batches of test data points
-            data_ids =  np.random.choice(test_size, batch_size_te,
-                                    replace=True)
-            batch_images = data.test_data[data_ids].astype(np.float32)
-            batch_samples = sample_pz(opts, self.pz_params,
-                                            batch_size_te)
-            l, lrec, lmatch = self.sess.run([self.objective,
-                                                self.loss_reconstruct,
-                                                self.matching_penalty],
-                                feed_dict={self.points:batch_images,
-                                                self.samples: batch_samples,
-                                                self.lmbd: wae_lambda,
-                                                self.is_training:False})
-            loss_test += l / batches_num_te
-            loss_rec_test += lrec / batches_num_te
-            loss_match_test += lmatch / batches_num_te
-            # Sample batches of train data points
-            data_ids =  np.random.choice(train_size, batch_size_te,
-                                    replace=True)
-            batch_images = data.data[data_ids].astype(np.float32)
-            batch_samples = sample_pz(opts, self.pz_params,
-                                            batch_size_te)
-            l, lrec, lmatch = self.sess.run([self.objective,
-                                                self.loss_reconstruct,
-                                                self.matching_penalty],
-                                feed_dict={self.points:batch_images,
-                                                self.samples: batch_samples,
-                                                self.lmbd: wae_lambda,
-                                                self.is_training:False})
-            loss += l / batches_num_te
-            loss_rec += lrec / batches_num_te
-            loss_match += lmatch / batches_num_te
+        # --- Saving
+        if save_score:
+            fid_res_dir = os.path.join(MODEL_PATH,fid_dir)
+            if not tf.io.gfile.isdir(fid_res_dir):
+                utils.create_dir(fid_res_dir)
+            filename = 'fid_' + fid_inputs
+            np.save(os.path.join(fid_res_dir,filename),fid_scores)
 
-        # Logging
-        debug_str = 'TRAIN: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
-                                loss,
-                                loss_rec,
-                                loss_match)
-        logging.error(debug_str)
-        debug_str = 'TEST: LOSS=%.3f, REC=%.3f, MATCH=%10.3e' % (
-                                loss_test,
-                                loss_rec_test,
-                                loss_match_test)
-        logging.error(debug_str)
-
-        name = 'losses'
-        np.savez(os.path.join(work_dir,name),
-                    loss_train=np.array(loss),
-                    loss_rec_train=np.array(loss_rec),
-                    loss_match_train=np.array(loss_match),
-                    loss_test=np.array(loss_test),
-                    loss_rec_test=np.array(loss_rec_test),
-                    loss_match_test=np.array(loss_match_test))
+        return fid_scores
