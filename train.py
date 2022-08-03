@@ -420,7 +420,6 @@ class Run(object):
                 teLoss_obs.append(obs_cost)
                 teLoss_latent.append([lmbd[n]*latent_costs[n] for n in range(len(latent_costs))])
                 teLoss_match.append(lmbd[-1]*matching_penalty)
-                # teKL.append(-np.concatenate([latent_costs,[matching_penalty]]))
                 teenc_Sigma_reg.append([lmbd_sigma[n]*enc_Sigma_penalty[n] for n in range(len(enc_Sigma_penalty))])
                 tedec_Sigma_reg.append([lmbd_sigma[n]*dec_Sigma_penalty[n] for n in range(len(dec_Sigma_penalty))])
                 teMSE.append(mse)
@@ -450,25 +449,6 @@ class Run(object):
                     FID_rec.append(fid_rec)
                     fid_gen = self.fid_score(fid_inputs='samples')
                     FID_gen.append(fid_gen)
-                # if self.opts['fid']:
-                #     fid = 0
-                #     for it_ in range(test_it_num):
-                #         # First convert to RGB
-                #         if np.shape(flat_samples)[-1] == 1:
-                #             # We have greyscale
-                #             flat_samples = self.sess.run(tf.image.grayscale_to_rgb(flat_samples))
-                #         preds_incep = self.inception_sess.run(self.inception_layer,
-                #                       feed_dict={'FID_Inception_Net/ExpandDims:0': flat_samples})
-                #         preds_incep = preds_incep.reshape((npics,-1))
-                #         mu_gen = np.mean(preds_incep, axis=0)
-                #         sigma_gen = np.cov(preds_incep, rowvar=False)
-                #         fid_score = fid.calculate_frechet_distance(mu_gen,
-                #                     sigma_gen,
-                #                     self.mu_train,
-                #                     self.sigma_train,
-                #                     eps=1e-6)
-                #     fid_scores.append(fid_score)
-
 
             ##### Vizu #####
             if it % self.opts['print_every'] == 0:
@@ -482,8 +462,6 @@ class Run(object):
                                     feed_dict={self.images: batch,
                                                self.pz_samples: fixed_noise,
                                                 self.sigma_scale: np.ones(1)})
-                # rec = [rec[n][:,0] for n in range(len(rec))]
-                # encoded = encoded[:,0]
                 save_train(self.opts, batch, labels, rec[-1], samples,
                                     encoded, fixed_noise,
                                     teLoss, teLoss_obs,
@@ -505,18 +483,13 @@ class Run(object):
 
                 if self.opts['vizu_embedded']:
                     batchsize = 1000
-                    # zs, ys = [], []
-                    # for _ in range(int(nencoded/batchsize)):
                     idx = np.random.randint(0, self.data.test_size, batchsize)
                     x, y = self.data.sample_observations(idx)
                     z = self.sess.run(self.encoded, feed_dict={self.images: x,
                                     self.sigma_scale: np.ones(1)})
-                        # zs += [z[n][:,0] for n in range(len(z))]
-                        # ys += y
                     plot_embedded(self.opts, z, y, exp_dir, 'train_plots', 'emb_it%07d.png' % it)
 
                 if self.opts['vizu_latent']:
-                    # idx = np.random.randint(0, self.data.test_size, int(sqrt(self.opts['nresamples'])))
                     idx = np.random.randint(0, self.data.test_size, 4)
                     x, _ = self.data.sample_observations(idx)
                     reconstruction = self.sess.run(self.resample_reconstruction, feed_dict={

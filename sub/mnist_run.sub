@@ -10,16 +10,16 @@
 
 #$ -t 1-4
 
-#$ -N stwaemnist
+#$ -N wuvaemnist
 
 source /share/apps/examples/source_files/python/python-3.6.4.source
 source /share/apps/examples/source_files/cuda/cuda-10.0.source
 
 ### train ###
 
-python3 run_wae.py --num_it 500000 --out_dir mnist --fid  --losses --id $SGE_TASK_ID
+#python3 run_wae.py --num_it 500000 --out_dir mnist --fid  --losses --id $SGE_TASK_ID
 
-# python3 run_vae.py --num_it 500000 --out_dir mnist --losses --latent --lmba_schedule adaptive --id $SGE_TASK_ID
+python3 run_vae.py --num_it 500000 --out_dir mnist --lmba_schedule adaptive --fid --id $SGE_TASK_ID
 # python3 run_vae.py --num_it 5000 --out_dir mnist --lmba_schedule adaptive --fid
 
 
