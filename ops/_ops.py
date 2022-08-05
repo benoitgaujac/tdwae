@@ -12,52 +12,59 @@ import logging
 
 import pdb
 
+
 def lrelu(x, leak=0.3):
     return tf.maximum(x, leak * x)
 
+
 def upsample_nn(input_, new_size, scope=None, reuse=None):
-    """NN up-sampling
-    """
+    """NN up-sampling"""
 
     with tf.compat.v1.variable_scope(scope or "upsample_nn", reuse=reuse):
         result = tf.image.resize_nearest_neighbor(input_, new_size)
 
     return result
 
+
 def downsample(input_, d_h=2, d_w=2, conv_filters_dim=None, scope=None, reuse=None):
-    """NN up-sampling
-    """
+    """NN up-sampling"""
 
     with tf.compat.v1.variable_scope(scope or "downsample", reuse=reuse):
-        result = tf.nn.max_pool(input_, ksize=[1, d_h, d_w, 1], strides=[1, d_h, d_w, 1], padding='SAME')
+        result = tf.nn.max_pool(
+            input_, ksize=[1, d_h, d_w, 1], strides=[1, d_h, d_w, 1], padding="SAME"
+        )
 
     return result
 
-def logsumexp(logits,axis=1,keepdims=True):
+
+def logsumexp(logits, axis=1, keepdims=True):
     eps = 1e-06
-    tmp = tf.reduce_sum(tf.exp(logits),axis=axis,keepdims=keepdims)
+    tmp = tf.reduce_sum(tf.exp(logits), axis=axis, keepdims=keepdims)
     return tf.log(tmp + eps)
+
 
 def logsumexp_v2(logits, axis=1, keepdims=True):
     mean = tf.reduce_mean(logits, axis=axis, keepdims=keepdims)
     tmp = tf.reduce_sum(logits - mean, axis=axis, keepdims=keepdims)
     return tf.log(tmp) + mean
 
-def softmax(logits,axis=None):
-    return tf.nn.softmax(logits,axis=axis)
 
-def non_linear(inputs,type):
-    if type=='linear':
+def softmax(logits, axis=None):
+    return tf.nn.softmax(logits, axis=axis)
+
+
+def non_linear(inputs, type):
+    if type == "linear":
         return inputs
-    elif type=='elu':
+    elif type == "elu":
         return tf.nn.elu(inputs)
-    elif type=='relu':
+    elif type == "relu":
         return tf.nn.relu(inputs)
-    elif type=='leaky_relu':
+    elif type == "leaky_relu":
         return tf.nn.leaky_relu(inputs, alpha=0.2)
-    elif type=='soft_plus':
+    elif type == "soft_plus":
         return tf.nn.softplus(inputs)
-    elif type=='tanh':
+    elif type == "tanh":
         return tf.nn.tanh(inputs)
     else:
-        assert False, 'Unknow non linear operation'
+        assert False, "Unknow non linear operation"

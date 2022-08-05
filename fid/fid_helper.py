@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-''' Calculates the Frechet Inception Distance (FID) to evalulate GANs.
+""" Calculates the Frechet Inception Distance (FID) to evalulate GANs.
 The FID metric calculates the distance between two distributions of images.
 Typically, we have summary statistics (mean & covariance matrix) of one
 of these distributions, while the 2nd distribution is given by a GAN.
@@ -10,14 +10,16 @@ The FID is calculated by assuming that X_1 and X_2 are the activations of
 the pool_3 layer of the inception net for generated samples and real world
 samples respectivly.
 See --help to see further details.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import os
 import tensorflow as tf
+
 # from scipy.misc import imread
 from scipy import linalg
+
 
 class InvalidFIDException(Exception):
     pass
@@ -26,10 +28,10 @@ class InvalidFIDException(Exception):
 def create_inception_graph(pth):
     """Creates a graph from saved GraphDef file."""
     # Creates graph from saved graph_def.pb.
-    with tf.gfile.FastGFile(pth, 'rb') as f:
+    with tf.gfile.FastGFile(pth, "rb") as f:
         graph_def = tf.GraphDef()
         graph_def.ParseFromString(f.read())
-        _ = tf.import_graph_def(graph_def, name='FID_Inception_Net')
+        _ = tf.import_graph_def(graph_def, name="FID_Inception_Net")
 
 
 # -------------------------------------------------------------------------------
@@ -38,13 +40,17 @@ def create_inception_graph(pth):
 # code for handling inception net derived from
 #   https://github.com/openai/improved-gan/blob/master/inception_score/model.py
 def _get_inception_layer(sess):
-    """Prepares inception net for batched usage and returns pool_3 layer. """
-    layername = 'FID_Inception_Net/pool_3:0'
+    """Prepares inception net for batched usage and returns pool_3 layer."""
+    layername = "FID_Inception_Net/pool_3:0"
     pool3 = sess.graph.get_tensor_by_name(layername)
 
     ops = pool3.graph.get_operations()
     for op_idx, op in enumerate(ops):
-        if op.name.find('encoder') >= 0 or op.name.find('decoder') >= 0 or op.name.find('full_VAE') >= 0:
+        if (
+            op.name.find("encoder") >= 0
+            or op.name.find("decoder") >= 0
+            or op.name.find("full_VAE") >= 0
+        ):
             continue
         for o in op.outputs:
             shape = o.get_shape()
@@ -56,7 +62,7 @@ def _get_inception_layer(sess):
                         new_shape.append(None)
                     else:
                         new_shape.append(s)
-                o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
+                o.__dict__["_shape_val"] = tf.TensorShape(new_shape)
     return pool3
 
 
@@ -80,7 +86,9 @@ def get_activations(images, sess, batch_size=50, verbose=False):
     inception_layer = _get_inception_layer(sess)
     d0 = images.shape[0]
     if batch_size > d0:
-        print("warning: batch size is bigger than the data size. setting batch size to data size")
+        print(
+            "warning: batch size is bigger than the data size. setting batch size to data size"
+        )
         batch_size = d0
     n_batches = d0 // batch_size
     n_used_imgs = n_batches * batch_size
@@ -91,7 +99,7 @@ def get_activations(images, sess, batch_size=50, verbose=False):
         start = i * batch_size
         end = start + batch_size
         batch = images[start:end]
-        pred = sess.run(inception_layer, {'FID_Inception_Net/ExpandDims:0': batch})
+        pred = sess.run(inception_layer, {"FID_Inception_Net/ExpandDims:0": batch})
         pred_arr[start:end] = pred.reshape(batch_size, -1)
     if verbose:
         print(" done")
@@ -127,15 +135,22 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     sigma1 = np.atleast_2d(sigma1)
     sigma2 = np.atleast_2d(sigma2)
 
-    assert mu1.shape == mu2.shape, "Training and test mean vectors have different lengths"
-    assert sigma1.shape == sigma2.shape, "Training and test covariances have different dimensions"
+    assert (
+        mu1.shape == mu2.shape
+    ), "Training and test mean vectors have different lengths"
+    assert (
+        sigma1.shape == sigma2.shape
+    ), "Training and test covariances have different dimensions"
 
     diff = mu1 - mu2
 
     # product might be almost singular
     covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
     if not np.isfinite(covmean).all():
-        msg = "fid calculation produces singular product; adding %s to diagonal of cov estimates" % eps
+        msg = (
+            "fid calculation produces singular product; adding %s to diagonal of cov estimates"
+            % eps
+        )
         print(msg)
         # warnings.warn(msg)
         offset = np.eye(sigma1.shape[0]) * eps
@@ -187,33 +202,41 @@ def calculate_activation_statistics(images, sess, batch_size=50, verbose=False):
 # for calculating FID scores
 # -------------------------------------------------------------------------------
 def check_or_download_inception(inception_path):
-    ''' Checks if the path to the inception file is valid, or downloads
-        the file if it is not present. '''
-    INCEPTION_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
+    """Checks if the path to the inception file is valid, or downloads
+    the file if it is not present."""
+    INCEPTION_URL = (
+        "http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz"
+    )
     if inception_path is None:
-        inception_path = '/tmp'
+        inception_path = "/tmp"
     # inception_path = pathlib.Path(inception_path)
-    model_file = os.path.join(inception_path, 'classify_image_graph_def.pb')
+    model_file = os.path.join(inception_path, "classify_image_graph_def.pb")
     if not os.path.exists(model_file):
         print("Downloading Inception model")
         import urllib
         import tarfile
+
         fn, _ = urllib.urlretrieve(INCEPTION_URL)
-        with tarfile.open(fn, mode='r') as f:
-            f.extract('classify_image_graph_def.pb', inception_path)
+        with tarfile.open(fn, mode="r") as f:
+            f.extract("classify_image_graph_def.pb", inception_path)
     return str(model_file)
 
 
 def _handle_path(path, sess):
-    if path.endswith('.npz'):
+    if path.endswith(".npz"):
         f = np.load(path)
-        m, s = f['m'][:], f['s'][:]
+        m, s = f["m"][:], f["s"][:]
         f.close()
     else:
         # path = pathlib.Path(path)
         # files = list(path.glob('*.jpg')) + list(path.glob('*.png'))
         files = os.listdir(path)
-        x = np.array([imread(os.path.join(path, str(fn))).astype(np.float32) for fn in files[0:10000]])
+        x = np.array(
+            [
+                imread(os.path.join(path, str(fn))).astype(np.float32)
+                for fn in files[0:10000]
+            ]
+        )
         if x.shape[-1] != 3:
             x = np.repeat(np.expand_dims(x, axis=-1), 3, axis=-1)
         m, s = calculate_activation_statistics(x, sess)
@@ -221,7 +244,7 @@ def _handle_path(path, sess):
 
 
 def calculate_fid_given_paths(paths, inception_path):
-    ''' Calculates the FID of two paths. '''
+    """Calculates the FID of two paths."""
     # inception_path = check_or_download_inception(inception_path)
 
     for p in paths:
@@ -238,18 +261,22 @@ def calculate_fid_given_paths(paths, inception_path):
 
 
 def get_fid(dataset_name, dataset_dir, test_dir):
-    inception_path = '/is/ps2/pghosh/datasets/inceptionv1_for_inception_score.pb'
-    compare_dataset_name = os.path.join(dataset_dir, dataset_name.upper() + '_STATS.npz')
+    inception_path = "/is/ps2/pghosh/datasets/inceptionv1_for_inception_score.pb"
+    compare_dataset_name = os.path.join(
+        dataset_dir, dataset_name.upper() + "_STATS.npz"
+    )
     if not os.path.exists(compare_dataset_name):
         with tf.Session() as sess:
             create_inception_graph(str(inception_path))
-            if os.path.exists(os.path.join(dataset_dir, 'test/test')):
-                m, s = _handle_path(os.path.join(dataset_dir, 'test/test'), sess)
+            if os.path.exists(os.path.join(dataset_dir, "test/test")):
+                m, s = _handle_path(os.path.join(dataset_dir, "test/test"), sess)
             else:
                 for datase_files in os.listdir(dataset_dir):
-                    if datase_files.endswith('.npz'):
+                    if datase_files.endswith(".npz"):
                         break
-                x = np.load(os.path.join(dataset_dir, datase_files))['x_test'][:, :, :, 0]
+                x = np.load(os.path.join(dataset_dir, datase_files))["x_test"][
+                    :, :, :, 0
+                ]
                 if x.shape[-1] != 3:
                     x = np.repeat(np.expand_dims(x, axis=-1), 3, axis=-1)
                 m, s = calculate_activation_statistics(x, sess)
@@ -264,53 +291,69 @@ if __name__ == "__main__":
 
     # dataset = 'celebA'
     # dataset = 'MNIST'
-    dataset = 'CIFAR_10'
-    if dataset == 'celebA':
-        compare_dataset_name = 'celebA_stats.npz'
-    elif dataset == 'MNIST':
-        compare_dataset_name = 'mnist_stats.npz'
-    elif dataset == 'CIFAR_10':
-        compare_dataset_name = '/is/ps2/pghosh/datasets/cifar/CIFAR_10_STATS.npz'
+    dataset = "CIFAR_10"
+    if dataset == "celebA":
+        compare_dataset_name = "celebA_stats.npz"
+    elif dataset == "MNIST":
+        compare_dataset_name = "mnist_stats.npz"
+    elif dataset == "CIFAR_10":
+        compare_dataset_name = "/is/ps2/pghosh/datasets/cifar/CIFAR_10_STATS.npz"
     else:
-        raise NotImplementedError('statistics fro given dataset is not found')
+        raise NotImplementedError("statistics fro given dataset is not found")
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
     if COMPUTE_DATASET_STASTICS:
-        if dataset == 'MNIST':
+        if dataset == "MNIST":
             from keras.datasets import mnist
+
             (x_train, y_train), (x_test, y_test) = mnist.load_data()
-            x_train = x_train.astype('float32')
+            x_train = x_train.astype("float32")
             x_train -= 127.0
             x_train /= 127.0
             x_train = np.repeat(np.expand_dims(x_train, axis=-1), 3, axis=-1)
-        elif dataset == 'CIFAR_10':
+        elif dataset == "CIFAR_10":
             from keras.datasets import cifar10
+
             (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-            x_test = x_train.astype('float32')
+            x_test = x_train.astype("float32")
             # x_train -= 127.0
             # x_test /= 255
 
         with tf.Session() as sess:
             inception_path = check_or_download_inception(None)
             create_inception_graph(str(inception_path))
-            if dataset == 'MNIST' or dataset == 'CIFAR_10':
+            if dataset == "MNIST" or dataset == "CIFAR_10":
                 m, s = calculate_activation_statistics(x_test, sess)
-            elif dataset == 'celebA':
-                m, s = _handle_path('/is/ps2/pghosh/datasets/celebA64x64/test/test', sess)
+            elif dataset == "celebA":
+                m, s = _handle_path(
+                    "/is/ps2/pghosh/datasets/celebA64x64/test/test", sess
+                )
             np.savez(compare_dataset_name, m=m, s=s)
 
     # fid_value = calculate_fid_given_paths(['/is/ps2/pghosh/celebA64x64/test/test', compare_dataset_name], None)
     # print("True data FID: ", fid_value)
     print("True data FID:  2.8198739711940277")
 
-    inception_path = '/is/ps2/pghosh/datasets/inceptionv1_for_inception_score.pb'
+    inception_path = "/is/ps2/pghosh/datasets/inceptionv1_for_inception_score.pb"
     if RECONSTRUCTIONS:
-        fid_value = calculate_fid_given_paths(['./generated_samples/celebA/reconstructed/const_H_vae', compare_dataset_name], inception_path)
+        fid_value = calculate_fid_given_paths(
+            [
+                "./generated_samples/celebA/reconstructed/const_H_vae",
+                compare_dataset_name,
+            ],
+            inception_path,
+        )
         print("const_H_vae FID: ", fid_value)
 
-        fid_value = calculate_fid_given_paths(['./generated_samples/celebA/reconstructed/normal_vae', compare_dataset_name], inception_path)
+        fid_value = calculate_fid_given_paths(
+            [
+                "./generated_samples/celebA/reconstructed/normal_vae",
+                compare_dataset_name,
+            ],
+            inception_path,
+        )
         print("normal_vae FID: ", fid_value)
     else:
         # fid_value = calculate_fid_given_paths(['./generated_samples/celebA/sampled/const_H_vae', compare_dataset_name], None)
@@ -318,7 +361,13 @@ if __name__ == "__main__":
         #
         # fid_value = calculate_fid_given_paths(['./generated_samples/celebA/sampled/normal_vae', compare_dataset_name], None)
         # print("normal_vae FID: ", fid_value)
-        fid_value = calculate_fid_given_paths(['/is/ps2/pghosh/repos/high_res_vae (3rd copy)/logs/4/gradient_penalty_8/reconstructed', compare_dataset_name], inception_path)
+        fid_value = calculate_fid_given_paths(
+            [
+                "/is/ps2/pghosh/repos/high_res_vae (3rd copy)/logs/4/gradient_penalty_8/reconstructed",
+                compare_dataset_name,
+            ],
+            inception_path,
+        )
         # fid_value = calculate_fid_given_paths(
         #     ['/is/ps2/pghosh/datasets/cifar/cifat_10/test',
         #      compare_dataset_name], inception_path)

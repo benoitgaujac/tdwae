@@ -5,10 +5,10 @@ import pdb
 
 
 def custom_uniform(stdev, size):
-    return np.random.uniform(low=-stdev * np.sqrt(3),
-                            high=stdev * np.sqrt(3),
-                            size=size
-                            ).astype('float32')
+    return np.random.uniform(
+        low=-stdev * np.sqrt(3), high=stdev * np.sqrt(3), size=size
+    ).astype("float32")
+
 
 def Linear(opts, input, input_dim, output_dim, scope=None, init=None, reuse=None):
     """Fully connected linear layer.
@@ -21,8 +21,8 @@ def Linear(opts, input, input_dim, output_dim, scope=None, init=None, reuse=None
             dimensionality of the matrix W.
     """
 
-    stddev = opts['init_std']
-    bias_start = opts['init_bias']
+    stddev = opts["init_std"]
+    bias_start = opts["init_bias"]
     # input_dim = np.prod(shape[1:])
 
     shape = input.get_shape().as_list()
@@ -34,44 +34,55 @@ def Linear(opts, input, input_dim, output_dim, scope=None, init=None, reuse=None
         input = tf.reshape(input, [-1, input_dim])
 
     with tf.compat.v1.variable_scope(scope or "lin", reuse=reuse):
-        if init == 'normal' or init == None:
+        if init == "normal" or init == None:
             matrix = tf.compat.v1.get_variable(
-                "W", [input_dim, output_dim], tf.float32,
-                tf.random_normal_initializer(stddev=stddev))
-        elif init == 'glorot':
+                "W",
+                [input_dim, output_dim],
+                tf.float32,
+                tf.random_normal_initializer(stddev=stddev),
+            )
+        elif init == "glorot":
             weight_values = custom_uniform(
-                np.sqrt(2./(input_dim+output_dim)),
-                (input_dim, output_dim))
+                np.sqrt(2.0 / (input_dim + output_dim)), (input_dim, output_dim)
+            )
             matrix = tf.compat.v1.get_variable(
-                "W", initializer=weight_values, dtype=tf.float32)
-        elif init == 'he':
+                "W", initializer=weight_values, dtype=tf.float32
+            )
+        elif init == "he":
             weight_values = custom_uniform(
-                np.sqrt(2./input_dim),
-                (input_dim, output_dim))
+                np.sqrt(2.0 / input_dim), (input_dim, output_dim)
+            )
             matrix = tf.compat.v1.get_variable(
-                "W", initializer=weight_values, dtype=tf.float32)
-        elif init == 'glorot_he':
+                "W", initializer=weight_values, dtype=tf.float32
+            )
+        elif init == "glorot_he":
             weight_values = custom_uniform(
-                np.sqrt(4./(input_dim+output_dim)),
-                (input_dim, output_dim))
+                np.sqrt(4.0 / (input_dim + output_dim)), (input_dim, output_dim)
+            )
             matrix = tf.compat.v1.get_variable(
-                "W", initializer=weight_values, dtype=tf.float32)
-        elif init == 'glorot_uniform':
+                "W", initializer=weight_values, dtype=tf.float32
+            )
+        elif init == "glorot_uniform":
             matrix = tf.compat.v1.get_variable(
-                "W", [input_dim, output_dim], tf.float32,
-                tf.compat.v1.glorot_uniform_initializer())
-        elif init[0] == 'uniform':
+                "W",
+                [input_dim, output_dim],
+                tf.float32,
+                tf.compat.v1.glorot_uniform_initializer(),
+            )
+        elif init[0] == "uniform":
             matrix = tf.compat.v1.get_variable(
-                "W", [input_dim, output_dim], tf.float32,
+                "W",
+                [input_dim, output_dim],
+                tf.float32,
                 tf.random_uniform_initializer(
-                    minval=-initialization[1],
-                    maxval=initialization[1]))
+                    minval=-initialization[1], maxval=initialization[1]
+                ),
+            )
         else:
-            raise Exception('Invalid %s mlp initialization!' % opts['mlp_init'])
+            raise Exception("Invalid %s mlp initialization!" % opts["mlp_init"])
 
         bias = tf.compat.v1.get_variable(
-            "b", [output_dim],
-            initializer=tf.constant_initializer(bias_start))
-
+            "b", [output_dim], initializer=tf.constant_initializer(bias_start)
+        )
 
     return tf.matmul(input, matrix) + bias

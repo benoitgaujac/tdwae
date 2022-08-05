@@ -3,6 +3,7 @@ import os
 from math import sqrt
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -17,35 +18,58 @@ import pdb
 mydpi = 100
 
 
-def save_train(opts, data, label, rec, samples, encoded, samples_prior,
-                teLoss, teLoss_obs, teLoss_latent, teLoss_match, teenc_Sigma_reg,
-                tedec_Sigma_reg, trLoss, trLoss_obs, trLoss_latent, trLoss_match,
-                teMSE, teKL, teaggKL, trMSE, trKL, traggKL,
-                exp_dir, plots_dir, filename):
+def save_train(
+    opts,
+    data,
+    label,
+    rec,
+    samples,
+    encoded,
+    samples_prior,
+    teLoss,
+    teLoss_obs,
+    teLoss_latent,
+    teLoss_match,
+    teenc_Sigma_reg,
+    tedec_Sigma_reg,
+    trLoss,
+    trLoss_obs,
+    trLoss_latent,
+    trLoss_match,
+    teMSE,
+    teKL,
+    teaggKL,
+    trMSE,
+    trKL,
+    traggKL,
+    exp_dir,
+    plots_dir,
+    filename,
+):
 
-    """ Generates and saves the plot of the following layout:
-        img1 | img2 | img3
-        img4 | img5 | img6
+    """Generates and saves the plot of the following layout:
+    img1 | img2 | img3
+    img4 | img5 | img6
 
-        img1    -   test reconstructions
-        img2    -   samples
-        img3    -   latents vizu
-        img4    -   loss curves
-        img5    -   metrics
-        img6    -   kl
-        img7    -   download_file_from_google_drivekl
+    img1    -   test reconstructions
+    img2    -   samples
+    img3    -   latents vizu
+    img4    -   loss curves
+    img5    -   metrics
+    img6    -   kl
+    img7    -   download_file_from_google_drivekl
 
     """
-    num_pics = opts['plot_num_pics']
-    num_cols = opts['plot_num_cols']
+    num_pics = opts["plot_num_pics"]
+    num_cols = opts["plot_num_cols"]
     assert num_pics % num_cols == 0
     assert num_pics % 2 == 0
     greyscale = data.shape[-1] == 1
 
-    if opts['input_normalize_sym']:
-        data = data / 2. + 0.5
-        rec = rec / 2. + 0.5
-        samples = samples / 2. + 0.5
+    if opts["input_normalize_sym"]:
+        data = data / 2.0 + 0.5
+        rec = rec / 2.0 + 0.5
+        samples = samples / 2.0 + 0.5
 
     ### Reconstruction & samples plots
     images = []
@@ -61,7 +85,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         r_ptr += 1
         w_ptr += 2
     if greyscale:
-        pics = 1. - merged[:num_pics]
+        pics = 1.0 - merged[:num_pics]
     else:
         pics = merged[:num_pics]
     # Figuring out a layout
@@ -70,7 +94,7 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     # samples
     assert len(samples) == num_pics
     if greyscale:
-        pics = 1. - samples
+        pics = 1.0 - samples
     else:
         pics = samples
     # Figuring out a layout
@@ -80,26 +104,28 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
     ### Creating a pyplot fig
     height_pic = img1.shape[0]
     width_pic = img1.shape[1]
-    fig_height = 4 * 2*height_pic / float(mydpi)
-    fig_width = 7 * 2*width_pic / float(mydpi)
+    fig_height = 4 * 2 * height_pic / float(mydpi)
+    fig_width = 7 * 2 * width_pic / float(mydpi)
     fig = plt.figure(figsize=(fig_width, fig_height))
     gs = matplotlib.gridspec.GridSpec(2, 4)
 
     # Filling in separate parts of the plot
-    for img, (gi, gj, title) in zip([img1, img2],
-                             [(0, 0, 'Test reconstruction'),
-                              (0, 1, 'Generated samples')]):
+    for img, (gi, gj, title) in zip(
+        [img1, img2], [(0, 0, "Test reconstruction"), (0, 1, "Generated samples")]
+    ):
         plt.subplot(gs[gi, gj])
         if greyscale:
             image = img[:, :, 0]
             # in Greys higher values correspond to darker colors
-            ax = plt.imshow(image, cmap='Greys',
-                            interpolation='none', vmin=0., vmax=1.)
+            ax = plt.imshow(
+                image, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0
+            )
         else:
-            ax = plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+            ax = plt.imshow(img, interpolation="none", vmin=0.0, vmax=1.0)
         ax = plt.subplot(gs[gi, gj])
-        plt.text(0.47, 1., title,
-                 ha="center", va="bottom", size=20, transform=ax.transAxes)
+        plt.text(
+            0.47, 1.0, title, ha="center", va="bottom", size=20, transform=ax.transAxes
+        )
         # Removing ticks
         ax.axes.get_xaxis().set_ticks([])
         ax.axes.get_yaxis().set_ticks([])
@@ -108,172 +134,225 @@ def save_train(opts, data, label, rec, samples, encoded, samples_prior,
         ax.axes.set_aspect(1)
 
     ###UMAP visualization of the embedings
-    if encoded.shape[-1]==samples_prior.shape[-1] and label is not None:
-        base = plt.cm.get_cmap('tab10')
+    if encoded.shape[-1] == samples_prior.shape[-1] and label is not None:
+        base = plt.cm.get_cmap("tab10")
         color_list = base(np.linspace(0, 1, 10))
         num_pics = np.shape(encoded)[0]
         ax = plt.subplot(gs[0, 2])
-        if np.shape(encoded)[1]==2:
-            embedding = np.concatenate((encoded,samples_prior),axis=0)
+        if np.shape(encoded)[1] == 2:
+            embedding = np.concatenate((encoded, samples_prior), axis=0)
         else:
-            if opts['embedding']=='pca':
-                embedding = PCA(n_components=2).fit_transform(np.concatenate((encoded,samples_prior),axis=0))
-            elif opts['embedding']=='umap':
-                embedding = umap.UMAP(n_neighbors=15,
-                                        min_dist=0.2,
-                                        metric='correlation').fit_transform(np.concatenate((encoded,samples_prior),axis=0))
+            if opts["embedding"] == "pca":
+                embedding = PCA(n_components=2).fit_transform(
+                    np.concatenate((encoded, samples_prior), axis=0)
+                )
+            elif opts["embedding"] == "umap":
+                embedding = umap.UMAP(
+                    n_neighbors=15, min_dist=0.2, metric="correlation"
+                ).fit_transform(np.concatenate((encoded, samples_prior), axis=0))
             else:
-                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
-        plt.scatter(embedding[:num_pics, 0], embedding[:num_pics, 1], alpha=0.7,
-                    c=label[:num_pics], s=40, label='Qz test',cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=label[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
+                assert False, "Unknown %s method for embedgins vizu" % opts["embedding"]
+        plt.scatter(
+            embedding[:num_pics, 0],
+            embedding[:num_pics, 1],
+            alpha=0.7,
+            c=label[:num_pics],
+            s=40,
+            label="Qz test",
+            cmap=discrete_cmap(10, base_cmap="tab10"),
+        )
+        # c=label[:num_pics], s=40, label='Qz test', edgecolors='none', cmap=discrete_cmap(10, base_cmap='Vega10'))
         plt.colorbar()
-        plt.scatter(embedding[num_pics:, 0], embedding[num_pics:, 1],
-                                color='navy', s=50, marker='*',label='Pz')
-        xmin = np.amin(embedding[:,0])
-        xmax = np.amax(embedding[:,0])
+        plt.scatter(
+            embedding[num_pics:, 0],
+            embedding[num_pics:, 1],
+            color="navy",
+            s=50,
+            marker="*",
+            label="Pz",
+        )
+        xmin = np.amin(embedding[:, 0])
+        xmax = np.amax(embedding[:, 0])
         magnify = 0.3
         width = abs(xmax - xmin)
         xmin = xmin - width * magnify
         xmax = xmax + width * magnify
-        ymin = np.amin(embedding[:,1])
-        ymax = np.amax(embedding[:,1])
+        ymin = np.amin(embedding[:, 1])
+        ymax = np.amax(embedding[:, 1])
         width = abs(ymin - ymax)
         ymin = ymin - width * magnify
         ymax = ymax + width * magnify
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
-        plt.legend(loc='upper left')
-        plt.text(0.47, 1., 'UMAP latents', ha="center", va="bottom",
-                                    size=20, transform=ax.transAxes)
+        plt.legend(loc="upper left")
+        plt.text(
+            0.47,
+            1.0,
+            "UMAP latents",
+            ha="center",
+            va="bottom",
+            size=20,
+            transform=ax.transAxes,
+        )
 
     ### Losses curves
     teLoss_latent_reg = np.sum(teLoss_latent, axis=-1) + teLoss_match
     trLoss_latent_reg = np.sum(trLoss_latent, axis=-1) + trLoss_match
     ax = plt.subplot(gs[1, 0])
-    for loss, (label, color, style) in zip([teLoss, trLoss,
-                                            teLoss_obs, trLoss_obs,
-                                            teLoss_latent_reg, trLoss_latent_reg],
-                                            [('loss', 'k', '-'), (None, 'k', '--'),
-                                            ('rec.', 'b', '-'), (None, 'b', '--'),
-                                            ('latent', 'r', '-'), (None, 'r', '--')]):
+    for loss, (label, color, style) in zip(
+        [teLoss, trLoss, teLoss_obs, trLoss_obs, teLoss_latent_reg, trLoss_latent_reg],
+        [
+            ("loss", "k", "-"),
+            (None, "k", "--"),
+            ("rec.", "b", "-"),
+            (None, "b", "--"),
+            ("latent", "r", "-"),
+            (None, "r", "--"),
+        ],
+    ):
         total_num = len(loss)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
-        if opts['model']=='vae':
+        if opts["model"] == "vae":
             y = -np.array(loss[::x_step])
         else:
             y = np.array(loss[::x_step])
         # y = loss[::x_step]
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
-    if opts['enc_sigma_pen']:
+    if opts["enc_sigma_pen"]:
         loss = np.sum(teenc_Sigma_reg, axis=-1)
         total_num = len(loss)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
-        plt.plot(x, y, linewidth=2, label='enc. Sig. reg.', color='g', linestyle='-')
-    if opts['dec_sigma_pen']:
+        plt.plot(x, y, linewidth=2, label="enc. Sig. reg.", color="g", linestyle="-")
+    if opts["dec_sigma_pen"]:
         loss = np.sum(tedec_Sigma_reg, axis=-1)
         total_num = len(loss)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(loss) + 1, x_step)
         y = np.log(loss[::x_step])
-        plt.plot(x, y, linewidth=2, label='dec. Sig. reg.', color='y', linestyle='-')
+        plt.plot(x, y, linewidth=2, label="dec. Sig. reg.", color="y", linestyle="-")
 
-    plt.ylabel('loss')
-    plt.grid(axis='y')
-    plt.legend(loc='upper right')
-    plt.text(0.47, 1., 'Losses curves', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
+    plt.ylabel("loss")
+    plt.grid(axis="y")
+    plt.legend(loc="upper right")
+    plt.text(
+        0.47,
+        1.0,
+        "Losses curves",
+        ha="center",
+        va="bottom",
+        size=20,
+        transform=ax.transAxes,
+    )
 
     ### metric curves
     ax = plt.subplot(gs[1, 1])
-    for metric, (label, color, style) in zip([teMSE, trMSE],
-                                            [('mse', 'b', '-'), (None, 'b', '--')]):
+    for metric, (label, color, style) in zip(
+        [teMSE, trMSE], [("mse", "b", "-"), (None, "b", "--")]
+    ):
         total_num = len(metric)
         x_step = max(int(total_num / 500), 1)
         x = np.arange(1, len(metric) + 1, x_step)
         y = np.log(metric[::x_step])
         plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
-    plt.ylabel('mse')
-    plt.grid(axis='y')
-    plt.legend(loc='upper right')
-    plt.text(0.47, 1., 'Metrics', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
+    plt.ylabel("mse")
+    plt.grid(axis="y")
+    plt.legend(loc="upper right")
+    plt.text(
+        0.47, 1.0, "Metrics", ha="center", va="bottom", size=20, transform=ax.transAxes
+    )
 
     ### kl curves
     teKL, trKL = np.array(teKL), np.array(trKL)
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap("tab10")
     color_list = base(np.linspace(0, 1, 6))
     ax = plt.subplot(gs[1, 2])
-    for kl, (label, style) in zip([teKL, trKL], [(True, '-'), (False, '--')]):
+    for kl, (label, style) in zip([teKL, trKL], [(True, "-"), (False, "--")]):
         for i in range(kl.shape[-1]):
             if label:
-                label = 'latent ' + str(i+1)
+                label = "latent " + str(i + 1)
             else:
-                label=None
-            total_num = len(kl[:,i])
+                label = None
+            total_num = len(kl[:, i])
             x_step = max(int(total_num / 500), 1)
-            x = np.arange(1, len(kl[:,i]) + 1, x_step)
-            y = np.log(kl[::x_step, i] / opts['zdim'][i])
+            x = np.arange(1, len(kl[:, i]) + 1, x_step)
+            y = np.log(kl[::x_step, i] / opts["zdim"][i])
             # y = kl[::x_step, i]# / opts['zdim'][i]
-            plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
-    plt.ylabel(r'logg kl(q$_i$|p$_i$)')
-    plt.grid(axis='y')
-    plt.legend(loc='upper right')
-    plt.text(0.47, 1., 'KL', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
-
+            plt.plot(
+                x, y, linewidth=2, label=label, color=color_list[i], linestyle=style
+            )
+    plt.ylabel(r"logg kl(q$_i$|p$_i$)")
+    plt.grid(axis="y")
+    plt.legend(loc="upper right")
+    plt.text(0.47, 1.0, "KL", ha="center", va="bottom", size=20, transform=ax.transAxes)
 
     ### aggkl curves
     teaggKL, traggKL = np.array(teaggKL), np.array(traggKL)
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap("tab10")
     color_list = base(np.linspace(0, 1, 6))
     ax = plt.subplot(gs[1, 3])
-    for kl, (label, style) in zip([teaggKL, traggKL], [(True, '-'), (False, '--')]):
+    for kl, (label, style) in zip([teaggKL, traggKL], [(True, "-"), (False, "--")]):
         for i in range(kl.shape[-1]):
             if label:
-                label = 'latent ' + str(i+1)
+                label = "latent " + str(i + 1)
             else:
-                label=None
-            total_num = len(kl[:,i])
+                label = None
+            total_num = len(kl[:, i])
             x_step = max(int(total_num / 500), 1)
-            x = np.arange(1, len(kl[:,i]) + 1, x_step)
+            x = np.arange(1, len(kl[:, i]) + 1, x_step)
             # y = np.log(kl[::x_step, i] / opts['zdim'][i])
-            y = kl[::x_step, i]# / opts['zdim'][i]
-            plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
-    plt.ylabel(r'kl(q$^{agg}_i$|p$_i$)')
-    plt.grid(axis='y')
-    plt.legend(loc='upper right')
-    plt.text(0.47, 1., 'KL', ha="center", va="bottom",
-                                size=20, transform=ax.transAxes)
+            y = kl[::x_step, i]  # / opts['zdim'][i]
+            plt.plot(
+                x, y, linewidth=2, label=label, color=color_list[i], linestyle=style
+            )
+    plt.ylabel(r"kl(q$^{agg}_i$|p$_i$)")
+    plt.grid(axis="y")
+    plt.legend(loc="upper right")
+    plt.text(0.47, 1.0, "KL", ha="center", va="bottom", size=20, transform=ax.transAxes)
     ### Saving plots and data
     # Plot
-    save_path = os.path.join(exp_dir,plots_dir)
+    save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### split losses #######
-def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_Sigma_reg, exp_dir, plots_dir, filename):
+def plot_splitloss(
+    opts,
+    Loss_obs,
+    Loss_latent,
+    Loss_match,
+    enc_Sigma_reg,
+    dec_Sigma_reg,
+    exp_dir,
+    plots_dir,
+    filename,
+):
 
     Loss_obs = np.array(Loss_obs)
     Loss_match = np.array(Loss_match)
     Loss_latent = np.array(Loss_latent)
-    Loss_latent_reg = np.concatenate([Loss_latent, np.expand_dims(Loss_match,axis=-1)], axis=-1)
+    Loss_latent_reg = np.concatenate(
+        [Loss_latent, np.expand_dims(Loss_match, axis=-1)], axis=-1
+    )
     enc_Sigma_reg, dec_Sigma_reg = np.array(enc_Sigma_reg), np.array(dec_Sigma_reg)
     fig = plt.figure()
-    base = plt.cm.get_cmap('tab10')
+    base = plt.cm.get_cmap("tab10")
     color_list = base(np.linspace(0, 1, 6))
-    for loss, (label, color, style) in zip([Loss_obs, Loss_latent_reg,
-                                            enc_Sigma_reg],
-                                            [('rec', 'k', '-'),
-                                            ('latent reg. ', None, '--'),
-                                            (None, None, '-.')]):
-        if len(loss.shape)==1:
+    for loss, (label, color, style) in zip(
+        [Loss_obs, Loss_latent_reg, enc_Sigma_reg],
+        [("rec", "k", "-"), ("latent reg. ", None, "--"), (None, None, "-.")],
+    ):
+        if len(loss.shape) == 1:
             total_num = len(loss)
             x_step = max(int(total_num / 500), 1)
             x = np.arange(1, len(loss) + 1, x_step)
@@ -281,63 +360,70 @@ def plot_splitloss(opts, Loss_obs, Loss_latent, Loss_match, enc_Sigma_reg, dec_S
             plt.plot(x, y, linewidth=2, label=label, color=color, linestyle=style)
         else:
             for i in range(loss.shape[-1]):
-                total_num = len(loss[:,i])
+                total_num = len(loss[:, i])
                 x_step = max(int(total_num / 500), 1)
-                x = np.arange(1, len(loss[:,i]) + 1, x_step)
-                y = np.log(loss[::x_step,i])
+                x = np.arange(1, len(loss[:, i]) + 1, x_step)
+                y = np.log(loss[::x_step, i])
                 if label is not None:
-                    label = 'latent ' + str(i+1)
+                    label = "latent " + str(i + 1)
                 else:
                     label = None
-                plt.plot(x, y, linewidth=2, label=label, color=color_list[i], linestyle=style)
+                plt.plot(
+                    x, y, linewidth=2, label=label, color=color_list[i], linestyle=style
+                )
     loss = dec_Sigma_reg
     for i in range(loss.shape[-1]):
-        total_num = len(loss[:,i])
+        total_num = len(loss[:, i])
         x_step = max(int(total_num / 500), 1)
-        x = np.arange(1, len(loss[:,i]) + 1, x_step)
-        y = np.log(loss[::x_step,i])
-        plt.plot(x, y, linewidth=2, label=None, color=color_list[i+1], linestyle=':')
+        x = np.arange(1, len(loss[:, i]) + 1, x_step)
+        y = np.log(loss[::x_step, i])
+        plt.plot(x, y, linewidth=2, label=None, color=color_list[i + 1], linestyle=":")
 
-    plt.grid(axis='y')
-    plt.legend(loc='best')
-    plt.title('Losses curves')
+    plt.grid(axis="y")
+    plt.legend(loc="best")
+    plt.title("Losses curves")
     # saving plots and data
-    save_path = os.path.join(exp_dir,plots_dir)
+    save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### samples #######
 def plot_samples(opts, samples, exp_dir, plots_dir, filename):
 
-    if opts['input_normalize_sym']:
-        samples = samples / 2. + 0.5
+    if opts["input_normalize_sym"]:
+        samples = samples / 2.0 + 0.5
 
     num_cols = int(sqrt(np.shape(samples)[0]))
-    if samples.shape[-1]==1:
-        samples = 1. - samples
+    if samples.shape[-1] == 1:
+        samples = 1.0 - samples
     # Figuring out a layout
     image = np.concatenate(np.split(samples, num_cols), axis=2)
     image = np.concatenate(image, axis=0)
     # plotting
-    fig_height = 10*image.shape[0] / float(mydpi)
-    fig_width = 10*image.shape[1] / float(mydpi)
+    fig_height = 10 * image.shape[0] / float(mydpi)
+    fig_width = 10 * image.shape[1] / float(mydpi)
     fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-    if image.shape[-1]==1:
+    if image.shape[-1] == 1:
         image = image[:, :, 0]
         # in Greys higher values correspond to darker colors
-        ax.imshow(image, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+        ax.imshow(image, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0)
     else:
-        ax.imshow(image, interpolation='none', vmin=0., vmax=1.)
+        ax.imshow(image, interpolation="none", vmin=0.0, vmax=1.0)
     # Removing ticks
     ax.axes.get_xaxis().set_ticks([])
     ax.axes.get_yaxis().set_ticks([])
     ax.axes.set_ylim([image.shape[0], 0])
     ax.axes.set_xlim([0, image.shape[1]])
     ax.axes.set_aspect(1)
-    ax.axes.axis('off')
+    ax.axes.axis("off")
 
     # adjust space between subplots
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
@@ -345,35 +431,46 @@ def plot_samples(opts, samples, exp_dir, plots_dir, filename):
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### full reconstruction #######
 def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
 
-    if opts['input_normalize_sym']:
-        images = images / 2. + 0.5
-        reconstruction = [rec / 2. + 0.5 for rec in reconstruction]
+    if opts["input_normalize_sym"]:
+        images = images / 2.0 + 0.5
+        reconstruction = [rec / 2.0 + 0.5 for rec in reconstruction]
 
     # formating and layout
-    img = [images,] + reconstruction
+    img = [
+        images,
+    ] + reconstruction
     num_rows = len(img)
     num_cols = np.shape(img[0])[0]
     # padding inut image
     npad = 1
-    pad_0 = ((npad,0),(0,0),(0,0))
-    pad_1 = ((0,npad),(0,0),(0,0))
+    pad_0 = ((npad, 0), (0, 0), (0, 0))
+    pad_1 = ((0, npad), (0, 0), (0, 0))
     for n in range(num_cols):
-        img[0][n] = np.pad(img[0][n,npad:], pad_0, mode='constant', constant_values=1.0)
-        img[1][n] = np.pad(img[1][n,:-npad], pad_1, mode='constant', constant_values=1.0)
-    img = np.split(np.array(img[::-1]),num_cols,axis=1)
-    pics = np.concatenate(img,axis=-2)
-    pics = np.concatenate(np.split(pics,num_rows),axis=-3)
-    pics = pics[0,0]
-    if images.shape[-1]==1:
-        pics = 1. - pics
+        img[0][n] = np.pad(
+            img[0][n, npad:], pad_0, mode="constant", constant_values=1.0
+        )
+        img[1][n] = np.pad(
+            img[1][n, :-npad], pad_1, mode="constant", constant_values=1.0
+        )
+    img = np.split(np.array(img[::-1]), num_cols, axis=1)
+    pics = np.concatenate(img, axis=-2)
+    pics = np.concatenate(np.split(pics, num_rows), axis=-3)
+    pics = pics[0, 0]
+    if images.shape[-1] == 1:
+        pics = 1.0 - pics
     else:
         pics = pics
     # create fig
@@ -382,23 +479,26 @@ def plot_fullrec(opts, images, reconstruction, exp_dir, plots_dir, filename):
     fig_height = height_pic / 20
     fig_width = width_pic / 20
     # fig = plt.figure(figsize=(fig_width, fig_height))
-    if images.shape[-1]==1:
+    if images.shape[-1] == 1:
         pics = pics[:, :, 0]
         # in Greys higher values correspond to darker colors
-        plt.imshow(pics, cmap='Greys',
-                        interpolation='none', vmin=0., vmax=1.)
+        plt.imshow(pics, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0)
     else:
-        plt.imshow(pics, interpolation='none', vmin=0., vmax=1.)
+        plt.imshow(pics, interpolation="none", vmin=0.0, vmax=1.0)
     # Removing axes, ticks, labels
-    plt.axis('off')
+    plt.axis("off")
     # # placing subplot
-    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
-            hspace = 0, wspace = 0)
+    plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
     # Saving
-    save_path = os.path.join(exp_dir,plots_dir)
+    save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
@@ -410,42 +510,48 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
     for i in range(nlatents):
         # encods = np.concatenate([encoded[i],decoded[i]],axis=0)
         # encods = encoded[i]
-        codes= encoded[i][:]
-        if np.shape(codes)[-1]==2:
+        codes = encoded[i][:]
+        if np.shape(codes)[-1] == 2:
             embedding = codes
         else:
-            if opts['embedding']=='pca':
+            if opts["embedding"] == "pca":
                 embedding = PCA(n_components=2).fit_transform(codes)
-            elif opts['embedding']=='umap':
-                embedding = umap.UMAP(n_neighbors=15,
-                                        min_dist=0.2,
-                                        metric='correlation').fit_transform(codes)
+            elif opts["embedding"] == "umap":
+                embedding = umap.UMAP(
+                    n_neighbors=15, min_dist=0.2, metric="correlation"
+                ).fit_transform(codes)
             else:
-                assert False, 'Unknown %s method for embedgins vizu' % opts['embedding']
+                assert False, "Unknown %s method for embedgins vizu" % opts["embedding"]
         embeds.append(embedding)
     # Creating a pyplot fig
     height_pic = 35
     width_pic = 35
-    fig_height = 4*height_pic / float(mydpi)
-    fig_width = 4*len(embeds) * height_pic  / float(mydpi)
+    fig_height = 4 * height_pic / float(mydpi)
+    fig_width = 4 * len(embeds) * height_pic / float(mydpi)
     fig = plt.figure(figsize=(fig_width, fig_height))
-    #fig = plt.figure()
+    # fig = plt.figure()
     gs = matplotlib.gridspec.GridSpec(1, len(embeds))
     for i in range(len(embeds)):
         ax = plt.subplot(gs[0, i])
-        plt.scatter(embeds[i][:, 0], embeds[i][:, 1], alpha=0.7,
-                    c=labels, s=1,cmap=discrete_cmap(10, base_cmap='tab10'))
-                    # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
+        plt.scatter(
+            embeds[i][:, 0],
+            embeds[i][:, 1],
+            alpha=0.7,
+            c=labels,
+            s=1,
+            cmap=discrete_cmap(10, base_cmap="tab10"),
+        )
+        # c=labels, s=40, label='Qz test',edgecolors='none',cmap=discrete_cmap(10, base_cmap='Vega10'))
         # if i==len(embeds)-1:
         #     plt.colorbar()
-        xmin = np.amin(embeds[i][:,0])
-        xmax = np.amax(embeds[i][:,0])
+        xmin = np.amin(embeds[i][:, 0])
+        xmax = np.amax(embeds[i][:, 0])
         magnify = 0.01
         width = abs(xmax - xmin)
         xmin = xmin - width * magnify
         xmax = xmax + width * magnify
-        ymin = np.amin(embeds[i][:,1])
-        ymax = np.amax(embeds[i][:,1])
+        ymin = np.amin(embeds[i][:, 1])
+        ymax = np.amax(embeds[i][:, 1])
         width = abs(ymin - ymax)
         ymin = ymin - width * magnify
         ymax = ymax + width * magnify
@@ -460,9 +566,9 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
         # ax.axes.get_yaxis().set_ticks([])
         # ax.axes.set_xlim([0, width_pic])
         # ax.axes.set_ylim([height_pic, 0])
-        x0,x1 = ax.axes.get_xlim()
-        y0,y1 = ax.axes.get_ylim()
-        ax.axes.set_aspect(abs(x1-x0)/abs(y1-y0))
+        x0, x1 = ax.axes.get_xlim()
+        y0, y1 = ax.axes.get_ylim()
+        ax.axes.set_aspect(abs(x1 - x0) / abs(y1 - y0))
         ax.axis("off")
     # adjust space between subplots
     plt.subplots_adjust(bottom=0.05, left=0.05, right=0.95, top=0.95, wspace=0.2)
@@ -473,16 +579,21 @@ def plot_embedded(opts, encoded, labels, exp_dir, plots_dir, filename):
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### latent exploration #######
 def plot_latent(opts, reconstruction, exp_dir, plots_dir, filename):
-    '''
+    """
     reconstruction: [[nrows, nresamples, imshape,] x nlatents]
-    '''
+    """
 
     nrows = np.shape(reconstruction[0])[0]
     npics = np.shape(reconstruction[0])[1]
@@ -491,34 +602,36 @@ def plot_latent(opts, reconstruction, exp_dir, plots_dir, filename):
 
     def preprocess_format_layout(img):
         # helper to format and create layout
-        if img.shape[-1]==1:
-            img = 1. - img
+        if img.shape[-1] == 1:
+            img = 1.0 - img
         # Figuring out a layout
         pics = np.concatenate(np.split(img, int(sqrt(npics))), axis=2)
         return np.concatenate(pics, axis=0)
 
     # plotting
-    fig_height = 100*int(sqrt(npics))*nrows / float(mydpi)
-    fig_width = 100*int(sqrt(npics))*ncols / float(mydpi)
+    fig_height = 100 * int(sqrt(npics)) * nrows / float(mydpi)
+    fig_width = 100 * int(sqrt(npics)) * ncols / float(mydpi)
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(fig_width, fig_height))
     for i in range(nrows):
         for j in range(ncols):
             pics = preprocess_format_layout(reconstruction[j][i])
-            if pics.shape[-1]==1:
+            if pics.shape[-1] == 1:
                 pics = pics[:, :, 0]
                 # in Greys higher values correspond to darker colors
-                axes[i,j].imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+                axes[i, j].imshow(
+                    pics, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0
+                )
             else:
-                axes[i,j].imshow(pics, interpolation='none', vmin=0., vmax=1.)
+                axes[i, j].imshow(pics, interpolation="none", vmin=0.0, vmax=1.0)
             # Removing ticks
-            axes[i,j].axes.get_xaxis().set_ticks([])
-            axes[i,j].axes.get_yaxis().set_ticks([])
-            axes[i,j].axes.set_ylim([pics.shape[0], 0])
-            axes[i,j].axes.set_xlim([0, pics.shape[1]])
-            axes[i,j].axes.set_aspect(1)
-            axes[i,j].axes.axis('off')
-            if i==0:
-                axes[i,j].set_title('latent ' + str(j+1))
+            axes[i, j].axes.get_xaxis().set_ticks([])
+            axes[i, j].axes.get_yaxis().set_ticks([])
+            axes[i, j].axes.set_ylim([pics.shape[0], 0])
+            axes[i, j].axes.set_xlim([0, pics.shape[1]])
+            axes[i, j].axes.set_aspect(1)
+            axes[i, j].axes.axis("off")
+            if i == 0:
+                axes[i, j].set_title("latent " + str(j + 1))
     # adjust space between subplots
     # plt.subplots_adjust(bottom=0.05, right=0.9, top=0.95, wspace=0.1, hspace=0.1)
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
@@ -526,23 +639,28 @@ def plot_latent(opts, reconstruction, exp_dir, plots_dir, filename):
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### pz grid #######
 def plot_grid(opts, samples, exp_dir, plots_dir, filename):
-    '''
+    """
     samples: [nrows, ncols, imshape]
-    '''
+    """
 
     nrows, ncols = np.shape(samples)[:2]
 
     def preprocess_format_layout(img):
         # helper to format and create layout
-        if img.shape[-1]==1:
-            img = 1. - img
+        if img.shape[-1] == 1:
+            img = 1.0 - img
         # Figuring out a layout
         pics = np.concatenate(np.split(img, nrows), axis=2)
         pics = pics[0]
@@ -550,68 +668,78 @@ def plot_grid(opts, samples, exp_dir, plots_dir, filename):
         return pics[0]
 
     # plotting
-    fig_height = 250*nrows / float(mydpi)
-    fig_width = 250*ncols / float(mydpi)
+    fig_height = 250 * nrows / float(mydpi)
+    fig_width = 250 * ncols / float(mydpi)
     fig, axes = plt.subplots(figsize=(fig_width, fig_height))
     pics = preprocess_format_layout(samples)
-    if pics.shape[-1]==1:
+    if pics.shape[-1] == 1:
         pics = pics[:, :, 0]
         # in Greys higher values correspond to darker colors
-        axes.imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+        axes.imshow(pics, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0)
     else:
-        axes.imshow(pics, interpolation='none', vmin=0., vmax=1.)
+        axes.imshow(pics, interpolation="none", vmin=0.0, vmax=1.0)
     # Removing ticks
     axes.axes.get_xaxis().set_ticks([])
     axes.axes.get_yaxis().set_ticks([])
     axes.axes.set_ylim([pics.shape[0], 0])
     axes.axes.set_xlim([0, pics.shape[1]])
     axes.axes.set_aspect(1)
-    axes.axes.axis('off')
+    axes.axes.axis("off")
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
 ####### Stochasticity of decoder #######
-def plot_stochasticity(opts, samples, exp_dir,  plots_dir, filename):
-    '''
+def plot_stochasticity(opts, samples, exp_dir, plots_dir, filename):
+    """
     samples: [[npics, imshape,] x ncols]
-    '''
+    """
 
     npics = np.shape(samples[0])[0]
     ncols = len(samples)
     pics = np.concatenate(samples, axis=2)
     pics = np.concatenate(np.split(pics, npics), axis=1)
     pics = pics[0]
-    if pics.shape[-1]==1:
-        pics =  1. - pics
+    if pics.shape[-1] == 1:
+        pics = 1.0 - pics
     # plotting
-    fig_height = 200*npics / float(mydpi)
-    fig_width = 200*ncols / float(mydpi)
+    fig_height = 200 * npics / float(mydpi)
+    fig_width = 200 * ncols / float(mydpi)
     fig, axes = plt.subplots(figsize=(fig_width, fig_height))
-    if pics.shape[-1]==1:
+    if pics.shape[-1] == 1:
         pics = pics[:, :, 0]
         # in Greys higher values correspond to darker colors
-        axes.imshow(pics, cmap='Greys', interpolation='none', vmin=0., vmax=1.)
+        axes.imshow(pics, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0)
     else:
-        axes.imshow(pics, interpolation='none', vmin=0., vmax=1.)
+        axes.imshow(pics, interpolation="none", vmin=0.0, vmax=1.0)
     # Removing ticks
     axes.axes.get_xaxis().set_ticks([])
     axes.axes.get_yaxis().set_ticks([])
     axes.axes.set_ylim([pics.shape[0], 0])
     axes.axes.set_xlim([0, pics.shape[1]])
     axes.axes.set_aspect(1)
-    axes.axes.axis('off')
+    axes.axes.axis("off")
     # axes.set_title(r'$\sigma=%.2f' % sqrt(opts['sigma_scale_stochasticity'][i]))
 
     ### Saving plot
     save_path = os.path.join(exp_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=mydpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=mydpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
@@ -621,73 +749,91 @@ def plot_sinkhorn(opts, sinkhorn, work_dir, filename):
     fig = plt.figure()
     x = np.arange(1, len(sinkhorn) + 1)
     y = np.log(sinkhorn)
-    plt.plot(x, y, linewidth=3, color='black', label='log sinkorn')
-    plt.grid(axis='y')
-    plt.legend(loc='best')
-    plt.title('Sinkhorn iterations')
+    plt.plot(x, y, linewidth=3, color="black", label="log sinkorn")
+    plt.grid(axis="y")
+    plt.legend(loc="best")
+    plt.title("Sinkhorn iterations")
     # Plot
-    plots_dir = 'train_plots'
-    save_path = os.path.join(work_dir,plots_dir)
+    plots_dir = "train_plots"
+    save_path = os.path.join(work_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=dpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
+
 
 def plot_encSigma(opts, enc_Sigmas, dec_Sigmas, work_dir, filename):
     fig = plt.figure()
-    encSig = np.stack(enc_Sigmas,axis=0)
+    encSig = np.stack(enc_Sigmas, axis=0)
     if dec_Sigmas:
-        decSig = np.stack(dec_Sigmas,axis=0)
+        decSig = np.stack(dec_Sigmas, axis=0)
     shape = np.shape(encSig)
     # base = plt.cm.get_cmap('Vega10')
-    base = plt.cm.get_cmap('tab10')
-    color_list = base(np.linspace(0, 1, opts['nlatents']+1))
+    base = plt.cm.get_cmap("tab10")
+    color_list = base(np.linspace(0, 1, opts["nlatents"] + 1))
     total_num = shape[0]
     x_step = max(int(total_num / 200), 1)
     x = np.arange(1, total_num + 1, x_step)
     for i in range(np.shape(encSig)[1]):
-        mean, var = encSig[::x_step,i,0], encSig[::x_step,i,1]
+        mean, var = encSig[::x_step, i, 0], encSig[::x_step, i, 1]
         y = np.log(mean)
-        plt.plot(x, y, linewidth=1, color=color_list[i], label=r'e$\Sigma_%d$' % i)
+        plt.plot(x, y, linewidth=1, color=color_list[i], label=r"e$\Sigma_%d$" % i)
         # if i!=0:
         #     mean, var = decSig[::x_step,i-1,0], decSig[::x_step,i-1,1]
         #     y = np.log(mean)
         #     plt.plot(x, y, linewidth=1, linestyle='--', color=color_list[i], label=r'd$\Sigma_%d$' % i)
         # y = np.log(mean+np.sqrt(var))
         # plt.plot(x, y, linewidth=1, linestyle='--',color=color_list[i])
-    plt.grid(axis='y')
-    plt.legend(loc='lower left',ncol=2)
-    plt.title(r'log norm_Tr$(\Sigma)$ curves')
+    plt.grid(axis="y")
+    plt.legend(loc="lower left", ncol=2)
+    plt.title(r"log norm_Tr$(\Sigma)$ curves")
     ### Saving plot
-    plots_dir = 'train_plots'
-    save_path = os.path.join(work_dir,plots_dir)
+    plots_dir = "train_plots"
+    save_path = os.path.join(work_dir, plots_dir)
     utils.create_dir(save_path)
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=dpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
-def save_latent_interpolation(opts, data_test, label_test, # data, labels
-                    encoded, # encoded
-                    reconstructed, full_reconstructed,# recon, full_recon
-                    inter_anchors, inter_latent, # anchors and latents interpolation
-                    samples, # samples
-                    MODEL_PATH): # working directory
+
+def save_latent_interpolation(
+    opts,
+    data_test,
+    label_test,  # data, labels
+    encoded,  # encoded
+    reconstructed,
+    full_reconstructed,  # recon, full_recon
+    inter_anchors,
+    inter_latent,  # anchors and latents interpolation
+    samples,  # samples
+    MODEL_PATH,
+):  # working directory
 
     # --- Create saving directory and preprocess
-    plots_dir = 'test_plots'
-    save_path = os.path.join(opts['work_dir'],plots_dir)
+    plots_dir = "test_plots"
+    save_path = os.path.join(opts["work_dir"], plots_dir)
     utils.create_dir(save_path)
 
     dpi = 100
 
     greyscale = np.shape(data_test)[-1] == 1
-    if opts['input_normalize_sym']:
-        full_reconstructed = full_reconstructed / 2. + 0.5
-        reconstructed = reconstructed / 2. + 0.5
-        anchors = anchors / 2. + 0.5
-        inter_anchors = inter_anchors / 2. + 0.5
-        inter_latent = inter_latent / 2. + 0.5
-        samples = samples / 2. + 0.5
+    if opts["input_normalize_sym"]:
+        full_reconstructed = full_reconstructed / 2.0 + 0.5
+        reconstructed = reconstructed / 2.0 + 0.5
+        anchors = anchors / 2.0 + 0.5
+        inter_anchors = inter_anchors / 2.0 + 0.5
+        inter_latent = inter_latent / 2.0 + 0.5
+        samples = samples / 2.0 + 0.5
     images = []
 
     # --- full reconstruction plots
@@ -695,18 +841,25 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     num_cols = np.shape(full_reconstructed[0])[0]
     # padding inut image
     npad = 1
-    pad_0 = ((npad,0),(0,0),(0,0))
-    pad_1 = ((0,npad),(0,0),(0,0))
+    pad_0 = ((npad, 0), (0, 0), (0, 0))
+    pad_1 = ((0, npad), (0, 0), (0, 0))
     for n in range(num_cols):
-        full_reconstructed[0][n] = np.pad(full_reconstructed[0][n,npad:], pad_0, mode='constant', constant_values=1.0)
-        full_reconstructed[1][n] = np.pad(full_reconstructed[1][n,:-npad], pad_1, mode='constant', constant_values=1.0)
-    full_reconstructed = np.split(np.array(full_reconstructed[::-1]),num_cols,axis=1)
-    pics = np.concatenate(full_reconstructed,axis=-2)
-    pics = np.concatenate(np.split(pics,num_rows),axis=-3)
+        full_reconstructed[0][n] = np.pad(
+            full_reconstructed[0][n, npad:], pad_0, mode="constant", constant_values=1.0
+        )
+        full_reconstructed[1][n] = np.pad(
+            full_reconstructed[1][n, :-npad],
+            pad_1,
+            mode="constant",
+            constant_values=1.0,
+        )
+    full_reconstructed = np.split(np.array(full_reconstructed[::-1]), num_cols, axis=1)
+    pics = np.concatenate(full_reconstructed, axis=-2)
+    pics = np.concatenate(np.split(pics, num_rows), axis=-3)
 
-    pics = pics[0,0]
+    pics = pics[0, 0]
     if greyscale:
-        image = 1. - pics
+        image = 1.0 - pics
     else:
         image = pics
     images.append(image)
@@ -720,7 +873,7 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     pics = []
     for idx in range(num_pics):
         if greyscale:
-            pics.append(1. - samples[idx, :, :, :])
+            pics.append(1.0 - samples[idx, :, :, :])
         else:
             pics.append(samples[idx, :, :, :])
     pics = np.array(pics)
@@ -733,23 +886,23 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     # num_cols = 14
     # svhn setup
     num_cols = 10
-    num_pics = num_cols*num_cols
+    num_pics = num_cols * num_cols
 
     # Arrange pics and reconstructions in a proper way
     pics = []
     for n in range(int(num_pics)):
-        if n%2==0:
-            pics.append(data_test[int(n/2)])
+        if n % 2 == 0:
+            pics.append(data_test[int(n / 2)])
         else:
-            pics.append(reconstructed[int(n/2)])
+            pics.append(reconstructed[int(n / 2)])
     # Figuring out a layout
     pics = np.array(pics)
-    pics = np.split(pics,num_cols,axis=0)
-    pics = np.concatenate(pics,axis=2)
-    pics = np.concatenate(np.split(pics,num_cols),axis=1)
+    pics = np.split(pics, num_cols, axis=0)
+    pics = np.concatenate(pics, axis=2)
+    pics = np.concatenate(np.split(pics, num_cols), axis=1)
     pics = pics[0]
     if greyscale:
-        image = 1. - pics
+        image = 1.0 - pics
     else:
         image = pics
     images.append(image)
@@ -758,12 +911,12 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     white_pix = 4
     num_rows = np.shape(inter_anchors)[0]
     num_cols = np.shape(inter_anchors)[1]
-    pics = np.concatenate(np.split(inter_anchors,num_cols,axis=1),axis=3)
-    pics = pics[:,0]
-    pics = np.concatenate(np.split(pics,num_rows),axis=1)
+    pics = np.concatenate(np.split(inter_anchors, num_cols, axis=1), axis=3)
+    pics = pics[:, 0]
+    pics = np.concatenate(np.split(pics, num_rows), axis=1)
     pics = pics[0]
     if greyscale:
-        image = 1. - pics
+        image = 1.0 - pics
     else:
         image = pics
     images.append(image)
@@ -776,17 +929,13 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     #                      ['full_recon',
     #                      'prior_samples'])
     img1, img2, img3, img4 = images
-    to_plot_list = zip([img1, img2, img3, img4],
-                         ['Full Reconstructions',
-                         'Samples',
-                         'Reconstruction',
-                         'Points interpolation'],
-                         ['full_recon',
-                         'prior_samples',
-                         'reconstructed',
-                         'point_inter'])
+    to_plot_list = zip(
+        [img1, img2, img3, img4],
+        ["Full Reconstructions", "Samples", "Reconstruction", "Points interpolation"],
+        ["full_recon", "prior_samples", "reconstructed", "point_inter"],
+    )
 
-    #Settings for pyplot fig
+    # Settings for pyplot fig
     for img, title, filename in to_plot_list:
         height_pic = img.shape[0]
         width_pic = img.shape[1]
@@ -796,40 +945,50 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
         if greyscale:
             image = img[:, :, 0]
             # in Greys higher values correspond to darker colors
-            plt.imshow(image, cmap='Greys',
-                            interpolation='none', vmin=0., vmax=1.)
+            plt.imshow(image, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0)
         else:
-            plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+            plt.imshow(img, interpolation="none", vmin=0.0, vmax=1.0)
         # Removing axes, ticks, labels
-        plt.axis('off')
+        plt.axis("off")
         # # placing subplot
-        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
-                hspace = 0, wspace = 0)
+        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         # Saving
-        filename = filename + '.png'
-        plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                    dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
+        filename = filename + ".png"
+        plt.savefig(
+            utils.o_gfile((save_path, filename), "wb"),
+            dpi=dpi,
+            format="png",
+            bbox_inches="tight",
+            pad_inches=0.0,
+        )
         plt.close()
-
 
     if inter_latent is not None:
         # --- Prior Interpolation plots
         white_pix = 4
         num_rows = np.shape(inter_latent)[0]
         num_cols = np.shape(inter_latent)[1]
-        pics = np.concatenate(np.split(inter_latent,num_cols,axis=1),axis=3)
-        pics = pics[:,0]
-        pics = np.concatenate(np.split(pics,num_rows),axis=1)
+        pics = np.concatenate(np.split(inter_latent, num_cols, axis=1), axis=3)
+        pics = pics[:, 0]
+        pics = np.concatenate(np.split(pics, num_rows), axis=1)
         pics = pics[0]
         if greyscale:
-            image = 1. - pics
+            image = 1.0 - pics
         else:
             image = pics
         # --- Save plots
-        to_plot_list = zip([image,],
-                             ['Latent interpolation',],
-                             ['latent_inter',])
-        #Settings for pyplot fig
+        to_plot_list = zip(
+            [
+                image,
+            ],
+            [
+                "Latent interpolation",
+            ],
+            [
+                "latent_inter",
+            ],
+        )
+        # Settings for pyplot fig
         for img, title, filename in to_plot_list:
             height_pic = img.shape[0]
             width_pic = img.shape[1]
@@ -839,19 +998,24 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
             if greyscale:
                 image = img[:, :, 0]
                 # in Greys higher values correspond to darker colors
-                plt.imshow(image, cmap='Greys',
-                                interpolation='none', vmin=0., vmax=1.)
+                plt.imshow(
+                    image, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0
+                )
             else:
-                plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+                plt.imshow(img, interpolation="none", vmin=0.0, vmax=1.0)
             # Removing axes, ticks, labels
-            plt.axis('off')
+            plt.axis("off")
             # # placing subplot
-            plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,
-                    hspace = 0, wspace = 0)
+            plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
             # Saving
-            filename = filename + '.png'
-            plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                        dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
+            filename = filename + ".png"
+            plt.savefig(
+                utils.o_gfile((save_path, filename), "wb"),
+                dpi=dpi,
+                format="png",
+                bbox_inches="tight",
+                pad_inches=0.0,
+            )
             plt.close()
 
     # # --- Embedings vizu
@@ -930,14 +1094,15 @@ def save_latent_interpolation(opts, data_test, label_test, # data, labels
     #             dpi=dpi, format='png', bbbox_inches='tight', pad_inches=0.01)
     # plt.close()
 
+
 def save_vlae_experiment(opts, decoded, work_dir):
     # num_pics = opts['plot_num_pics']
     num_cols = 10
     greyscale = decoded[0].shape[-1] == 1
 
-    if opts['input_normalize_sym']:
+    if opts["input_normalize_sym"]:
         for i in range(len(decoded)):
-            decoded[i] = decoded[i] / 2. + 0.5
+            decoded[i] = decoded[i] / 2.0 + 0.5
 
     images = []
 
@@ -949,15 +1114,20 @@ def save_vlae_experiment(opts, decoded, work_dir):
         pics = []
         for idx in range(num_pics):
             if greyscale:
-                pics.append(1. - samples[idx, :, :, :])
+                pics.append(1.0 - samples[idx, :, :, :])
             else:
                 pics.append(samples[idx, :, :, :])
         # Figuring out a layout
         pics = np.array(pics)
-        if n==0:
+        if n == 0:
             npad = 1
-            pad = ((npad,npad),(npad,npad),(0,0))
-            pics[0] = np.pad(pics[0,npad:-npad,npad:-npad], pad, mode='constant', constant_values=.0)
+            pad = ((npad, npad), (npad, npad), (0, 0))
+            pics[0] = np.pad(
+                pics[0, npad:-npad, npad:-npad],
+                pad,
+                mode="constant",
+                constant_values=0.0,
+            )
         image = np.concatenate(np.split(pics, num_cols), axis=2)
         image = np.concatenate(image, axis=0)
         images.append(image)
@@ -966,10 +1136,10 @@ def save_vlae_experiment(opts, decoded, work_dir):
     dpi = 100
     height_pic = images[0].shape[0]
     width_pic = images[0].shape[1]
-    fig_height = 1 * 2*height_pic / float(dpi)
-    fig_width = opts['nlatents'] * 2*width_pic / float(dpi)
+    fig_height = 1 * 2 * height_pic / float(dpi)
+    fig_width = opts["nlatents"] * 2 * width_pic / float(dpi)
     fig = plt.figure(figsize=(fig_width, fig_height))
-    gs = matplotlib.gridspec.GridSpec(1, opts['nlatents'])
+    gs = matplotlib.gridspec.GridSpec(1, opts["nlatents"])
 
     # Filling in separate parts of the plot
     for n in range(len(decoded)):
@@ -978,10 +1148,11 @@ def save_vlae_experiment(opts, decoded, work_dir):
         if greyscale:
             image = image[:, :, 0]
             # in Greys higher values correspond to darker colors
-            ax = plt.imshow(image, cmap='Greys',
-                            interpolation='none', vmin=0., vmax=1.)
+            ax = plt.imshow(
+                image, cmap="Greys", interpolation="none", vmin=0.0, vmax=1.0
+            )
         else:
-            ax = plt.imshow(img, interpolation='none', vmin=0., vmax=1.)
+            ax = plt.imshow(img, interpolation="none", vmin=0.0, vmax=1.0)
         ax = plt.subplot(gs[0, n])
         # title = 'sampling %d layer' % n
         # plt.text(0.47, 1., title,
@@ -996,12 +1167,17 @@ def save_vlae_experiment(opts, decoded, work_dir):
     # plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0,hspace = 0, wspace = 0)
     ### Saving plots and data
     # Plot
-    plots_dir = 'test_plots'
-    save_path = os.path.join(work_dir,plots_dir)
+    plots_dir = "test_plots"
+    save_path = os.path.join(work_dir, plots_dir)
     utils.create_dir(save_path)
-    filename = 'vlae_exp.png'
-    plt.savefig(utils.o_gfile((save_path, filename), 'wb'),
-                dpi=dpi, format='png', bbox_inches='tight', pad_inches=0.0)
+    filename = "vlae_exp.png"
+    plt.savefig(
+        utils.o_gfile((save_path, filename), "wb"),
+        dpi=dpi,
+        format="png",
+        bbox_inches="tight",
+        pad_inches=0.0,
+    )
     plt.close()
 
 
@@ -1014,6 +1190,7 @@ def discrete_cmap(N, base_cmap=None):
     color_list = base(np.linspace(0, 1, N))
     cmap_name = base.name + str(N)
     return matplotlib.colors.LinearSegmentedColormap.from_list(cmap_name, color_list, N)
+
 
 # def save_vizu(opts, data_train, data_test,              # images
 #                     label_test,                         # labels

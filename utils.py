@@ -13,8 +13,10 @@ import copy
 import numpy as np
 import logging
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
 
 class ArraySaver(object):
     """A simple class helping with saving/loading numpy arrays from files.
@@ -23,27 +25,28 @@ class ArraySaver(object):
     on disk or in memory.
     """
 
-    def __init__(self, mode='ram', workdir=None):
+    def __init__(self, mode="ram", workdir=None):
         self._mode = mode
         self._workdir = workdir
         self._global_arrays = {}
 
     def save(self, name, array):
-        if self._mode == 'ram':
+        if self._mode == "ram":
             self._global_arrays[name] = copy.deepcopy(array)
-        elif self._mode == 'disk':
+        elif self._mode == "disk":
             create_dir(self._workdir)
-            np.save(o_gfile((self._workdir, name), 'wb'), array)
+            np.save(o_gfile((self._workdir, name), "wb"), array)
         else:
-            assert False, 'Unknown save / load mode'
+            assert False, "Unknown save / load mode"
 
     def load(self, name):
-        if self._mode == 'ram':
+        if self._mode == "ram":
             return self._global_arrays[name]
-        elif self._mode == 'disk':
-            return np.load(o_gfile((self._workdir, name), 'rb'))
+        elif self._mode == "disk":
+            return np.load(o_gfile((self._workdir, name), "rb"))
         else:
-            assert False, 'Unknown save / load mode'
+            assert False, "Unknown save / load mode"
+
 
 def create_dir(d):
     if not tf.io.gfile.isdir(d):
@@ -52,6 +55,7 @@ def create_dir(d):
 
 class File(tf.io.gfile.GFile):
     """Wrapper on GFile extending seek, to support what python file supports."""
+
     def __init__(self, *args):
         super(File, self).__init__(*args)
 
@@ -64,6 +68,7 @@ class File(tf.io.gfile.GFile):
             assert whence == 0
         super(File, self).seek(position)
 
+
 def o_gfile(filename, mode):
     """Wrapper around file open, using gfile underneath.
 
@@ -74,8 +79,10 @@ def o_gfile(filename, mode):
         filename = os.path.join(*filename)
     return File(filename, mode)
 
+
 def listdir(dirname):
     return tf.io.gfile.ListDirectory(dirname)
+
 
 def get_batch_size(inputs):
     return tf.cast(tf.shape(inputs)[0], tf.float32)
