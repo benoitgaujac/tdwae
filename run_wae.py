@@ -194,14 +194,14 @@ def main():
         # lmbas += list(itertools.product(base_lmba, lmba, pen_sigma_coef))
         # latent reg
         opts["lambda"] = [
-            lmbas[FLAGS.exp_id - 1][0] ** (i / 3.0 + 1) for i in range(opts["nlatents"] - 1)
+            lmbas[FLAGS.id - 1][0] ** (i / 3.0 + 1) for i in range(opts["nlatents"] - 1)
         ]
-        opts["lambda"].append(lmbas[FLAGS.exp_id - 1][1])
+        opts["lambda"].append(lmbas[FLAGS.id - 1][1])
         # enc sigma pen
         opts["pen_enc_sigma"] = True
         opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
         # opts["lambda_pen_enc_sigma"] = [
-        #     1.5 * exp(-lmbas[FLAGS.exp_id - 1][-1] * i) for i in range(opts["nlatents"])
+        #     1.5 * exp(-lmbas[FLAGS.id - 1][-1] * i) for i in range(opts["nlatents"])
         # ]
         # opts["lambda_pen_enc_sigma"][-1] *= 2.0
         # dec sigma pen        
