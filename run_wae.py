@@ -170,6 +170,9 @@ def main():
             lmatch,
         ]
     elif FLAGS.dataset=='celebA':
+        sche = 'constant'
+        opts['use_sigmoid'] = FLAGS.sigmoid
+        sig = str(FLAGS.sigmoid)
         lmbas = []
         base_lmba = [
             0.1,
@@ -192,11 +195,12 @@ def main():
         lmbas += list(itertools.product(base_lmba, lmba))
         # pen_sigma_coef = [5.0 / 6, 3.0 / 6]
         # lmbas += list(itertools.product(base_lmba, lmba, pen_sigma_coef))
+        lrec, lmatch = lmbas[FLAGS.id][0], lmbas[FLAGS.id][1]
         # latent reg
         opts["lambda"] = [
-            lmbas[FLAGS.id - 1][0] ** (i / 3.0 + 1) for i in range(opts["nlatents"] - 1)
+            lrec ** (i / 3.0 + 1) for i in range(opts["nlatents"] - 1)
         ]
-        opts["lambda"].append(lmbas[FLAGS.id - 1][1])
+        opts["lambda"].append(lmatch)
         # enc sigma pen
         opts["pen_enc_sigma"] = True
         opts['lambda_pen_enc_sigma'] = [2.5 * exp(-5. * i / 6.) for i in range(opts['nlatents'])]
